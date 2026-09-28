@@ -3,6 +3,7 @@ import type { Me, ThinkingLevel } from "@rakazo/contracts";
 import {
   DEFAULT_MODEL_CONTEXT_WINDOW,
   DEFAULT_MODEL_MAX_TOKENS,
+  formatOpenAiCompatibleModelLabel,
   MAX_MODEL_CONTEXT_WINDOW,
   MAX_MODEL_MAX_TOKENS,
   OPENAI_COMPATIBLE_PROVIDER_ID,
@@ -11,6 +12,7 @@ import {
   parseModelContextWindow,
   parseModelMaxImagesPerPrompt,
   parseModelMaxTokens,
+  sortProbedModels,
 } from "@rakazo/contracts";
 import { createModelProbe, initialModelProbeState } from "@rakazo/core";
 import {
@@ -251,7 +253,8 @@ export function ModelSettingsOverlay({
       apiKey,
       request: rpc.models.probeOpenAiCompatible,
       onSuccess: (models) => {
-        setModelId((current) => current.trim() || models[0] || "");
+        const sorted = sortProbedModels(models);
+        setModelId((current) => current.trim() || sorted[0] || "");
         setNotice(openAiCompatibleProbeSuccessMessage(models.length));
       },
       onError: (err) =>
@@ -531,9 +534,9 @@ export function ModelSettingsOverlay({
                           }}
                           aria-label={t`Models from server`}
                         >
-                          {probeModels.map((id) => (
+                          {sortProbedModels(probeModels).map((id) => (
                             <NativeSelectOption key={id} value={id}>
-                              {id}
+                              {formatOpenAiCompatibleModelLabel(id)}
                             </NativeSelectOption>
                           ))}
                           <NativeSelectOption value="">
@@ -560,7 +563,7 @@ export function ModelSettingsOverlay({
                           type="button"
                           variant="link"
                           className="mt-2 h-auto px-0 text-[13px] text-muted-foreground underline"
-                          onClick={() => setModelId(probeModels[0] ?? "")}
+                          onClick={() => setModelId(sortProbedModels(probeModels)[0] ?? "")}
                         >
                           <Trans>Use a found model</Trans>
                         </Button>

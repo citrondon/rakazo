@@ -1,5 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
-import type { AvatarStyle, SpaceMemoryConfig } from "@rakazo/contracts";
+import type { AvatarStyle, SpaceMemoryConfig, UsageMonth } from "@rakazo/contracts";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web";
 import { Brain, CloudDownload, Cpu, Gauge, Monitor, Settings, Volume2, XIcon } from "lucide-react";
 import { type ComponentType, useEffect, useRef, useState } from "react";
@@ -33,6 +33,8 @@ export function SettingsOverlay({
   email,
   name,
   usage,
+  usageMonth,
+  onUsageOpen,
   initialSection = "general",
   avatarStyle,
   onAvatarStyleChange,
@@ -48,6 +50,9 @@ export function SettingsOverlay({
   email?: string | null;
   name: string;
   usage?: { runs: number; inputTokens: number; outputTokens: number } | null;
+  usageMonth?: UsageMonth | null;
+  /** Load the current month whenever the Usage section is shown. */
+  onUsageOpen?: () => void;
   initialSection?: SettingsSection;
   avatarStyle: AvatarStyle;
   onAvatarStyleChange: (style: AvatarStyle) => Promise<void>;
@@ -74,10 +79,10 @@ export function SettingsOverlay({
   }, [initialSection]);
 
   useEffect(() => {
-    if (section === "usage") {
-      usageRef.current?.focus();
-    }
-  }, [section]);
+    if (section !== "usage") return;
+    usageRef.current?.focus();
+    onUsageOpen?.();
+  }, [section, onUsageOpen]);
 
   const navItems: NavItem[] = [
     { id: "general", label: t`General`, icon: Settings },
@@ -208,7 +213,7 @@ export function SettingsOverlay({
                 />
               ) : null}
               {section === "usage" ? (
-                <UsageSettingsPanel usage={usage} panelRef={usageRef} />
+                <UsageSettingsPanel usage={usage} usageMonth={usageMonth} panelRef={usageRef} />
               ) : null}
               {section === "computer" && showComputer ? <ComputerSettingsPanel /> : null}
               {section === "updates" ? (

@@ -1,4 +1,4 @@
-import type { AvatarStyle } from "@rakazo/contracts";
+import type { AvatarStyle, UsageMonth } from "@rakazo/contracts";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
@@ -81,6 +81,7 @@ export default function Account() {
     inputTokens: number;
     outputTokens: number;
   } | null>(null);
+  const [usageMonth, setUsageMonth] = useState<UsageMonth | null>(null);
   const { avatarStyle, updateAvatarStyle } = useAvatarStyle();
   const appearance = getCachedAppearancePreference();
   const streamReplies = useSyncExternalStore(
@@ -104,6 +105,9 @@ export default function Account() {
     void rpc<{ runs: number; inputTokens: number; outputTokens: number }>("usage/summary")
       .then(setUsage)
       .catch(() => undefined);
+    void rpc<UsageMonth>("usage/month")
+      .then(setUsageMonth)
+      .catch(() => undefined);
     if (Platform.OS === "android") {
       void getLiveNotificationSettings()
         .then(setNotifications)
@@ -122,6 +126,29 @@ export default function Account() {
             tokens: usage.inputTokens + usage.outputTokens,
           })}
         </Text>
+      ) : null}
+      {usageMonth && usageMonth.bots.length > 0 ? (
+        <View style={styles.monthBlock} accessibilityLabel={t("This month")}>
+          <Text style={styles.sectionTitle}>{t("This month")}</Text>
+          {usageMonth.bots.map((bot) => (
+            <View key={bot.botId} style={styles.monthRow}>
+              <Text
+                numberOfLines={1}
+                style={[styles.monthName, bot.archived ? styles.monthArchived : null]}
+              >
+                {bot.botName || "—"}
+              </Text>
+              <Text style={styles.monthTokens}>
+                {bot.monthlyTokenBudget
+                  ? t("{used} / {budget}", {
+                      used: bot.totalTokens,
+                      budget: bot.monthlyTokenBudget,
+                    })
+                  : String(bot.totalTokens)}
+              </Text>
+            </View>
+          ))}
+        </View>
       ) : null}
     </View>
   );
@@ -655,6 +682,28 @@ function createAccountStyles() {
       color: native.secondaryLabel,
       fontSize: 14,
       fontWeight: "600",
+    },
+    monthBlock: {
+      marginTop: 10,
+      gap: 6,
+    },
+    monthRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    monthName: {
+      flex: 1,
+      color: native.label,
+      fontSize: 14,
+    },
+    monthArchived: {
+      color: native.tertiaryLabel,
+    },
+    monthTokens: {
+      color: native.secondaryLabel,
+      fontSize: 14,
+      fontVariant: ["tabular-nums"],
     },
     archivedRow: {
       flexDirection: "row",

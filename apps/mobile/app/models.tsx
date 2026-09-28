@@ -2,6 +2,7 @@ import type { ModelOAuthBegin, ThinkingLevel } from "@rakazo/contracts";
 import {
   DEFAULT_MODEL_CONTEXT_WINDOW,
   DEFAULT_MODEL_MAX_TOKENS,
+  formatOpenAiCompatibleModelLabel,
   MAX_MODEL_CONTEXT_WINDOW,
   MAX_MODEL_MAX_TOKENS,
   OPENAI_COMPATIBLE_BASE_URL_HINT,
@@ -10,6 +11,7 @@ import {
   parseModelContextWindow,
   parseModelMaxImagesPerPrompt,
   parseModelMaxTokens,
+  sortProbedModels,
 } from "@rakazo/contracts";
 import { createModelProbe, featuredModelProviders, initialModelProbeState } from "@rakazo/core";
 import { useFocusEffect } from "expo-router";
@@ -586,7 +588,7 @@ export default function Models() {
                 <Text style={[styles.sectionTitle, { marginTop: 12 }]}>{t("Model")}</Text>
                 {probeModels.length && probeModels.includes(modelId) ? (
                   <View style={styles.card}>
-                    {probeModels.map((entry) => (
+                    {sortProbedModels(probeModels).map((entry) => (
                       <Pressable
                         key={entry}
                         accessibilityRole="radio"
@@ -603,7 +605,9 @@ export default function Models() {
                         <View style={styles.radio}>
                           {entry === modelId ? <View style={styles.radioDot} /> : null}
                         </View>
-                        <Text style={styles.modelLabel}>{entry}</Text>
+                        <Text style={styles.modelLabel}>
+                          {formatOpenAiCompatibleModelLabel(entry)}
+                        </Text>
                       </Pressable>
                     ))}
                     <Pressable
@@ -637,7 +641,7 @@ export default function Models() {
                     {probeModels.length ? (
                       <Pressable
                         accessibilityRole="button"
-                        onPress={() => setModelId(probeModels[0] ?? "")}
+                        onPress={() => setModelId(sortProbedModels(probeModels)[0] ?? "")}
                       >
                         <Text style={styles.helpLabel}>{t("Use a found model")}</Text>
                       </Pressable>

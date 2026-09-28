@@ -2,6 +2,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import {
   DEFAULT_MODEL_CONTEXT_WINDOW,
   DEFAULT_MODEL_MAX_TOKENS,
+  formatOpenAiCompatibleModelLabel,
   type IntegrationSetupState,
   MAX_MODEL_CONTEXT_WINDOW,
   MAX_MODEL_MAX_TOKENS,
@@ -11,6 +12,7 @@ import {
   parseModelContextWindow,
   parseModelMaxImagesPerPrompt,
   parseModelMaxTokens,
+  sortProbedModels,
   type ThinkingLevel,
 } from "@rakazo/contracts";
 import { createModelProbe, initialModelProbeState } from "@rakazo/core";
@@ -207,7 +209,10 @@ export function OnboardingPage() {
   );
   const probeModelItems = useMemo(
     () => [
-      ...probeModels.map((id) => ({ value: id, label: id })),
+      ...sortProbedModels(probeModels).map((id) => ({
+        value: id,
+        label: formatOpenAiCompatibleModelLabel(id),
+      })),
       { value: CUSTOM_MODEL_OPTION, label: otherModelLabel },
     ],
     [otherModelLabel, probeModels],
@@ -258,9 +263,10 @@ export function OnboardingPage() {
       apiKey,
       request: rpc.models.probeOpenAiCompatible,
       onSuccess: (models) => {
+        const sorted = sortProbedModels(models);
         setModelId((current) => {
           const trimmed = current.trim();
-          const next = trimmed || models[0] || "";
+          const next = trimmed || sorted[0] || "";
           // Stay in manual entry across re-probes so a typed id that matches a
           // discovered model cannot yank the freeform field back to the Select.
           setManualModelId(

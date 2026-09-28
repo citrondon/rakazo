@@ -54,6 +54,7 @@ function mapBot(
     modelProvider?: string | null;
     modelId?: string | null;
     thinkingLevel?: string | null;
+    monthlyTokenBudget?: number | null;
     teamChatAmbientEnabled?: boolean;
     teamChatRules?: string;
     webhookSecretId?: string | null;
@@ -91,6 +92,7 @@ function mapBot(
     modelProvider: bot.modelProvider ?? null,
     modelId: bot.modelId ?? null,
     thinkingLevel: (bot.thinkingLevel as Bot["thinkingLevel"]) ?? null,
+    monthlyTokenBudget: bot.monthlyTokenBudget ?? null,
     teamChatAmbientEnabled: bot.teamChatAmbientEnabled ?? false,
     teamChatRules: bot.teamChatRules ?? "",
     webhookConfigured: Boolean(bot.webhookSecretId),

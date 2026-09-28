@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Every run's system instructions now state the current date and time (UTC), so bots judge deadlines, recency and scheduling from the real present instead of guessing it from training data or quoted timestamps.
 - Connect Slack, WhatsApp Business Cloud, or Telegram DMs to a bot from Messaging settings, alongside iMessage/SMS. Each app can use a different bot. Group conversations remain iMessage-only.
 - Model picker includes Grok 4.6 (xAI) and Ox Alpha Free / GLM-5.3 (OpenCode Go).
+- A run refused for an exhausted monthly token budget no longer pushes a notification. The stop already appears in the thread and in the spend view, so repeating it on every routine wake was noise (web, Electron, and mobile).
 
 ### Added
 
@@ -37,6 +38,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Provider-neutral integrations: managed apps through Composio or Pipedream Connect, plus encrypted user-installed Treg, HTTPS MCP, and OpenAPI tool sources on web and mobile.
 - Disconnect connected Composio plugins.
 - Routines in plain language instead of raw cron.
+- Spend view: a bot's settings show this month's tokens next to its monthly budget, and Usage lists this month's tokens per bot, including a deleted bot's name from its tombstone. Tokens only — no price table.
+- Run receipt: each completed run in the transcript expands to duration, tokens, tools called, artifacts, recorded effects, approvals, and why it stopped. It reads stored rows, so it never depends on a live computer or provider.
 
 ### Removed
 

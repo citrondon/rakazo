@@ -16,6 +16,12 @@ installPreloadRecovery();
 applyUiDirection(resolveUiLocale());
 applyUiAppearance();
 
+if ("serviceWorker" in navigator && !import.meta.env.DEV) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
+
 function PerformanceProbe() {
   useLayoutEffect(() => {
     markOnce("rk:renderer:first-react-commit");

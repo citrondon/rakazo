@@ -1,7 +1,8 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { AvatarStyle } from "@rakazo/contracts";
+import type { AvatarStyle, UsageMonth } from "@rakazo/contracts";
 import { BotAvatar, Button, Field, FieldLabel, Input, Label, Switch, Toggle } from "@rakazo/ui-web";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Download } from "lucide-react";
+import { usePwaInstall } from "../lib/use-pwa-install";
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type RefObject,
@@ -173,6 +174,8 @@ export function GeneralSettingsPanels({
         ) : null}
       </section>
 
+      <PwaInstallSection />
+
       {isDeploymentOwner ? (
         <Button variant="outline" render={<Link to="/integrations/setup" />}>
           <Trans>Server integrations</Trans>
@@ -231,11 +234,15 @@ export function GeneralSettingsPanels({
 
 export function UsageSettingsPanel({
   usage,
+  usageMonth,
   panelRef,
 }: {
   usage?: { runs: number; inputTokens: number; outputTokens: number } | null;
+  usageMonth?: UsageMonth | null;
   panelRef?: RefObject<HTMLDivElement | null>;
 }) {
+  const { i18n } = useLingui();
+  const locale = i18n.locale || "en";
   return (
     <div
       ref={panelRef}
@@ -252,6 +259,32 @@ export function UsageSettingsPanel({
             {usage.runs} runs · {usage.inputTokens + usage.outputTokens} tokens
           </Trans>
         </p>
+      ) : null}
+      {usageMonth && usageMonth.bots.length > 0 ? (
+        <div className="mt-4">
+          <h4 className="text-[13px] font-medium text-foreground/75">
+            <Trans>This month</Trans>
+          </h4>
+          <div data-testid="usage-month" className="mt-2 flex flex-col gap-1">
+            {usageMonth.bots.map((bot) => (
+              <div key={bot.botId} className="flex items-baseline justify-between gap-3">
+                <span
+                  className={`min-w-0 flex-1 truncate text-[13px] ${
+                    bot.archived ? "text-muted-foreground" : "text-foreground/75"
+                  }`}
+                  dir="auto"
+                >
+                  {bot.botName || "—"}
+                </span>
+                <span className="shrink-0 text-[13px] tabular-nums text-muted-foreground">
+                  {bot.monthlyTokenBudget
+                    ? `${bot.totalTokens.toLocaleString(locale)} / ${bot.monthlyTokenBudget.toLocaleString(locale)}`
+                    : bot.totalTokens.toLocaleString(locale)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       ) : null}
       <p className={`text-[12.5px] text-muted-foreground/80 ${usage ? "mt-2" : "mt-3"}`}>
         <Trans>Model spend uses your provider keys.</Trans>
@@ -583,3 +616,50 @@ function UiLocalePicker({
     </div>
   );
 }
+
+function PwaInstallSection() {
+  const { canInstall, isInstalled, install } = usePwaInstall();
+
+  if (isInstalled) {
+    return (
+      <section className="rounded-xl border border-border px-4 py-4">
+        <h3 className="text-[15px] font-medium text-foreground">
+          <Trans>App Installation</Trans>
+        </h3>
+        <p className="mt-2 text-[13px] text-muted-foreground/70">
+          <Trans>Rakazo is installed as a standalone app.</Trans>
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-xl border border-border px-4 py-4">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h3 className="text-[15px] font-medium text-foreground">
+            <Trans>Desktop & Mobile App</Trans>
+          </h3>
+          <p className="mt-1 text-[13px] text-muted-foreground/70">
+            <Trans>Install Rakazo as a standalone app without browser borders.</Trans>
+          </p>
+        </div>
+        {canInstall ? (
+          <Button
+            variant="secondary"
+            className="rounded-full shrink-0 gap-2"
+            onClick={() => void install()}
+          >
+            <Download size={15} strokeWidth={2} />
+            <Trans>Install app</Trans>
+          </Button>
+        ) : (
+          <p className="text-[12px] text-muted-foreground/60 italic shrink-0">
+            <Trans>Install via browser menu</Trans>
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+

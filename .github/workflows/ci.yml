@@ -26,6 +26,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - name: Locale catalogs match the source
+        run: pnpm --filter @rakazo/web intl:check
 
   check:
     name: Typecheck

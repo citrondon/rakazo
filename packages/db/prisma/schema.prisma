@@ -370,6 +370,14 @@ model Bot {
   modelProvider     String?
   modelId           String?
   thinkingLevel     String?
+  /// Optional monthly spend ceiling for this bot, in total tokens (input + output)
+  /// across all usage records attributed to the bot in the current UTC calendar month.
+  /// Null or <= 0 means unlimited.
+  monthlyTokenBudget Int?
+  /// When the owner was last warned that this bot crossed its budget warning line, so the
+  /// warning fires once a month instead of on every run. Cleared when the ceiling changes,
+  /// because a new ceiling has its own warning line.
+  budgetWarnedAt    DateTime?
   webhookSecretId   String?
   teamChatAmbientEnabled Boolean @default(false)
   teamChatRules          String  @default("")
@@ -1015,6 +1023,8 @@ model UsageRecord {
   createdAt        DateTime @default(now())
 
   @@index([spaceId, userId, createdAt])
+  /// The monthly budget check and the per-bot usage view both filter bot + month window.
+  @@index([botId, createdAt])
   @@map("usage_records")
 }
 

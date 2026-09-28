@@ -22,6 +22,16 @@ msgstr " (não lido)"
 msgid "{0, plural, one {# model} other {# models}}"
 msgstr "{0, plural, one {# modelo} other {# modelos}}"
 
+#. placeholder {0}: preview.memoryCount
+#: src/pages/BotImportOverlay.tsx:185
+msgid "{0, plural, zero {No memories} one {# memory} other {# memories}}"
+msgstr ""
+
+#. placeholder {0}: preview.routineNames.length
+#: src/pages/BotImportOverlay.tsx:193
+msgid "{0, plural, zero {No routines} one {Routine: #} other {Routines: #}}"
+msgstr ""
+
 #. placeholder {0}: file.name
 #: src/pages/Shell.tsx
 msgid "{0} (max {ATTACHMENT_MAX_COUNT} attachments)"
@@ -36,6 +46,13 @@ msgstr "{0} (acima de 10 MiB)"
 #: src/pages/RoutineSchedule.tsx
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
+
+#. placeholder {0}: usage.totalTokens.toLocaleString(i18n.locale)
+#. placeholder {1}: usage.monthlyTokenBudget.toLocaleString(i18n.locale)
+#. placeholder {2}: usage.usedPercent ?? 0
+#: src/pages/shell/bot-panel.tsx:569
+msgid "{0} / {1} tokens this month ({2}%)"
+msgstr ""
 
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
@@ -72,6 +89,11 @@ msgstr ""
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "{0} runs · {1} tokens"
 msgstr "{0} execuções · {1} tokens"
+
+#. placeholder {0}: usage.totalTokens.toLocaleString(i18n.locale)
+#: src/pages/shell/bot-panel.tsx:570
+msgid "{0} tokens this month"
+msgstr ""
 
 #. placeholder {0}: bot.name
 #: src/pages/ExternalConversationSettings.tsx

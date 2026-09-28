@@ -2900,6 +2900,59 @@ describeJourneys("required product journeys", () => {
       membershipsBefore + 1,
     );
   });
+
+  it("25: a receipt reports what a run did and a spent month refuses the next turn", async () => {
+    const cookie = await signup(app, `receipt-j-${stamp}@rakazo.test`, "Receipt");
+    const bot = await rpc<Bot>(app, cookie, "bots/create", {
+      name: "Chief",
+      title: "",
+      description: "",
+      instructions: "",
+      notifyOnFinish: true,
+    });
+
+    // A tool-using run writes usage rows and a durable assistant message the receipt reads.
+    const snap = await sendAndWait(
+      app,
+      cookie,
+      bot.id,
+      "write a file called notes/receipt.md that says hello",
+    );
+    const runId = snap.run?.id;
+    expect(runId).toBeTruthy();
+
+    const receipt = await rpc<RunReceipt>(app, cookie, "runs/receipt", { runId });
+    expect(receipt.toolCalls).toBeGreaterThan(0);
+    expect(receipt.tokens?.totalTokens ?? 0).toBeGreaterThan(0);
+    expect(receipt.stopReason).toBeNull();
+
+    // A receipt is scoped to its owner, like every other read.
+    const otherCookie = await signup(app, `receipt-other-j-${stamp}@rakazo.test`, "Other");
+    expect(await rpc<RunReceipt | null>(app, otherCookie, "runs/receipt", { runId })).toBeNull();
+
+    const month = await rpc<UsageMonth>(app, cookie, "usage/month");
+    expect(month.bots.find((row) => row.botId === bot.id)?.totalTokens ?? 0).toBeGreaterThan(0);
+
+    // A budget the month already spent refuses the next turn before any model call.
+    await rpc(app, cookie, "bots/update", { botId: bot.id, monthlyTokenBudget: 1 });
+    const refused = await rpc<{ runId: string }>(app, cookie, "threads/send", {
+      botId: bot.id,
+      text: "try again",
+    });
+    let terminal: { status: string; error: string | null } | null = null;
+    await waitForDatabase(async () => {
+      terminal = await prisma.run.findUnique({
+        where: { id: refused.runId },
+        select: { status: true, error: true },
+      });
+      return Boolean(terminal && ["completed", "failed", "cancelled"].includes(terminal.status));
+    });
+    expect(terminal?.status).toBe("failed");
+    expect(terminal?.error ?? "").toMatch(/Monthly token budget exhausted/);
+
+    const afterBudget = await rpc<UsageMonth>(app, cookie, "usage/month");
+    expect(afterBudget.bots.find((row) => row.botId === bot.id)?.monthlyTokenBudget).toBe(1);
+  });
 });
 
 type Me = { spaceId: string; userId: string; canChooseHostComputer: boolean };
@@ -2926,6 +2979,17 @@ type Snap = {
   }>;
   run: { id: string; status: string } | null;
   activeRuns?: Array<{ id: string; status: string }>;
+};
+type RunReceipt = {
+  runId: string;
+  tokens: { inputTokens: number; totalTokens: number } | null;
+  toolCalls: number;
+  stopReason: string | null;
+};
+type UsageMonth = {
+  monthStart: string;
+  bots: Array<{ botId: string; totalTokens: number; monthlyTokenBudget: number | null }>;
+  totals: { totalTokens: number };
 };
 
 async function signup(app: App, email: string, name: string) {

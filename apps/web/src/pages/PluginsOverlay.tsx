@@ -5,6 +5,7 @@ import type {
   ConnectionCatalogItem,
   IntegrationCatalogResult,
   IntegrationCatalogSurface,
+  McpServer,
 } from "@rakazo/contracts";
 import {
   abortableDelay,
@@ -14,6 +15,7 @@ import {
   humanizeToolName,
 } from "@rakazo/core";
 import {
+  Badge,
   Button,
   Card,
   CardContent,
@@ -28,11 +30,24 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@rakazo/ui-web";
-import { ChevronDown, ChevronLeft, ChevronUp, X } from "lucide-react";
+import {
+  BookOpen,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronUp,
+  FolderKanban,
+  GitBranch,
+  Globe,
+  Loader2,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IntegrationSetup } from "../components/integrations/IntegrationSetup";
 import { optionalCatalogFeedProbe } from "../lib/optional-catalog-feed";
 import { rpc } from "../lib/rpc";
+import { MCP_PRESETS, type McpPreset } from "./mcp-presets";
 
 type SourceKind = "treg" | "executor" | "mcp" | "api" | "graphql";
 
@@ -107,17 +122,23 @@ export function PluginsOverlay({
   const [toolsLoading, setToolsLoading] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(true);
   const [toolsTick, setToolsTick] = useState(0);
+  const [mcpServers, setMcpServers] = useState<McpServer[]>([]);
+  const [presetPending, setPresetPending] = useState<string | null>(null);
+  const [githubToken, setGithubToken] = useState("");
+  const [githubPromptOpen, setGithubPromptOpen] = useState(false);
   const connectionAttempt = useRef<AbortController | null>(null);
 
   async function refresh() {
-    const [items, installs, rows, catalogFeed] = await Promise.all([
+    const [items, installs, rows, catalogFeed, serversList] = await Promise.all([
       rpc.connections.catalog({}),
       rpc.capabilities.list(),
       rpc.connections.list(),
       optionalCatalogFeedProbe(rpc.capabilities.catalogSearch({ query: "" })),
+      rpc.mcp.servers.list().catch(() => []),
     ]);
     setCatalog(items);
     setConnections(rows);
+    setMcpServers(serversList);
     setLabelDrafts((current) => {
       const next: Record<string, string> = {};
       for (const row of rows) {
@@ -134,6 +155,57 @@ export function PluginsOverlay({
     );
     setCatalogFeedEnabled(catalogFeed.enabled);
     return items;
+  }
+
+  async function installPreset(preset: McpPreset, envOverride?: Record<string, string>) {
+    setCatalogError(null);
+    setPresetPending(preset.id);
+    try {
+      const created = await rpc.mcp.servers.create({
+        slug: preset.slug,
+        name: preset.name,
+        transport: preset.transport,
+        command: preset.command,
+        args: preset.args,
+        env: envOverride ?? {},
+        enabled: true,
+      });
+
+      const bots = await rpc.bots.list();
+      await Promise.all(
+        bots.map((bot) =>
+          rpc.mcp.assignments.replace({
+            botId: bot.id,
+            assignments: [{ serverId: created.id, allowAllTools: true, allowedTools: [] }],
+          }),
+        ),
+      );
+
+      await refresh();
+      if (preset.id === "github") {
+        setGithubPromptOpen(false);
+        setGithubToken("");
+      }
+    } catch (err) {
+      setCatalogError(err instanceof Error ? err.message : t`Could not install preset`);
+    } finally {
+      setPresetPending(null);
+    }
+  }
+
+  async function uninstallPreset(preset: McpPreset) {
+    const existing = mcpServers.find((s) => s.slug === preset.slug);
+    if (!existing) return;
+    setCatalogError(null);
+    setPresetPending(preset.id);
+    try {
+      await rpc.mcp.servers.remove({ id: existing.id });
+      await refresh();
+    } catch (err) {
+      setCatalogError(err instanceof Error ? err.message : t`Could not remove preset`);
+    } finally {
+      setPresetPending(null);
+    }
   }
 
   useEffect(() => {
@@ -700,13 +772,174 @@ export function PluginsOverlay({
         ) : null}
 
         <div id="integration-list" className="rk-scroll flex-1 overflow-y-auto px-8 py-6">
-          <Button
-            variant="outline"
-            className="mb-4"
-            onClick={() => setSetupOpen((current) => !current)}
-          >
-            <Trans>Browse MCP servers</Trans>
-          </Button>
+          {/* 1-Klick MCP Connectors Gallery */}
+          <div className="mb-8 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-amber-500" />
+                <h3 className="text-base font-semibold text-foreground">
+                  <Trans>1-Klick Connectors (Grok-Bot Style)</Trans>
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="hidden text-xs text-muted-foreground sm:inline">
+                  <Trans>Automatisch für alle Bots aktiv</Trans>
+                </span>
+                {onOpenMcp ? (
+                  <Button variant="outline" size="sm" onClick={onOpenMcp}>
+                    <Trans>Erweiterte Server</Trans>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSetupOpen((current) => !current)}
+                  >
+                    <Trans>MCP Server konfigurieren</Trans>
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {MCP_PRESETS.map((preset) => {
+                const isInstalled = mcpServers.some((s) => s.slug === preset.slug);
+                const isPending = presetPending === preset.id;
+
+                const renderIcon = () => {
+                  switch (preset.iconName) {
+                    case "FolderKanban":
+                      return <FolderKanban className="h-5 w-5 text-blue-500" />;
+                    case "Globe":
+                      return <Globe className="h-5 w-5 text-emerald-500" />;
+                    case "BookOpen":
+                      return <BookOpen className="h-5 w-5 text-purple-500" />;
+                    case "GitBranch":
+                      return <GitBranch className="h-5 w-5 text-orange-500" />;
+                  }
+                };
+
+                return (
+                  <Card
+                    key={preset.id}
+                    className={`flex flex-col justify-between border transition-all ${
+                      isInstalled
+                        ? "border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/10"
+                        : "border-border hover:border-border/80"
+                    }`}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between gap-1">
+                        <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent/60">
+                          {renderIcon()}
+                        </div>
+                        {isInstalled ? (
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 text-[10px] gap-1 px-1.5 py-0"
+                          >
+                            <Check className="h-3 w-3" />
+                            <Trans>Aktiv</Trans>
+                          </Badge>
+                        ) : preset.badge ? (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            {preset.badge}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <CardTitle className="mt-2 text-sm font-semibold">{preset.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-1 flex-col justify-between gap-3 text-xs text-muted-foreground pt-0">
+                      <p className="line-clamp-2 leading-relaxed">{preset.description}</p>
+                      {isInstalled ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          disabled={isPending}
+                          onClick={() => void uninstallPreset(preset)}
+                        >
+                          {isPending ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trans>Trennen</Trans>
+                          )}
+                        </Button>
+                      ) : preset.id === "github" ? (
+                        <div className="flex flex-col gap-2">
+                          {githubPromptOpen ? (
+                            <div className="flex flex-col gap-1.5">
+                              <Input
+                                type="password"
+                                placeholder={t`Personal Access Token`}
+                                value={githubToken}
+                                onChange={(e) => setGithubToken(e.target.value)}
+                                className="h-7 text-xs"
+                              />
+                              <div className="flex gap-1">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="h-7 flex-1 text-xs"
+                                  disabled={isPending || !githubToken.trim()}
+                                  onClick={() =>
+                                    void installPreset(preset, {
+                                      GITHUB_PERSONAL_ACCESS_TOKEN: githubToken.trim(),
+                                    })
+                                  }
+                                >
+                                  {isPending ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <Trans>Speichern</Trans>
+                                  )}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs px-2"
+                                  onClick={() => setGithubPromptOpen(false)}
+                                >
+                                  <Trans>Abbrechen</Trans>
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="w-full text-xs"
+                              onClick={() => setGithubPromptOpen(true)}
+                            >
+                              <Trans>Verbinden</Trans>
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="w-full text-xs"
+                          disabled={isPending}
+                          onClick={() => void installPreset(preset)}
+                        >
+                          {isPending ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trans>Verbinden</Trans>
+                          )}
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
           {setupOpen ? (
             <div className="mb-6">
               <IntegrationSetup

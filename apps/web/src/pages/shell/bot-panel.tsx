@@ -3,6 +3,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type {
   AgentSkillCatalogEntry,
   Bot,
+  BotUsageSummary,
   ComputerMode,
   Me,
   ModelCatalogEntry,
@@ -188,6 +189,7 @@ export function CreateBotForm({
 
 export function BotSettings({
   bot,
+  usage,
   memoryProviderConfigured,
   onSkillsChange,
   onSave,
@@ -195,6 +197,7 @@ export function BotSettings({
   onClear,
 }: {
   bot: Bot;
+  usage?: BotUsageSummary | null;
   onSkillsChange: (skills: AgentSkillCatalogEntry[]) => void;
   memoryProviderConfigured: boolean;
   onSave: (patch: {
@@ -211,11 +214,12 @@ export function BotSettings({
     modelProvider?: string | null;
     modelId?: string | null;
     thinkingLevel?: ThinkingLevel | null;
+    monthlyTokenBudget?: number | null;
   }) => Promise<void>;
   onExport: () => Promise<void>;
   onClear: () => void;
 }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const [advancedOpened, setAdvancedOpened] = useState(false);
   const ids = useId();
   const [name, setName] = useState(bot.name);
@@ -232,6 +236,9 @@ export function BotSettings({
     bot.modelProvider && bot.modelId ? modelOptionKey(bot.modelProvider, bot.modelId) : "",
   );
   const [thinkingLevel, setThinkingLevel] = useState(bot.thinkingLevel ?? "");
+  const [monthlyTokenBudget, setMonthlyTokenBudget] = useState(
+    bot.monthlyTokenBudget != null ? String(bot.monthlyTokenBudget) : "",
+  );
   const [credentials, setCredentials] = useState<ModelCredential[]>([]);
   const [catalog, setCatalog] = useState<ModelCatalogEntry[]>([]);
   const [me, setMe] = useState<Me | null>(null);
@@ -371,6 +378,9 @@ export function BotSettings({
                 : null,
             }
           : {}),
+        ...(monthlyTokenBudget.trim()
+          ? { monthlyTokenBudget: Number(monthlyTokenBudget.trim()) }
+          : { monthlyTokenBudget: null }),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : t`Could not save`);
@@ -539,6 +549,28 @@ export function BotSettings({
             </NativeSelect>
           </label>
         ) : null}
+        <label htmlFor={`${ids}-budget`} className={fieldLabelClass}>
+          <Trans>Monthly token budget</Trans>
+          <Input
+            id={`${ids}-budget`}
+            inputMode="numeric"
+            value={monthlyTokenBudget}
+            onChange={(e) => setMonthlyTokenBudget(e.target.value.replace(/[^0-9]/g, ""))}
+            onBlur={() => void enqueueSave()}
+            placeholder={t`Unlimited`}
+            className="mt-1.5"
+          />
+          {usage ? (
+            <p
+              data-testid="bot-budget-usage"
+              className="mt-1.5 text-[12px] font-normal text-muted-foreground/80"
+            >
+              {usage.monthlyTokenBudget
+                ? t`${usage.totalTokens.toLocaleString(i18n.locale)} / ${usage.monthlyTokenBudget.toLocaleString(i18n.locale)} tokens this month (${usage.usedPercent ?? 0}%)`
+                : t`${usage.totalTokens.toLocaleString(i18n.locale)} tokens this month`}
+            </p>
+          ) : null}
+        </label>
         {memoryProviderConfigured ? (
           <div className="mt-4 text-[14px] text-muted-foreground">
             <Trans>Memory scope</Trans>

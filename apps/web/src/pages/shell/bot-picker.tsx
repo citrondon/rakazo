@@ -9,12 +9,13 @@ import {
   CommandList,
   CommandSeparator,
 } from "@rakazo/ui-web";
-import { Info, Lock, Plus, Users } from "lucide-react";
+import { Info, Lock, Plus, Upload, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export function BotCreatePicker({
   bots,
   onCreateBot,
+  onImportBot,
   onOpenBot,
   onCreateGroup,
   onCreateSpace,
@@ -23,6 +24,7 @@ export function BotCreatePicker({
 }: {
   bots: Bot[];
   onCreateBot: () => void;
+  onImportBot: () => void;
   onOpenBot: (botId: string) => void;
   onCreateGroup: () => void;
   onCreateSpace: () => void;
@@ -74,6 +76,15 @@ export function BotCreatePicker({
                 <Trans>Create new Bot</Trans>
               </CommandItem>
             ) : null}
+            <CommandItem
+              value="import-bot"
+              data-testid="import-bot"
+              onSelect={() => onImportBot()}
+              className="gap-2"
+            >
+              <Upload size={16} strokeWidth={1.8} aria-hidden="true" />
+              <Trans>Import bot…</Trans>
+            </CommandItem>
             {matched.map((bot) => (
               <CommandItem
                 key={bot.id}

@@ -23,10 +23,22 @@ import {
   TabsList,
   TabsTrigger,
 } from "@rakazo/ui-web";
-import { Check, X } from "lucide-react";
+import {
+  BookOpen,
+  Check,
+  Database,
+  FolderKanban,
+  GitBranch,
+  Globe,
+  Loader2,
+  Sparkles,
+  Terminal,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { connectMcpOauth, MCP_OAUTH_CHANNEL } from "../lib/mcp-connect";
 import { rpc } from "../lib/rpc";
+import { MCP_PRESETS, type McpPreset } from "./mcp-presets";
 
 function oauthStatusText(server: McpServer): string | null {
   if (server.oauthStatus === "connected") return t`OAuth connected`;
@@ -57,6 +69,66 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [oauthPending, setOauthPending] = useState<string | null>(null);
+  const [presetPending, setPresetPending] = useState<string | null>(null);
+  const [githubToken, setGithubToken] = useState("");
+  const [githubPromptOpen, setGithubPromptOpen] = useState(false);
+
+  async function installPreset(preset: McpPreset, envOverride?: Record<string, string>) {
+    setError(null);
+    setPresetPending(preset.id);
+    try {
+      const created = await rpc.mcp.servers.create({
+        slug: preset.slug,
+        name: preset.name,
+        transport: preset.transport,
+        command: preset.command,
+        args: preset.args,
+        env: envOverride ?? {},
+        enabled: true,
+      });
+
+      // Automatically assign all active bots to this preset connector
+      await Promise.all(
+        bots.map((bot) => {
+          const existing = (botAssignments[bot.id] ?? []).filter(
+            (entry) => entry.serverId !== created.id,
+          );
+          return rpc.mcp.assignments.replace({
+            botId: bot.id,
+            assignments: [
+              ...existing,
+              { serverId: created.id, allowAllTools: true, allowedTools: [] },
+            ],
+          });
+        }),
+      );
+
+      await refresh();
+      if (preset.id === "github") {
+        setGithubPromptOpen(false);
+        setGithubToken("");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t`Could not install preset`);
+    } finally {
+      setPresetPending(null);
+    }
+  }
+
+  async function uninstallPreset(preset: McpPreset) {
+    const existing = servers.find((s) => s.slug === preset.slug);
+    if (!existing) return;
+    setError(null);
+    setPresetPending(preset.id);
+    try {
+      await rpc.mcp.servers.remove({ id: existing.id });
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t`Could not remove preset`);
+    } finally {
+      setPresetPending(null);
+    }
+  }
 
   async function refresh() {
     const [nextServers, nextBots, assignments] = await Promise.all([
@@ -268,252 +340,418 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
             {error}
           </p>
         ) : null}
-        <div className="rk-scroll grid min-h-0 grid-cols-1 gap-5 overflow-y-auto p-6 lg:grid-cols-2">
-          <Card className="self-start">
-            <CardHeader>
-              <CardTitle>
-                <Trans>Add server</Trans>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FieldGroup className="gap-4">
-                <Field>
-                  <FieldLabel htmlFor="mcp-name">
-                    <Trans>Server name</Trans>
-                  </FieldLabel>
-                  <Input
-                    id="mcp-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Mobbin"
-                  />
-                </Field>
-                <Tabs
-                  value={transport}
-                  onValueChange={(value) => setTransport(value as McpTransport)}
+        <div className="rk-scroll flex min-h-0 flex-col gap-6 overflow-y-auto p-6">
+          {/* 1-Click Presets Gallery */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-amber-500" />
+                <h3 className="text-base font-semibold text-foreground">
+                  <Trans>1-Klick Connectors (Empfohlen)</Trans>
+                </h3>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                <Trans>Keine manuelle Konfiguration nötig</Trans>
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {MCP_PRESETS.map((preset) => {
+                const isInstalled = servers.some((s) => s.slug === preset.slug);
+                const isPending = presetPending === preset.id;
+
+                const renderIcon = () => {
+                  switch (preset.iconName) {
+                    case "FolderKanban":
+                      return <FolderKanban className="h-5 w-5 text-blue-500" />;
+                    case "Globe":
+                      return <Globe className="h-5 w-5 text-emerald-500" />;
+                    case "BookOpen":
+                      return <BookOpen className="h-5 w-5 text-purple-500" />;
+                    case "GitBranch":
+                      return <GitBranch className="h-5 w-5 text-orange-500" />;
+                    case "Terminal":
+                      return <Terminal className="h-5 w-5 text-amber-500" />;
+                    case "Database":
+                      return <Database className="h-5 w-5 text-cyan-500" />;
+                  }
+                };
+
+                return (
+                  <Card
+                    key={preset.id}
+                    className={`flex flex-col justify-between border transition-all ${
+                      isInstalled
+                        ? "border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/10"
+                        : "border-border hover:border-border/80"
+                    }`}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between gap-1">
+                        <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent/60">
+                          {renderIcon()}
+                        </div>
+                        {isInstalled ? (
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 text-[10px] gap-1 px-1.5 py-0"
+                          >
+                            <Check className="h-3 w-3" />
+                            Aktiv
+                          </Badge>
+                        ) : preset.badge ? (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            {preset.badge}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <CardTitle className="mt-2 text-sm font-semibold">{preset.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-1 flex-col justify-between gap-3 text-xs text-muted-foreground pt-0">
+                      <p className="line-clamp-2 leading-relaxed">{preset.description}</p>
+                      {isInstalled ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          disabled={isPending}
+                          onClick={() => void uninstallPreset(preset)}
+                        >
+                          {isPending ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trans>Trennen</Trans>
+                          )}
+                        </Button>
+                      ) : preset.id === "github" ? (
+                        <Button
+                          type="button"
+                          variant="default"
+                          size="sm"
+                          className="w-full text-xs"
+                          disabled={isPending}
+                          onClick={() => setGithubPromptOpen(true)}
+                        >
+                          <Trans>Aktivieren…</Trans>
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="default"
+                          size="sm"
+                          className="w-full text-xs"
+                          disabled={isPending}
+                          onClick={() => void installPreset(preset)}
+                        >
+                          {isPending ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trans>1-Klick Aktivieren</Trans>
+                          )}
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* GitHub Token Prompt */}
+          {githubPromptOpen ? (
+            <div className="rounded-xl border border-primary/20 bg-accent/30 p-4 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">
+                  <Trans>GitHub Personal Access Token erforderlich</Trans>
+                </span>
+                <Button variant="ghost" size="icon-sm" onClick={() => setGithubPromptOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                <Trans>
+                  Füge einen GitHub-Token (mit repo/read-Rechten) ein, um den Connector zu
+                  aktivieren:
+                </Trans>
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="password"
+                  value={githubToken}
+                  onChange={(e) => setGithubToken(e.target.value)}
+                  placeholder="ghp_..."
+                  className="text-xs"
+                />
+                <Button
+                  size="sm"
+                  disabled={!githubToken.trim() || presetPending === "github"}
+                  onClick={() => {
+                    const preset = MCP_PRESETS.find((p) => p.id === "github");
+                    if (preset) {
+                      void installPreset(preset, {
+                        GITHUB_PERSONAL_ACCESS_TOKEN: githubToken.trim(),
+                      });
+                    }
+                  }}
                 >
-                  <TabsList className="w-full">
-                    <TabsTrigger value="streamable_http">HTTP</TabsTrigger>
-                    <TabsTrigger value="sse">SSE</TabsTrigger>
-                    <TabsTrigger value="stdio">STDIO</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                {transport === "stdio" ? (
-                  <>
-                    <Field>
-                      <FieldLabel htmlFor="mcp-command">
-                        <Trans>Command</Trans>
-                      </FieldLabel>
-                      <Input
-                        id="mcp-command"
-                        value={command}
-                        onChange={(e) => setCommand(e.target.value)}
-                        placeholder="/opt/mcp-server"
-                      />
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="mcp-args">
-                        <Trans>Arguments</Trans>
-                      </FieldLabel>
-                      <Input
-                        id="mcp-args"
-                        value={args}
-                        onChange={(e) => setArgs(e.target.value)}
-                        placeholder="--stdio"
-                      />
-                    </Field>
-                  </>
-                ) : (
+                  {presetPending === "github" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trans>Verbinden</Trans>
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Manual Configuration & Existing Servers */}
+          <div className="grid min-h-0 grid-cols-1 gap-5 lg:grid-cols-2">
+            <Card className="self-start">
+              <CardHeader>
+                <CardTitle>
+                  <Trans>Add server</Trans>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FieldGroup className="gap-4">
                   <Field>
-                    <FieldLabel htmlFor="mcp-endpoint">
-                      <Trans>Server URL</Trans>
+                    <FieldLabel htmlFor="mcp-name">
+                      <Trans>Server name</Trans>
                     </FieldLabel>
                     <Input
-                      id="mcp-endpoint"
-                      value={endpoint}
-                      onChange={(e) => setEndpoint(e.target.value)}
-                      placeholder="https://api.mobbin.com/mcp"
+                      id="mcp-name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. Mobbin"
                     />
                   </Field>
-                )}
-                <details className="group rounded-xl border border-border">
-                  <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-sm text-foreground">
-                    <span>
-                      <Trans>Advanced</Trans>
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      className="text-muted-foreground transition-transform group-open:rotate-90"
-                    >
-                      ›
-                    </span>
-                  </summary>
-                  <div className="space-y-4 border-t border-border p-3">
+                  <Tabs
+                    value={transport}
+                    onValueChange={(value) => setTransport(value as McpTransport)}
+                  >
+                    <TabsList className="w-full">
+                      <TabsTrigger value="streamable_http">HTTP</TabsTrigger>
+                      <TabsTrigger value="sse">SSE</TabsTrigger>
+                      <TabsTrigger value="stdio">STDIO</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  {transport === "stdio" ? (
+                    <>
+                      <Field>
+                        <FieldLabel htmlFor="mcp-command">
+                          <Trans>Command</Trans>
+                        </FieldLabel>
+                        <Input
+                          id="mcp-command"
+                          value={command}
+                          onChange={(e) => setCommand(e.target.value)}
+                          placeholder="/opt/mcp-server"
+                        />
+                      </Field>
+                      <Field>
+                        <FieldLabel htmlFor="mcp-args">
+                          <Trans>Arguments</Trans>
+                        </FieldLabel>
+                        <Input
+                          id="mcp-args"
+                          value={args}
+                          onChange={(e) => setArgs(e.target.value)}
+                          placeholder="--stdio"
+                        />
+                      </Field>
+                    </>
+                  ) : (
                     <Field>
-                      <FieldLabel htmlFor="mcp-secret">
-                        <Trans>Access token (optional)</Trans>
+                      <FieldLabel htmlFor="mcp-endpoint">
+                        <Trans>Server URL</Trans>
                       </FieldLabel>
                       <Input
-                        id="mcp-secret"
-                        type="password"
-                        value={secret}
-                        onChange={(e) => setSecret(e.target.value)}
-                        placeholder={t`Stored encrypted`}
+                        id="mcp-endpoint"
+                        value={endpoint}
+                        onChange={(e) => setEndpoint(e.target.value)}
+                        placeholder="https://api.mobbin.com/mcp"
                       />
                     </Field>
-                    {transport !== "stdio" ? (
-                      <div className="grid grid-cols-[.7fr_1fr] gap-2">
+                  )}
+                  <details className="group rounded-xl border border-border">
+                    <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-sm text-foreground">
+                      <span>
+                        <Trans>Advanced</Trans>
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="text-muted-foreground transition-transform group-open:rotate-90"
+                      >
+                        ›
+                      </span>
+                    </summary>
+                    <div className="space-y-4 border-t border-border p-3">
+                      <Field>
+                        <FieldLabel htmlFor="mcp-secret">
+                          <Trans>Access token (optional)</Trans>
+                        </FieldLabel>
                         <Input
-                          aria-label={t`Header name`}
-                          value={headerName}
-                          onChange={(e) => setHeaderName(e.target.value)}
-                        />
-                        <Input
-                          aria-label={t`Header value`}
+                          id="mcp-secret"
                           type="password"
-                          value={headerValue}
-                          onChange={(e) => setHeaderValue(e.target.value)}
-                          placeholder={t`Optional header value`}
+                          value={secret}
+                          onChange={(e) => setSecret(e.target.value)}
+                          placeholder={t`Stored encrypted`}
                         />
-                      </div>
-                    ) : null}
-                  </div>
-                </details>
-                {bots.length > 0 ? (
-                  <Field>
-                    <FieldTitle>
-                      <Trans>Agents:</Trans>
-                    </FieldTitle>
-                    <div className="flex flex-wrap gap-1.5">
-                      {bots.map((bot) => {
-                        const selected = selectedBotIds.includes(bot.id);
-                        return (
-                          <Button
-                            key={bot.id}
-                            type="button"
-                            variant={selected ? "default" : "outline"}
-                            size="xs"
-                            className="rounded-full"
-                            aria-pressed={selected}
-                            onClick={() => toggleBot(bot.id)}
-                          >
-                            {selected ? <Check aria-hidden="true" /> : null}
-                            {bot.name}
-                          </Button>
-                        );
-                      })}
+                      </Field>
+                      {transport !== "stdio" ? (
+                        <div className="grid grid-cols-[.7fr_1fr] gap-2">
+                          <Input
+                            aria-label={t`Header name`}
+                            value={headerName}
+                            onChange={(e) => setHeaderName(e.target.value)}
+                          />
+                          <Input
+                            aria-label={t`Header value`}
+                            type="password"
+                            value={headerValue}
+                            onChange={(e) => setHeaderValue(e.target.value)}
+                            placeholder={t`Optional header value`}
+                          />
+                        </div>
+                      ) : null}
                     </div>
-                  </Field>
-                ) : null}
-              </FieldGroup>
-              <Button
-                type="button"
-                className="mt-5 w-full"
-                disabled={saving}
-                onClick={() => void addServer()}
-              >
-                {saving ? <Trans>Adding…</Trans> : <Trans>Add server</Trans>}
-              </Button>
-            </CardContent>
-          </Card>
-          <div>
-            <h2 className="text-[15px] font-medium text-foreground">
-              <Trans>Configured servers</Trans>
-            </h2>
-            <div className="mt-3 space-y-2">
-              {servers.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">
-                  <Trans>No MCP servers yet.</Trans>
-                </p>
-              ) : (
-                servers.map((server) => {
-                  const statusText = oauthStatusText(server);
-                  return (
-                    <Card key={server.id} size="sm">
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-foreground">{server.name}</span>
-                          <Badge variant="secondary" className="uppercase">
-                            {server.transport.replace("_", " ")}
-                          </Badge>
-                        </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {server.endpoint ?? server.command ?? server.slug}
-                        </p>
-                        {statusText ? (
-                          <p
-                            className={`mt-2 text-[11px] ${server.oauthStatus === "reconnect" ? "text-warning" : "text-muted-foreground"}`}
-                          >
-                            {statusText}
+                  </details>
+                  {bots.length > 0 ? (
+                    <Field>
+                      <FieldTitle>
+                        <Trans>Agents:</Trans>
+                      </FieldTitle>
+                      <div className="flex flex-wrap gap-1.5">
+                        {bots.map((bot) => {
+                          const selected = selectedBotIds.includes(bot.id);
+                          return (
+                            <Button
+                              key={bot.id}
+                              type="button"
+                              variant={selected ? "default" : "outline"}
+                              size="xs"
+                              className="rounded-full"
+                              aria-pressed={selected}
+                              onClick={() => toggleBot(bot.id)}
+                            >
+                              {selected ? <Check aria-hidden="true" /> : null}
+                              {bot.name}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </Field>
+                  ) : null}
+                </FieldGroup>
+                <Button
+                  type="button"
+                  className="mt-5 w-full"
+                  disabled={saving}
+                  onClick={() => void addServer()}
+                >
+                  {saving ? <Trans>Adding…</Trans> : <Trans>Add server</Trans>}
+                </Button>
+              </CardContent>
+            </Card>
+            <div>
+              <h2 className="text-[15px] font-medium text-foreground">
+                <Trans>Configured servers</Trans>
+              </h2>
+              <div className="mt-3 space-y-2">
+                {servers.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+                    <Trans>No MCP servers yet.</Trans>
+                  </p>
+                ) : (
+                  servers.map((server) => {
+                    const statusText = oauthStatusText(server);
+                    return (
+                      <Card key={server.id} size="sm">
+                        <CardContent>
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-foreground">{server.name}</span>
+                            <Badge variant="secondary" className="uppercase">
+                              {server.transport.replace("_", " ")}
+                            </Badge>
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {server.endpoint ?? server.command ?? server.slug}
                           </p>
-                        ) : null}
-                        <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                          <span className="text-[11px] text-muted-foreground">
-                            <Trans>Agents:</Trans>
-                          </span>
-                          {bots.map((bot) => {
-                            const assigned = (botAssignments[bot.id] ?? []).some(
-                              (entry) => entry.serverId === server.id,
-                            );
-                            return (
-                              <Button
-                                key={bot.id}
-                                type="button"
-                                variant={assigned ? "default" : "outline"}
-                                size="xs"
-                                className="rounded-full"
-                                aria-pressed={assigned}
-                                onClick={() => void toggleAssignment(server, bot.id)}
-                              >
-                                {assigned ? <Check aria-hidden="true" /> : null}
-                                {bot.name}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {server.transport !== "stdio" ? (
-                            <>
-                              <Button
-                                type="button"
-                                size="sm"
-                                disabled={oauthPending === server.id}
-                                onClick={() => void connectOAuth(server)}
-                              >
-                                {oauthActionLabel(server, oauthPending === server.id)}
-                              </Button>
-                              {server.oauthStatus !== "none" ? (
+                          {statusText ? (
+                            <p
+                              className={`mt-2 text-[11px] ${server.oauthStatus === "reconnect" ? "text-warning" : "text-muted-foreground"}`}
+                            >
+                              {statusText}
+                            </p>
+                          ) : null}
+                          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                            <span className="text-[11px] text-muted-foreground">
+                              <Trans>Agents:</Trans>
+                            </span>
+                            {bots.map((bot) => {
+                              const assigned = (botAssignments[bot.id] ?? []).some(
+                                (entry) => entry.serverId === server.id,
+                              );
+                              return (
+                                <Button
+                                  key={bot.id}
+                                  type="button"
+                                  variant={assigned ? "default" : "outline"}
+                                  size="xs"
+                                  className="rounded-full"
+                                  aria-pressed={assigned}
+                                  onClick={() => void toggleAssignment(server, bot.id)}
+                                >
+                                  {assigned ? <Check aria-hidden="true" /> : null}
+                                  {bot.name}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {server.transport !== "stdio" ? (
+                              <>
                                 <Button
                                   type="button"
-                                  variant="outline"
                                   size="sm"
                                   disabled={oauthPending === server.id}
-                                  onClick={() => void disconnectOAuth(server)}
+                                  onClick={() => void connectOAuth(server)}
                                 >
-                                  <Trans>Disconnect</Trans>
+                                  {oauthActionLabel(server, oauthPending === server.id)}
                                 </Button>
-                              ) : null}
-                            </>
-                          ) : null}
-                          <Button
-                            type="button"
-                            variant={confirmingDelete === server.id ? "destructive" : "outline"}
-                            size="sm"
-                            className="ml-auto"
-                            onClick={() => void deleteServer(server)}
-                          >
-                            {confirmingDelete === server.id ? (
-                              <Trans>Confirm delete</Trans>
-                            ) : (
-                              <Trans>Delete</Trans>
-                            )}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })
-              )}
+                                {server.oauthStatus !== "none" ? (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={oauthPending === server.id}
+                                    onClick={() => void disconnectOAuth(server)}
+                                  >
+                                    <Trans>Disconnect</Trans>
+                                  </Button>
+                                ) : null}
+                              </>
+                            ) : null}
+                            <Button
+                              type="button"
+                              variant={confirmingDelete === server.id ? "destructive" : "outline"}
+                              size="sm"
+                              className="ml-auto"
+                              onClick={() => void deleteServer(server)}
+                            >
+                              {confirmingDelete === server.id ? (
+                                <Trans>Confirm delete</Trans>
+                              ) : (
+                                <Trans>Delete</Trans>
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </div>
         </div>

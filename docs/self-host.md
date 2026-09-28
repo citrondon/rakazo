@@ -1,4 +1,29 @@
-# Self-hosting Rakazo
+# Self-hosting
+
+## Connectors for beginners (Gmail, Calendar, and more)
+
+Bots reach apps like Gmail or Google Calendar through connectors. Credentials are encrypted on
+the server and never returned by the API.
+
+**Option A — managed catalog (Composio):**
+
+1. Set `COMPOSIO_API_KEY` in `.env` and restart the stack.
+2. In the web app open **Settings → Integrations**, search the app (for example Gmail), and
+   press **Connect**. An OAuth window opens; sign in with the account the bot should use.
+3. The connector's tools become available to your bots automatically.
+
+**Option B — MCP server (no managed catalog):**
+
+1. In the web app open **Settings → Integrations → Add MCP server** and paste the HTTPS URL of
+   an MCP server for the app.
+2. Credential tools are treated as writes; the bot asks before consequential actions per your
+   approval policy.
+
+Both options work per user, not per bot — every bot in the space can use a connected app.
+A quick end-to-end check: message a bot with *"Summarize my unread Gmail messages"* and confirm
+it answers from the inbox, not from imagination.
+
+## Overview
 
 The signed-in product is a long-running API, a Graphile Worker, Postgres, and a computer provider (Docker supervisor, E2B, Daytona, CreateOS, or Box). It is not a static site. The marketing site in `apps/www` can be hosted separately.
 

@@ -5,6 +5,7 @@ import type {
   ConnectionCatalogItem,
   MessageBlock,
   Routine,
+  RunReceipt,
 } from "@rakazo/contracts";
 import {
   canReactToThreadMessage,
@@ -136,6 +137,7 @@ import {
   getCachedResponseStreamingEnabled,
   subscribeResponseStreaming,
 } from "../lib/response-streaming";
+import { receiptLines } from "../lib/run-receipt";
 import {
   type ThreadScrollAction,
   ThreadScrollBehavior,
@@ -374,6 +376,16 @@ function Thread() {
     [snap?.messages],
   );
   const visibleMessages = reactionView.visibleMessages;
+  // One receipt per run, on that run's last durable message, mirroring the web transcript.
+  const receiptMessageIds = useMemo(() => {
+    const lastMessageByRun = new Map<string, string>();
+    for (const message of visibleMessages) {
+      if (message.role !== "bot" || !message.runId) continue;
+      if (message.id.startsWith("progress:")) continue;
+      lastMessageByRun.set(message.runId, message.id);
+    }
+    return new Set(lastMessageByRun.values());
+  }, [visibleMessages]);
   const latestMessageId = visibleMessages.at(-1)?.id ?? null;
   const activePendingAttachments = attachmentsForThread(pendingAttachments, threadKey);
   const composerMentionTargets = useMemo(
@@ -1613,6 +1625,9 @@ function Thread() {
               ))}
             </View>
           ) : null}
+          {message.role === "bot" && message.runId && receiptMessageIds.has(message.id) ? (
+            <RunReceiptButton runId={message.runId} />
+          ) : null}
         </View>
       </View>
     );
@@ -2550,6 +2565,46 @@ async function speakMessage(botId: string, message: MobileMessage) {
     throw new Error(t("Add a voice provider in Voice settings."));
   }
 }
+
+/**
+ * Compact receipt for the run that produced a message. Mobile has no room for an expanded
+ * panel, so the stored rows open in a native alert fetched on demand.
+ */
+const RunReceiptButton = memo(function RunReceiptButton({ runId }: { runId: string }) {
+  const { t } = useI18n();
+  const [loading, setLoading] = useState(false);
+
+  async function openReceipt() {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const receipt = await rpc<RunReceipt | null>("runs/receipt", { runId });
+      Alert.alert(
+        t("Receipt"),
+        receipt ? receiptLines(receipt).join("\n") : t("Receipt unavailable"),
+      );
+    } catch {
+      Alert.alert(t("Receipt"), t("Receipt unavailable"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t("Receipt")}
+      disabled={loading}
+      hitSlop={8}
+      onPress={() => void openReceipt()}
+      style={({ pressed }) => ({ marginTop: 4, opacity: pressed || loading ? 0.6 : 1 })}
+    >
+      <Text style={{ color: mobileTokens().mutedForeground, fontSize: 12.5 }}>
+        {t("Receipt")} ›
+      </Text>
+    </Pressable>
+  );
+});
 
 type MessageActionProps = Pick<
   TextProps,

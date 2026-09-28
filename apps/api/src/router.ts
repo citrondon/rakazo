@@ -188,6 +188,7 @@ import {
   listArtifactVersions,
   listSpaceArtifacts,
 } from "./artifacts.js";
+import { prepareBotImport } from "./bot-import.js";
 import { botProfileLabelsChanged, commitBotUpdate } from "./bot-update.js";
 import {
   executionBlocksUserTakeover,
@@ -214,6 +215,7 @@ import {
   promptFocus,
   startOnboarding,
 } from "./onboarding.js";
+import { loadRunReceipt } from "./run-receipt.js";
 import { listSpaceRuns } from "./runs.js";
 import { addScreenProxyCapability } from "./screen-proxy.js";
 import { querySpaceSearch } from "./search.js";
@@ -241,6 +243,7 @@ import {
   threadHead,
   threadSnapshot,
 } from "./thread-target.js";
+import { loadUsageMonth } from "./usage-month.js";
 import {
   disconnectVoiceCredential,
   listVoiceCatalog,
@@ -1381,6 +1384,16 @@ export function createRouter(deps: RouterDeps) {
           }
         }
         if (!existing.thread) throw new IsolationError();
+        // A new ceiling has its own warning line, so the month's warning is cleared with it.
+        const budgetPatch =
+          input.monthlyTokenBudget === undefined
+            ? {}
+            : {
+                monthlyTokenBudget: input.monthlyTokenBudget,
+                ...(input.monthlyTokenBudget === existing.monthlyTokenBudget
+                  ? {}
+                  : { budgetWarnedAt: null }),
+              };
         await commitBotUpdate({
           prisma: deps.prisma,
           notify: (threadId, seq) => deps.events.notify(threadId, seq),
@@ -1404,6 +1417,7 @@ export function createRouter(deps: RouterDeps) {
               ? { modelProvider: input.modelProvider, modelId: input.modelId ?? null }
               : {}),
             ...(input.thinkingLevel !== undefined ? { thinkingLevel } : {}),
+            ...budgetPatch,
             ...(input.teamChatAmbientEnabled !== undefined
               ? { teamChatAmbientEnabled: input.teamChatAmbientEnabled }
               : {}),
@@ -1537,6 +1551,116 @@ export function createRouter(deps: RouterDeps) {
           { deleteMemories: input.deleteMemories },
         );
         return { ok: true as const };
+      }),
+      importPreview: authed.bots.importPreview.handler(async ({ input }) => {
+        const warnings: string[] = [];
+        const prepared = prepareBotImport(input, warnings);
+        return {
+          name: prepared.profile.name,
+          title: prepared.profile.title,
+          description: prepared.profile.description,
+          instructionsPreview: prepared.profile.instructions.slice(0, 500),
+          memoryCount: prepared.memory.size,
+          routineNames: prepared.routines.map((routine) => routine.name),
+          fileCount: prepared.files.length,
+          historyCount: input.manifest.history.length,
+          warnings,
+        };
+      }),
+      import: authed.bots.import.handler(async ({ context, input }) => {
+        const warnings: string[] = [];
+        const prepared = prepareBotImport(input, warnings);
+        const homeContext = {
+          operationId: "bots.import",
+          traceId: "bots.import",
+          spaceId: context.actor.spaceId,
+          userId: context.actor.userId,
+          signal: context.signal ?? new AbortController().signal,
+        };
+        // One transaction creates the bot (thread, team computer, browser profile,
+        // MEMORY.md) and applies every durable part of the preset. Import notes
+        // land as a durable system meta message, matching spawn's "Created by" note.
+        const created = await deps.prisma.$transaction(async (tx) => {
+          const bot = await repos.createBot(context.actor, {
+            ...prepared.profile,
+            notifyOnFinish: true,
+            computerMode: "team",
+            initialMessage: {
+              role: "system",
+              blocks: [
+                {
+                  kind: "meta",
+                  text:
+                    warnings.length > 0
+                      ? `Imported preset with warnings: ${warnings.join(" ")}`
+                      : "Imported from preset.",
+                },
+              ],
+            },
+          });
+          for (const [path, content] of prepared.memory) {
+            const existingDoc = await tx.memoryDocument.findFirst({
+              where: { spaceId: context.actor.spaceId, scope: "bot", botId: bot.id, path },
+              select: { id: true },
+            });
+            if (existingDoc) {
+              await tx.memoryDocument.update({
+                where: { id: existingDoc.id },
+                data: { content },
+              });
+            } else {
+              await tx.memoryDocument.create({
+                data: {
+                  spaceId: context.actor.spaceId,
+                  userId: context.actor.userId,
+                  botId: bot.id,
+                  scope: "bot",
+                  path,
+                  content,
+                },
+              });
+            }
+          }
+          for (const routine of prepared.routines) {
+            await tx.routine.create({
+              data: {
+                spaceId: context.actor.spaceId,
+                botId: bot.id,
+                userId: context.actor.userId,
+                name: routine.name,
+                prompt: routine.prompt,
+                crons: routine.crons,
+                timezone: routine.timezone,
+                notify: false,
+                // Routines import inactive; the user arms them deliberately.
+                active: false,
+              },
+            });
+          }
+          return bot;
+        });
+        if (prepared.files.length > 0) {
+          // The bot's team computer and its home were allocated in the same
+          // transaction; files go through the real home API after commit. A
+          // failed write downgrades to a log line, not a failed import.
+          const computer = await deps.prisma.computer.findFirst({
+            where: { bots: { some: { id: created.id } } },
+            select: { homeKey: true },
+          });
+          if (computer) {
+            try {
+              for (const file of prepared.files) {
+                await deps.home.writeFile(computer.homeKey, file.path, file.content, homeContext);
+              }
+            } catch (error) {
+              getLogger().error("bots.import home file write failed", error);
+            }
+          }
+        }
+        const bots = await repos.listBots(context.actor);
+        const dto = bots.find((b) => b.id === created.id);
+        if (!dto) throw new IsolationError();
+        return dto;
       }),
       rotateWebhookSecret: authed.bots.rotateWebhookSecret.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);
@@ -5176,6 +5300,9 @@ export function createRouter(deps: RouterDeps) {
           runs: result._count._all,
         };
       }),
+      month: authed.usage.month.handler(async ({ context }) =>
+        loadUsageMonth(deps.prisma, context.actor),
+      ),
     },
     export: {
       bot: authed.export.bot.handler(async ({ context, input }) => {
@@ -5248,6 +5375,9 @@ export function createRouter(deps: RouterDeps) {
       list: authed.runs.list.handler(async ({ context, input }) => ({
         runs: await listSpaceRuns(deps.prisma, context.actor, input.filter),
       })),
+      receipt: authed.runs.receipt.handler(async ({ context, input }) =>
+        loadRunReceipt(deps.prisma, context.actor, input.runId),
+      ),
     },
     voice: {
       catalog: authed.voice.catalog.handler(async () => listVoiceCatalog()),

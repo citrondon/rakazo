@@ -31,7 +31,10 @@
     "perf:desktop": "tsx packages/testkit/src/cli/desktop-performance.ts",
     "perf:compare": "tsx packages/testkit/src/cli/compare-performance.ts",
     "compose:up": "docker compose --env-file .env -f infra/compose/docker-compose.yml up --build",
-    "compose:down": "docker compose --env-file .env -f infra/compose/docker-compose.yml down -v"
+    "compose:down": "docker compose --env-file .env -f infra/compose/docker-compose.yml down -v",
+    "workspace:pull": "powershell -ExecutionPolicy Bypass -File scripts/sync-workspace.ps1 -Action pull",
+    "workspace:push": "powershell -ExecutionPolicy Bypass -File scripts/sync-workspace.ps1 -Action push",
+    "workspace:watch": "powershell -ExecutionPolicy Bypass -File scripts/sync-workspace.ps1 -Action watch"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13",

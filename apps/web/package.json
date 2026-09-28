@@ -11,7 +11,8 @@
     "test": "vitest run --root ../.. apps/web/src",
     "e2e": "playwright test",
     "intl:extract": "lingui extract --clean",
-    "intl:compile": "lingui compile"
+    "intl:compile": "lingui compile",
+    "intl:check": "node scripts/check-locale-catalogs.mjs"
   },
   "dependencies": {
     "@lingui/core": "6.6.0",

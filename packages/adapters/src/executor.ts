@@ -48,6 +48,7 @@ import {
   appendToolCallSegment,
   applyJudgeDecision,
   assertTransition,
+  BUDGET_STOP_PREFIX,
   blocksToAgentHistoryText,
   botMessageAllowsSilence,
   CALL_CLIENT_NONCE_PREFIX,
@@ -55,6 +56,7 @@ import {
   connectorKindFromToolName,
   containsSecret,
   createStreamingRedactor,
+  currentMonthStart,
   endsSentence,
   expandSkillReferencesInPrompt,
   formatSkillRunPrompt,
@@ -72,9 +74,11 @@ import {
   nextFence,
   planActionGate,
   promptInvokesSkill,
+  reachedBudgetWarnLine,
   redactSecrets,
   renderBotDirectory,
   resolveActionApprovalDetail,
+  runStopKind,
   sandboxCommandTimeoutMs,
   type ToolCallStreak,
   toolRequiresApproval,
@@ -1512,7 +1516,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
               "status",
             ).catch((error) => getLogger().error("bot message failure return", error));
           }
-          if (!failed.continuationRunId) {
+          // A budget stop already appears in the thread and in the usage view. Pushing it
+          // would repeat the same news on every routine wake that hits the ceiling.
+          if (!failed.continuationRunId && runStopKind(message) !== "budget") {
             await notifyRun(deps, run, {
               kind: "failure",
               title: `${bot.name} failed`,
@@ -1526,6 +1532,15 @@ export function createRunExecutor(deps: ExecutorDeps) {
           await failRunBeforeModel(MISSING_MODEL_MESSAGE);
           return;
         }
+        // Spend ceiling: refuse the turn before any model call when this bot's
+        // monthly token budget is already exhausted (UTC calendar month).
+        const budgetExceededMessage = await monthlyTokenBudgetExceeded(deps.prisma, bot);
+        if (budgetExceededMessage) {
+          await failRunBeforeModel(budgetExceededMessage);
+          return;
+        }
+        // The refusal above is the only pre-model stop that stays off the notification
+        // channel; runStopKind decides that from the message itself.
         // An incompatible saved model is a configuration error. Record it on the run.
         // Leaving it for the setup catch would retry and replace the message.
         let resolved: Awaited<ReturnType<typeof resolveModelKey>>;
@@ -4595,6 +4610,32 @@ export function createRunExecutor(deps: ExecutorDeps) {
               threadId: thread.id,
             });
           }
+          // Tell the owner once the bot is near its ceiling, so the budget can be raised
+          // before work is refused. Either the warning is already visible where they read
+          // results, or pushing it costs one notification a month.
+          try {
+            const budget = bot.monthlyTokenBudget;
+            if (budget) {
+              const totalTokens = await monthlyTokensUsed(deps.prisma, bot.id);
+              if (
+                reachedBudgetWarnLine(totalTokens, budget) &&
+                (await claimBudgetWarning(deps.prisma, bot.id))
+              ) {
+                await notifyRun(deps, run, {
+                  kind: "warning",
+                  title: `${bot.name} is near its monthly budget`,
+                  body:
+                    `${totalTokens.toLocaleString("en-US")} of ` +
+                    `${budget.toLocaleString("en-US")} tokens used this month. ` +
+                    "Raise or clear the budget to keep it working.",
+                  botId: bot.id,
+                  threadId: thread.id,
+                });
+              }
+            }
+          } catch (error) {
+            getLogger().error("budget warning", error);
+          }
           // Last, and never fatal: the run is already finalized, so a failure here must not reach
           // the catch block below, where a second finalizeRun would match no rows and silently
           // skip the completion notification.
@@ -4804,6 +4845,65 @@ export function parseUpdateBotPatch(
     patch.name = patch.title.slice(0, BOT_NAME_MAX_LENGTH);
   }
   return { patch };
+}
+
+/**
+ * Message shown to the user when this bot's monthly token budget is exhausted, or null
+ * when the run may proceed. Budget counts total tokens (input + output + cache) attributed
+ * to the bot in the current UTC calendar month; null/zero budget means unlimited. The
+ * message starts with the shared prefix, so the notification path can recognize it.
+ */
+/** Tokens attributed to a bot in the current UTC calendar month. */
+export async function monthlyTokensUsed(prisma: PrismaClient, botId: string): Promise<number> {
+  const usage = await prisma.usageRecord.aggregate({
+    where: { botId, createdAt: { gte: currentMonthStart() } },
+    _sum: {
+      inputTokens: true,
+      outputTokens: true,
+      cacheReadTokens: true,
+      cacheWriteTokens: true,
+    },
+  });
+  return (
+    (usage._sum.inputTokens ?? 0) +
+    (usage._sum.outputTokens ?? 0) +
+    (usage._sum.cacheReadTokens ?? 0) +
+    (usage._sum.cacheWriteTokens ?? 0)
+  );
+}
+
+/**
+ * Whether the owner already heard this month's warning for this bot, claiming it when not.
+ * A conditional update keeps the warning to one per month even when runs of the same bot
+ * finish at the same time.
+ */
+export async function claimBudgetWarning(
+  prisma: PrismaClient,
+  botId: string,
+): Promise<boolean> {
+  const claimed = await prisma.bot.updateMany({
+    where: {
+      id: botId,
+      OR: [{ budgetWarnedAt: null }, { budgetWarnedAt: { lt: currentMonthStart() } }],
+    },
+    data: { budgetWarnedAt: new Date() },
+  });
+  return claimed.count === 1;
+}
+
+export async function monthlyTokenBudgetExceeded(
+  prisma: PrismaClient,
+  bot: { id: string; monthlyTokenBudget?: number | null },
+): Promise<string | null> {
+  const budget = bot.monthlyTokenBudget;
+  if (!budget || budget <= 0) return null;
+  const totalTokens = await monthlyTokensUsed(prisma, bot.id);
+  if (totalTokens < budget) return null;
+  return (
+    `${BUDGET_STOP_PREFIX} for this bot ` +
+    `(${totalTokens.toLocaleString("en-US")} of ${budget.toLocaleString("en-US")} tokens used this month). ` +
+    "Raise or clear the budget in the bot settings to continue."
+  );
 }
 
 export async function runNotificationsEnabled(

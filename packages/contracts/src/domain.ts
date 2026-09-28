@@ -66,6 +66,8 @@ export const BotSchema = z.object({
   modelProvider: z.string().nullable(),
   modelId: z.string().nullable(),
   thinkingLevel: ThinkingLevelSchema.nullable(),
+  /** Monthly spend ceiling in total tokens (input + output), UTC calendar month. Null = unlimited. */
+  monthlyTokenBudget: z.number().int().nullable(),
   teamChatAmbientEnabled: z.boolean(),
   teamChatRules: z.string(),
   webhookConfigured: z.boolean(),
@@ -330,6 +332,8 @@ export const UpdateBotInput = z
     modelProvider: z.string().trim().min(1).max(80).nullable().optional(),
     modelId: z.string().trim().min(1).max(200).nullable().optional(),
     thinkingLevel: ThinkingLevelSchema.nullable().optional(),
+    /** Null clears the cap; 0 is rejected so a cap is always a real cap. */
+    monthlyTokenBudget: z.number().int().min(1).max(2_000_000_000).nullable().optional(),
     teamChatAmbientEnabled: z.boolean().optional(),
     teamChatRules: z.string().max(TEAM_CHAT_RULES_MAX_LENGTH).optional(),
   })
@@ -754,6 +758,44 @@ export const UsageRecordSchema = z.object({
   outputTokens: z.number().int(),
   createdAt: z.string(),
 });
+
+const TokenTotalsSchema = z.object({
+  inputTokens: z.number().int().nonnegative(),
+  outputTokens: z.number().int().nonnegative(),
+  cacheReadTokens: z.number().int().nonnegative(),
+  cacheWriteTokens: z.number().int().nonnegative(),
+  totalTokens: z.number().int().nonnegative(),
+});
+
+/** One bot's token use in the current UTC month, next to the ceiling that bounds it. */
+export const BotUsageSummarySchema = TokenTotalsSchema.extend({
+  botId: Id,
+  botName: z.string(),
+  archived: z.boolean(),
+  /** Distinct runs that spent tokens this month; a refused run never reached a model. */
+  runs: z.number().int().nonnegative(),
+  monthlyTokenBudget: z.number().int().positive().nullable(),
+  /** Null without a budget; otherwise the share of the ceiling already used. */
+  usedPercent: z.number().nonnegative().nullable(),
+});
+export type BotUsageSummary = z.infer<typeof BotUsageSummarySchema>;
+
+export const UsageMonthSchema = z.object({
+  monthStart: z.string(),
+  bots: z.array(BotUsageSummarySchema),
+  totals: TokenTotalsSchema.extend({ runs: z.number().int().nonnegative() }),
+});
+export type UsageMonth = z.infer<typeof UsageMonthSchema>;
+
+/** Total tokens a ceiling counts: input, output, and both cache directions. */
+export function countedTokens(input: {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+}): number {
+  return input.inputTokens + input.outputTokens + input.cacheReadTokens + input.cacheWriteTokens;
+}
 
 export const COMPUTER_UPDATE_STAGES = [
   "preparing",
@@ -1256,3 +1298,66 @@ export const ExportManifestSchema = z.object({
   history: z.array(ThreadMessageSchema),
 });
 export type ExportManifest = z.infer<typeof ExportManifestSchema>;
+
+/** Memory path cap mirrors the home file export; longer paths are never produced by export. */
+const BOT_IMPORT_PATH_MAX = 512;
+/** Per-item cap for memory/file contents; the home export writes UTF-8 text files. */
+const BOT_IMPORT_ITEM_MAX = 1_000_000;
+const BOT_IMPORT_ITEM_COUNT_MAX = 200;
+
+/** Import input: the export manifest plus which durable parts to bring along. History is
+ * deliberately not importable — an imported bot starts with a fresh thread. */
+export const BotImportInputSchema = z
+  .object({
+    manifest: ExportManifestSchema,
+    includeMemory: z.boolean().default(true),
+    includeRoutines: z.boolean().default(true),
+    includeFiles: z.boolean().default(false),
+  })
+  .superRefine((value, ctx) => {
+    const checkItems = (
+      items: Array<{ path: string; content: string }>,
+      label: string,
+      path: (string | number)[],
+    ) => {
+      if (items.length > BOT_IMPORT_ITEM_COUNT_MAX) {
+        ctx.addIssue({
+          code: "custom",
+          message: `More than ${BOT_IMPORT_ITEM_COUNT_MAX} ${label} entries`,
+          path,
+        });
+      }
+      for (const [index, item] of items.entries()) {
+        if (item.path.length > BOT_IMPORT_PATH_MAX) {
+          ctx.addIssue({
+            code: "custom",
+            message: `${label} path exceeds ${BOT_IMPORT_PATH_MAX} characters`,
+            path: [...path, index, "path"],
+          });
+        }
+        if (item.content.length > BOT_IMPORT_ITEM_MAX) {
+          ctx.addIssue({
+            code: "custom",
+            message: `${label} content exceeds ${BOT_IMPORT_ITEM_MAX} characters`,
+            path: [...path, index, "content"],
+          });
+        }
+      }
+    };
+    checkItems(value.manifest.memory, "memory", ["manifest", "memory"]);
+    checkItems(value.manifest.files, "file", ["manifest", "files"]);
+  });
+export type BotImportInput = z.infer<typeof BotImportInputSchema>;
+
+export const ImportPreviewSchema = z.object({
+  name: z.string(),
+  title: z.string(),
+  description: z.string(),
+  instructionsPreview: z.string(),
+  memoryCount: z.number().int().nonnegative(),
+  routineNames: z.array(z.string()),
+  fileCount: z.number().int().nonnegative(),
+  historyCount: z.number().int().nonnegative(),
+  warnings: z.array(z.string()),
+});
+export type ImportPreview = z.infer<typeof ImportPreviewSchema>;

@@ -21,6 +21,7 @@ import type {
   TaughtSkill,
   ThreadMessage,
   ThreadSnapshot,
+  UsageMonth,
   VoiceStatus,
 } from "@rakazo/contracts";
 import {
@@ -53,6 +54,7 @@ import {
   reorderBotTo,
   resolveComposerSendPlan,
   resolveMentionPickerKey,
+  runStopKind,
   runThreadSubscription,
   SLASH_ACTIONS,
   type SlashActionId,
@@ -90,6 +92,7 @@ import {
   ChevronDown,
   Clock,
   Copy,
+  Download,
   FolderOpen,
   Gauge,
   LayoutGrid,
@@ -137,6 +140,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArtifactFileCard } from "../components/ArtifactFileCard";
 import { AskCard } from "../components/AskCard";
 import { ActiveBotGlyph, CollaborationMarker } from "../components/ai/CollaborationMarker";
+import { RunReceiptRow } from "../components/ai/RunReceiptRow";
 import { CloudAgentCard } from "../components/CloudAgentCard";
 import { ComputerMaintenanceActions } from "../components/ComputerMaintenanceActions";
 import {
@@ -229,6 +233,7 @@ import {
   transcriptMovedDown,
 } from "../lib/transcript-scroll";
 import { speaker } from "../lib/tts";
+import { usePwaInstall } from "../lib/use-pwa-install";
 import { ActivityList } from "./ActivityList";
 import type { ContextMenuPosition } from "./BotContextMenu";
 import { CreateGroupForm, GroupSettings, memberName } from "./GroupPanel";
@@ -284,6 +289,10 @@ const PluginsOverlay = lazy(() =>
 );
 const McpServersOverlay = lazy(() =>
   import("./McpServersOverlay").then((module) => ({ default: module.McpServersOverlay })),
+);
+const CallView = lazy(() => import("./CallView").then((module) => ({ default: module.CallView })));
+const BotImportOverlay = lazy(() =>
+  import("./BotImportOverlay").then((module) => ({ default: module.BotImportOverlay })),
 );
 
 type Panel =
@@ -381,6 +390,7 @@ function readCollapsedRosterParents(userId: string | null | undefined): Set<stri
 
 export function ShellPage() {
   const { t } = useLingui();
+  const { canInstall: canInstallPwa, install: installPwa } = usePwaInstall();
   const { botId, groupId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -515,6 +525,7 @@ export function ShellPage() {
   const [pluginsOpen, setPluginsOpen] = useState(false);
   const [mcpOpen, setMcpOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
   const [messagingSettingsOpen, setMessagingSettingsOpen] = useState(false);
   const [messagingSurfaceEnabled, setMessagingSurfaceEnabled] = useState(false);
@@ -673,6 +684,15 @@ export function ShellPage() {
     outputTokens: number;
     runs: number;
   } | null>(null);
+  const [usageMonth, setUsageMonth] = useState<UsageMonth | null>(null);
+  const loadUsage = useCallback(async () => {
+    const [summary, month] = await Promise.all([rpc.usage.summary(), rpc.usage.month()]);
+    setUsage(summary);
+    setUsageMonth(month);
+  }, []);
+  const openUsage = useCallback(() => {
+    void loadUsage().catch(() => undefined);
+  }, [loadUsage]);
   const autoBooted = useRef<string | null>(null);
   const routineSavePending = useRef(false);
   const webhookSecretProvisionRef = useRef(new Map<string, Promise<string>>());
@@ -717,6 +737,12 @@ export function ShellPage() {
 
   const inGroup = Boolean(groupId);
   const active = inGroup ? undefined : (bots.find((b) => b.id === botId) ?? bots[0]);
+  // The bot panel shows this month's spend beside the budget field, so load the month
+  // whenever a bot's settings open and when switching between bots.
+  useEffect(() => {
+    if (panel !== "settings" || !active) return;
+    void loadUsage().catch(() => undefined);
+  }, [panel, active?.id, loadUsage]);
   const computerBot =
     (computerBotId ? bots.find((bot) => bot.id === computerBotId) : undefined) ?? active;
   computerOpenRef.current = computerOpen;
@@ -1763,6 +1789,8 @@ export function ShellPage() {
   const composerRunning = currentRuns.some((run) => isActive(run.status));
   const runError = threadRunError(activeSnapshot, dismissedRunErrorIds);
   const displayedRunError = !sendError ? runError : null;
+  // A budget stop offers a direct way to keep working instead of only a dead end.
+  const budgetStopped = runStopKind(displayedRunError) === "budget";
   const displayedRunErrorId = displayedRunError ? (activeSnapshot?.run?.id ?? null) : null;
   const handleRunErrorPresented = useCallback((runId: string) => {
     rememberSeenRunErrorId(runId);
@@ -2789,6 +2817,11 @@ export function ShellPage() {
                       setMobileSidebarOpen(false);
                       setPanel("create");
                     }}
+                    onImportBot={() => {
+                      setCreateMenuOpen(false);
+                      setMobileSidebarOpen(false);
+                      setImportOpen(true);
+                    }}
                     onOpenBot={(id) => {
                       setCreateMenuOpen(false);
                       setMobileSidebarOpen(false);
@@ -3308,16 +3341,25 @@ export function ShellPage() {
                 aria-label={t`Usage`}
                 onClick={() => {
                   setMenuOpen(false);
-                  void rpc.usage
-                    .summary()
-                    .then(setUsage)
-                    .catch(() => undefined);
                   openSettings("usage");
                 }}
               >
                 <Gauge className="text-muted-foreground" strokeWidth={1.75} />
                 <Trans>Usage</Trans>
               </Button>
+              {canInstallPwa ? (
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start font-normal text-primary hover:text-primary"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    void installPwa();
+                  }}
+                >
+                  <Download className="text-primary" strokeWidth={1.75} />
+                  <Trans>Install app</Trans>
+                </Button>
+              ) : null}
               <Button
                 variant="ghost"
                 className="w-full justify-start font-normal"
@@ -3525,6 +3567,8 @@ export function ShellPage() {
             runError={displayedRunError}
             runErrorId={displayedRunErrorId}
             onRunErrorPresented={handleRunErrorPresented}
+            budgetStopped={budgetStopped}
+            onRaiseBudget={!inGroup && active ? () => setPanel("settings") : undefined}
             onDismissError={dismissComposerError}
             sending={sending}
             fileInputRef={fileInputRef}
@@ -3565,10 +3609,6 @@ export function ShellPage() {
                 return;
               }
               if (action === "settings-usage") {
-                void rpc.usage
-                  .summary()
-                  .then(setUsage)
-                  .catch(() => undefined);
                 openSettings("usage");
               }
             }}
@@ -3763,6 +3803,7 @@ export function ShellPage() {
               <BotSettings
                 key={active.id}
                 bot={active}
+                usage={usageMonth?.bots.find((entry) => entry.botId === active.id) ?? null}
                 memoryProviderConfigured={memoryProviderConfig != null}
                 onSkillsChange={setAgentSkills}
                 onSave={async ({ computerMode, ...patch }) => {
@@ -4303,6 +4344,14 @@ export function ShellPage() {
         {messagingSettingsOpen ? (
           <MessagingSettingsOverlay onClose={() => setMessagingSettingsOpen(false)} />
         ) : null}
+        {importOpen ? (
+          <BotImportOverlay
+            onClose={() => {
+              setImportOpen(false);
+              void refreshBots().catch(() => undefined);
+            }}
+          />
+        ) : null}
       </Suspense>
 
       <Suspense fallback={null}>
@@ -4311,6 +4360,8 @@ export function ShellPage() {
             name={userName}
             email={session.data?.user.email}
             usage={usage}
+            usageMonth={usageMonth}
+            onUsageOpen={openUsage}
             initialSection={settingsSection}
             avatarStyle={bootstrapMe?.avatarStyle ?? "robot"}
             isDeploymentOwner={bootstrapMe?.isDeploymentOwner === true}
@@ -4604,6 +4655,17 @@ const Transcript = memo(function Transcript({
     [messages],
   );
   const reactionView = useMemo(() => projectMessageReactions(messages), [messages]);
+  // One receipt per run, attached to that run's last durable message so a run with several
+  // messages does not repeat it. Live runs have no receipt yet; their progress is on screen.
+  const receiptMessageIds = useMemo(() => {
+    const lastMessageByRun = new Map<string, string>();
+    for (const message of reactionView.visibleMessages) {
+      if (message.role !== "bot" || !message.runId) continue;
+      if (message.id.startsWith("progress:")) continue;
+      lastMessageByRun.set(message.runId, message.id);
+    }
+    return new Set(lastMessageByRun.values());
+  }, [reactionView.visibleMessages]);
   const workingBotName = workingBots.length === 1 ? workingBots[0]?.name : undefined;
   const workingLabel =
     workingBotName != null && workingBotName !== ""
@@ -4862,6 +4924,10 @@ const Transcript = memo(function Transcript({
           if (!messageHasVisibleBlocks(message.blocks, showToolActivity)) return null;
           const peerReceipt = isPeerReceiptBlocks(message.blocks);
           const messageReactions = reactionView.reactions.get(message.id);
+          const receiptRunId =
+            !running && !peerReceipt && message.runId && receiptMessageIds.has(message.id)
+              ? message.runId
+              : null;
           return (
             <div
               key={message.id}
@@ -4963,6 +5029,7 @@ const Transcript = memo(function Transcript({
                   ))}
                 </div>
               ) : null}
+              {receiptRunId ? <RunReceiptRow runId={receiptRunId} /> : null}
             </div>
           );
         })}
@@ -5089,6 +5156,8 @@ const Composer = memo(function Composer({
   runError,
   runErrorId,
   onRunErrorPresented,
+  budgetStopped,
+  onRaiseBudget,
   onDismissError,
   sending,
   fileInputRef,
@@ -5115,6 +5184,8 @@ const Composer = memo(function Composer({
   runError: string | null;
   runErrorId: string | null;
   onRunErrorPresented: (runId: string) => void;
+  budgetStopped?: boolean;
+  onRaiseBudget?: () => void;
   onDismissError: () => void;
   sending: boolean;
   fileInputRef: RefObject<HTMLInputElement | null>;
@@ -5451,6 +5522,19 @@ const Composer = memo(function Composer({
           className="mb-3 flex items-center gap-2 rounded-[14px] border border-destructive/40 bg-destructive/10 px-4 py-2 text-[13px] text-destructive"
         >
           <span className="min-w-0 flex-1">{sendError ?? runError}</span>
+          {budgetStopped && onRaiseBudget ? (
+            <button
+              type="button"
+              data-testid="composer-raise-budget"
+              onClick={() => {
+                onRaiseBudget();
+                window.requestAnimationFrame(() => textareaRef.current?.focus());
+              }}
+              className="shrink-0 font-medium underline-offset-2 hover:underline"
+            >
+              <Trans>Raise budget</Trans>
+            </button>
+          ) : null}
           <button
             type="button"
             aria-label={t`Dismiss error`}
