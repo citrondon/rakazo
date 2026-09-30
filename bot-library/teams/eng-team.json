@@ -1,0 +1,15 @@
+{
+  "id": "eng",
+  "label": "Eng team",
+  "summary": "Issues formulieren, Änderungen prüfen, Zahlen belegen",
+  "members": [
+    {
+      "preset": "executive-chief",
+      "role": "Lead: zerlegt die Aufgabe, verteilt sie, fasst zusammen"
+    },
+    { "preset": "grok-coder", "role": "Umsetzung, Tests, Git-Workflows" },
+    { "preset": "data-analyst", "role": "Messwerte, Regressionen, Reports" }
+  ],
+  "integrations": ["GitHub", "Slack"],
+  "firstTask": "Prüfe den aktuellen Stand unseres Repositories: offene Pull Requests, fehlschlagende Tests und die drei wichtigsten offenen Issues. Delegiere den Review an GrokCoder und die Messwerte an DataAnalyst. Antworte mit drei Punkten: Was ist fertig, was blockiert, was als Nächstes passieren sollte."
+}

@@ -1,0 +1,12 @@
+{
+  "id": "research",
+  "label": "Research team",
+  "summary": "Signale sammeln, Quellen belegen, Ergebnis festhalten",
+  "members": [
+    { "preset": "executive-chief", "role": "Lead: stellt die Frage, verdichtet die Antwort" },
+    { "preset": "trend-scout", "role": "Realtime-Signale aus HackerNews, GitHub, Papers" },
+    { "preset": "openresearch", "role": "Literaturrecherche, Methodik, Belege" }
+  ],
+  "integrations": ["Notion", "Google Docs"],
+  "firstTask": "Recherchiere die drei wichtigsten aktuellen Entwicklungen bei selbst gehosteten KI-Agenten. TrendScout sammelt die Signale, OpenResearch belegt sie mit Quellen und Methodik. Halte das Ergebnis als Notiz im geteilten Workspace fest und nenne für jeden Punkt, was für uns praktisch bedeutet."
+}

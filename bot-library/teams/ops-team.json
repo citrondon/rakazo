@@ -1,0 +1,12 @@
+{
+  "id": "ops",
+  "label": "Ops team",
+  "summary": "Überblick behalten, Zahlen prüfen, Routine aufsetzen",
+  "members": [
+    { "preset": "executive-chief", "role": "Lead: priorisiert, delegiert, berichtet" },
+    { "preset": "trend-scout", "role": "Was sich außen ändert" },
+    { "preset": "data-analyst", "role": "Zahlen, Kosten, Auslastung" }
+  ],
+  "integrations": ["Slack", "Google Calendar"],
+  "firstTask": "Erstelle unseren Wochenüberblick: Was ist diese Woche gelaufen, welche Zahlen sind relevant, und welche drei Dinge sollten als Nächstes laufen? TrendScout bringt externe Signale, DataAnalyst die Kennzahlen. Schlage danach eine Routine vor, die den Überblick künftig automatisch liefert."
+}
