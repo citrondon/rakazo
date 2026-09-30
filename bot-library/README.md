@@ -27,7 +27,9 @@ Models** (oder im Onboarding) eine Verbindung anlegen:
 3. Laufzeit und Kosten richten sich nach der Modellwahl: Der Trend-Scan läuft viele Male am Tag und
    braucht ein schnelles Modell, die übrigen Presets ein starkes Coding- bzw. Reasoning-Modell.
 
-## Presets
+## Eigene Presets
+
+Fünf Presets sind hier entstanden; die anderen 56 sind wortgetreu übernommen (siehe unten).
 
 | Datei | Bot | Anforderung ans Modell | Zweck |
 | --- | --- | --- | --- |
@@ -39,19 +41,43 @@ Models** (oder im Onboarding) eine Verbindung anlegen:
 
 ## Übernommene GrokBot-Profile
 
-`pr-reviewer`, `changelog-bot`, `issue-drafter`, `docs-writer`, `bug-reproduction`, `repo-hardener`,
-`deploy-watch`, `query-helper` und `daily-brief` stammen aus der CC0-Sammlung
-[awesome-grokbot](https://github.com/mergisi/awesome-grokbot). Der Prompt-Text ist **wortgetreu**
-übernommen, weil die Sammlung ausdrücklich darum bittet, ein Profil unverändert zu verwenden. Name
-und `integrations` stammen aus dem Front Matter, die Beschreibung aus der ersten Zeile unter
-„What you do"; `title` bleibt leer, damit nichts erfunden wird.
+**56** der 61 Presets stammen aus der CC0-Sammlung
+[awesome-grokbot](https://github.com/mergisi/awesome-grokbot), vollständig: development (8),
+productivity (8), marketing (10), ops (17), sales (8), personal (5). Der Prompt-Text ist
+**wortgetreu** übernommen, weil die Sammlung ausdrücklich darum bittet, ein Profil unverändert zu
+verwenden. Name und `integrations` stammen aus dem Front Matter, die Beschreibung aus der ersten
+Zeile unter „What you do"; `title` bleibt leer, damit nichts erfunden wird.
 
-Weitere Profile übertragen:
+Weitere Profile übertragen (gleiche Slugs werden überschrieben) — sinnvoll, wenn die Sammlung
+wächst:
 
 ```bash
-node scripts/import-grokbot-profiles.mjs sales/qbr-pack-builder ops/incident-desk
+node scripts/import-grokbot-profiles.mjs marketing/viral-tweet-scout ops/chief-of-staff
+pnpm exec biome check --write bot-library   # JSON auf die Repo-Formatierung bringen
 ```
 
-Der Import liest `PROFILE.md` und schreibt `bot-library/<slug>.v1.json`; gleiche Slugs werden
-überschrieben.
+Der Import liest `PROFILE.md` und schreibt `bot-library/<slug>.v1.json`. Jedes Preset wird geprüft
+(`apps/api/src/bot-library-presets.test.ts`): kein Preset darf einen Skriptpfad nennen, den kein
+Image ausliefert, und jede Routine braucht Prompt und Zeitplan. Ein Profil, das das verletzt, wird
+nicht übernommen.
+
+## Teams
+
+`teams/*.json` sind Roster statt einzelner Bots: das erste Mitglied ist der Lead und bekommt beim
+Anlegen die `firstTask`. Ein Team bleibt bei 2–4 Bots, weil ein fünfter Bot ein zweites Team ist.
+
+| Datei | Team | Lead zuerst |
+| --- | --- | --- |
+| `eng-team.json` | Eng team | ExecutiveChief, GrokCoder, DataAnalyst |
+| `research-team.json` | Research team | ExecutiveChief, TrendScout, OpenResearch |
+| `ops-team.json` | Ops team | Chief of Staff, Incident Desk, Cloud Spend, Vendor Inbox |
+| `marketing-team.json` | Marketing team | Social Queue, Viral Tweet Scout, SEO Pages, Newsletter Desk |
+| `sales-team.json` | Sales team | Meeting Prep, Call Followup, Proposal Desk, Win Loss |
+| `support-team.json` | Support team | Support Replies, Churn Watch, Feature Ask Finder |
+| `desk-team.json` | Desk team | Inbox Triage, Meeting Notes, Standup Desk, Focus Defender |
+| `personal-team.json` | Personal team | Household Ops, Trip Concierge, Subscription Pruner, Reading Digest |
+| `finance-team.json` | Finance team | Cloud Spend, Expense Manager, SaaS Finance |
+
+Geladen werden sie mit `listTeamTemplates()` (`apps/api/src/team-templates.ts`). Jedes genannte
+Preset wird gegen die Bibliothek aufgelöst; ein Tippfehler fällt im Test auf statt beim Anlegen.
 

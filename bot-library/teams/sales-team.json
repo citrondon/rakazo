@@ -1,0 +1,13 @@
+{
+  "id": "sales",
+  "label": "Sales team",
+  "summary": "Termine vorbereiten, nachfassen, Angebote",
+  "members": [
+    { "preset": "meeting-prep", "role": "Lead: bereitet den nächsten Termin vor" },
+    { "preset": "call-followup", "role": "Follow-up direkt nach dem Gespräch" },
+    { "preset": "proposal-desk", "role": "Angebotsgerüst aus Notizen und Docs" },
+    { "preset": "win-loss", "role": "Review nach dem Abschluss" }
+  ],
+  "integrations": ["Google Calendar", "Gmail", "Slack", "Google Docs", "Notion"],
+  "firstTask": "Bereite den nächsten Kundentermin vor: Meeting Prep fasst Mail-Verlauf, Notizen und die letzten Slack-Signale zur Firma zusammen, Call Followup legt den Follow-up-Entwurf zum letzten Gespräch bereit, Proposal Desk macht daraus das Angebotsgerüst. Nenne am Ende den nächsten konkreten Schritt, den Empfänger und was noch fehlt, bevor es rausgeht."
+}

@@ -1,0 +1,13 @@
+{
+  "id": "marketing",
+  "label": "Marketing team",
+  "summary": "Ideen ausspielen: Posts, Suche, Newsletter",
+  "members": [
+    { "preset": "social-queue", "role": "Lead: macht aus einem Gedanken die Post-Queue" },
+    { "preset": "viral-tweet-scout", "role": "Hooks und Formate, die gerade ziehen" },
+    { "preset": "seo-pages", "role": "Seiten mit verlorenen Klicks neu schreiben" },
+    { "preset": "newsletter-desk", "role": "Links und Notizen der Woche zum Newsletter" }
+  ],
+  "integrations": ["Notion", "X", "LinkedIn", "Google Search Console", "Gmail", "Google Docs"],
+  "firstTask": "Plant die nächste Marketingwoche: Social Queue schreibt aus dem zuletzt ausgelieferten Feature eine Post-Queue, Viral Tweet Scout liefert zwei Hooks aus aktuellen Top-Posts zum Thema, SEO Pages nennt die zwei Seiten mit den meisten verlorenen Klicks samt neuem Titel und Beschreibung, Newsletter Desk sammelt den Rest für den Wochen-Newsletter. Antworte mit der Queue und markiere, was Freigabe braucht."
+}

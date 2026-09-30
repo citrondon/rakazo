@@ -1,12 +1,13 @@
 {
   "id": "ops",
   "label": "Ops team",
-  "summary": "Überblick behalten, Zahlen prüfen, Routine aufsetzen",
+  "summary": "Tageslage, Vorfälle, Kosten, Lieferanten",
   "members": [
-    { "preset": "executive-chief", "role": "Lead: priorisiert, delegiert, berichtet" },
-    { "preset": "trend-scout", "role": "Was sich außen ändert" },
-    { "preset": "data-analyst", "role": "Zahlen, Kosten, Auslastung" }
+    { "preset": "chief-of-staff", "role": "Lead: Tageslage, offene Entscheidungen, Zusagen" },
+    { "preset": "incident-desk", "role": "Vorfälle: Timeline, Ursache, Nachbereitung" },
+    { "preset": "cloud-spend", "role": "Kosten und Auslastung prüfen" },
+    { "preset": "vendor-inbox", "role": "Rechnungen, Verträge, Fristen" }
   ],
-  "integrations": ["Slack", "Google Calendar"],
-  "firstTask": "Erstelle unseren Wochenüberblick: Was ist diese Woche gelaufen, welche Zahlen sind relevant, und welche drei Dinge sollten als Nächstes laufen? TrendScout bringt externe Signale, DataAnalyst die Kennzahlen. Schlage danach eine Routine vor, die den Überblick künftig automatisch liefert."
+  "integrations": ["Slack", "Google Calendar", "Notion", "Gmail", "Google Drive", "GitHub"],
+  "firstTask": "Erstelle die Tageslage: Chief of Staff sammelt Termine, offene Entscheidungen und Zusagen aus Kalender, Slack und Notion; Incident Desk prüft offene Vorfälle und was noch nachbereitet werden muss; Cloud Spend bringt die größten Kostenposten, Vendor Inbox die fälligen Rechnungen und Verträge. Antworte in drei Blöcken: heute wichtig, was hängt, was als Nächstes entschieden werden muss."
 }

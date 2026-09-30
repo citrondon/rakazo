@@ -1,0 +1,13 @@
+{
+  "id": "desk",
+  "label": "Desk team",
+  "summary": "Postfach, Meetings, Standups, Fokuszeit",
+  "members": [
+    { "preset": "inbox-triage", "role": "Lead: sortiert das Postfach" },
+    { "preset": "meeting-notes", "role": "Entscheidungen und Aufgaben aus Notizen" },
+    { "preset": "standup-desk", "role": "Standup aus dem Kanal zusammenfassen" },
+    { "preset": "focus-defender", "role": "Fokusblöcke finden und halten" }
+  ],
+  "integrations": ["Gmail", "Google Docs", "Slack", "Google Calendar"],
+  "firstTask": "Ordne meinen Tag: Inbox Triage sortiert das Postfach nach sofort antworten, warten auf andere und später lesen; Standup Desk fasst den Kanal für gestern und heute zusammen; Meeting Notes zieht die offenen Aufgaben aus dem letzten Protokoll; Focus Defender schlägt zwei Fokusblöcke für die Woche vor. Antworte knapp und sage, welcher Block heute geschützt wird."
+}

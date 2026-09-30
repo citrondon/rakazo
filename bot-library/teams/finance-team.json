@@ -1,0 +1,12 @@
+{
+  "id": "finance",
+  "label": "Finance team",
+  "summary": "Kosten, Belege, Verträge",
+  "members": [
+    { "preset": "cloud-spend", "role": "Lead: größte Posten und Ausreißer" },
+    { "preset": "expense-manager", "role": "Belege zur Wochenübersicht" },
+    { "preset": "saas-finance", "role": "Umsatz, Verlängerungen, offene Rechnungen" }
+  ],
+  "integrations": ["Gmail", "Google Drive", "Stripe"],
+  "firstTask": "Mach den Monatscheck: Cloud Spend liest die letzte Abrechnung und nennt die größten Posten samt Veränderung zum Vormonat, Expense Manager baut die Wochenübersicht aus den Belegen, SaaS Finance listet Umsatz, Verlängerungen in den nächsten 14 Tagen und überfällige Rechnungen. Antworte mit Betrag, Frist und was eine Entscheidung braucht — ohne Zahlen zu schätzen."
+}

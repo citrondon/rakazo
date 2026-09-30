@@ -1,0 +1,13 @@
+{
+  "id": "personal",
+  "label": "Personal team",
+  "summary": "Alltag, Reisen, Abos, Lesestoff",
+  "members": [
+    { "preset": "household-ops", "role": "Lead: Termine, Aufgaben, Konflikte im Alltag" },
+    { "preset": "trip-concierge", "role": "Reiseplan aus Buchungen" },
+    { "preset": "subscription-pruner", "role": "Abos und Trials prüfen" },
+    { "preset": "reading-digest", "role": "Gespeicherte Artikel verdichten" }
+  ],
+  "integrations": ["Google Calendar", "Slack", "Gmail", "Notion"],
+  "firstTask": "Sieh dir die Woche an: Household Ops listet Termine, Zuständigkeiten und den einen Konflikt, Trip Concierge prüft die nächste Reise auf fehlende Nächte und enge Umstiege, Subscription Pruner nennt die Abos, die in den nächsten zwei Wochen verlängert werden, Reading Digest zieht fünf gespeicherte Artikel heraus, die sich lohnen. Antworte sortiert nach Wochentag."
+}
