@@ -37,3 +37,21 @@ Models** (oder im Onboarding) eine Verbindung anlegen:
 | `executive-chief.v1.json` | **ExecutiveChief** | starkes Modell, geringe Latenz für den Chat | Chief of Staff & Productivity Lead: Aufgaben-Priorisierung via Eisenhower-Matrix, Daily Standup Briefing (Cron 08:00) und Multi-Bot-Koordination. |
 | `data-analyst.v1.json` | **DataAnalyst** | starkes Modell mit Code-Ausführung | Data Science, SQL & Visualization Specialist: Strukturierte CSV/JSON/DuckDB-Analysen, Matplotlib/Seaborn Visualisierungen und statistische Auswertungen. |
 
+## Übernommene GrokBot-Profile
+
+`pr-reviewer`, `changelog-bot`, `issue-drafter`, `docs-writer`, `bug-reproduction`, `repo-hardener`,
+`deploy-watch`, `query-helper` und `daily-brief` stammen aus der CC0-Sammlung
+[awesome-grokbot](https://github.com/mergisi/awesome-grokbot). Der Prompt-Text ist **wortgetreu**
+übernommen, weil die Sammlung ausdrücklich darum bittet, ein Profil unverändert zu verwenden. Name
+und `integrations` stammen aus dem Front Matter, die Beschreibung aus der ersten Zeile unter
+„What you do"; `title` bleibt leer, damit nichts erfunden wird.
+
+Weitere Profile übertragen:
+
+```bash
+node scripts/import-grokbot-profiles.mjs sales/qbr-pack-builder ops/incident-desk
+```
+
+Der Import liest `PROFILE.md` und schreibt `bot-library/<slug>.v1.json`; gleiche Slugs werden
+überschrieben.
+
