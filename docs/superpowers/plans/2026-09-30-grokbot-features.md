@@ -10,6 +10,21 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-30-grokbot-features-design.md`
 
+## Status (Stand 2026-09-30, Linux-Quellcheckout)
+
+Dieser Plan beschreibt einen **Windows-Prototyp**, nicht den Stand des Repositories. Maßgeblich
+sind heute die nativen Pfade:
+
+| Task | Stand |
+| --- | --- |
+| 1 War Room | erledigt: Gruppen und `@`-Routing sind nativ (`packages/db/src/groups.ts`, `packages/core/src/composer-mentions.ts`, `apps/api/src/team-chat-bridge.ts`); `scripts/seed-war-room-group.ts` und `scripts/test-group-chat-mention.ts` existieren |
+| 2 E-Mail-Freigaben | ersetzt: **Settings → Action confirmations** plus Freigabekarten im Thread (`apps/web/src/components/ApprovalRulesSettings.tsx`, `packages/core/src/action-approval.ts`). `workspace/tools/google_assistant.py` existiert nicht |
+| 3 Second Brain | ersetzt: MCP-Preset „Markdown Second Brain" auf `/home/rakazo/shared/notes` (`apps/web/src/pages/mcp-presets.ts`); Host-Mirror über `pnpm workspace:pull\|push\|watch` |
+| 4 Voice | erledigt als Ausgabeoption („Diese Antwort vorlesen", Voice-Provider unter Settings → Voice); `.wav`-Briefings werden nicht erzeugt, `voice_briefing.py` existiert nicht |
+
+`workspace/` ist ein **Host-Mirror** eines Bot-Workspace, keine Tool-Sammlung im Repository. Für
+Anwender ist `docs/grokbot-features-guide.md` die gültige Beschreibung.
+
 ## Global Constraints
 - Secrets policy strictly enforced: never print or expose secrets or environment keys.
 - Preserve all existing comments and docstrings.
@@ -35,7 +50,7 @@
   - Ensure a corresponding `threads` row exists with `groupId: "grp_grokbot_war_room"`.
 
 - [ ] **Step 2: Run seed script and verify in database**
-  - Execute `docker cp scripts/seed-war-room-group.ts rakazo-worker-1:/app/scripts/seed-war-room-group.ts && docker exec rakazo-worker-1 npx tsx /app/scripts/seed-war-room-group.ts`
+  - In a source checkout run it on the host with the stack up: `pnpm exec tsx scripts/seed-war-room-group.ts`
   - Verify row count in `chat_group_members`.
 
 - [ ] **Step 3: Write and run `scripts/test-group-chat-mention.ts`**
