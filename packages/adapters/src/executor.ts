@@ -4621,16 +4621,22 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 reachedBudgetWarnLine(totalTokens, budget) &&
                 (await claimBudgetWarning(deps.prisma, bot.id))
               ) {
-                await notifyRun(deps, run, {
-                  kind: "warning",
-                  title: `${bot.name} is near its monthly budget`,
-                  body:
-                    `${totalTokens.toLocaleString("en-US")} of ` +
-                    `${budget.toLocaleString("en-US")} tokens used this month. ` +
-                    "Raise or clear the budget to keep it working.",
-                  botId: bot.id,
-                  threadId: thread.id,
-                });
+                try {
+                  await notifyRun(deps, run, {
+                    kind: "warning",
+                    title: `${bot.name} is near its monthly budget`,
+                    body:
+                      `${totalTokens.toLocaleString("en-US")} of ` +
+                      `${budget.toLocaleString("en-US")} tokens used this month. ` +
+                      "Raise or clear the budget to keep it working.",
+                    botId: bot.id,
+                    threadId: thread.id,
+                  });
+                } catch (error) {
+                  // The claim is already spent; give it back so the owner still hears about it.
+                  await releaseBudgetWarning(deps.prisma, bot.id).catch(() => undefined);
+                  throw error;
+                }
               }
             }
           } catch (error) {
@@ -4886,6 +4892,14 @@ export async function claimBudgetWarning(prisma: PrismaClient, botId: string): P
     data: { budgetWarnedAt: new Date() },
   });
   return claimed.count === 1;
+}
+
+/**
+ * Hands back a claim whose warning could not be written, so a later run warns instead of the
+ * month passing unmentioned. A repeated warning is the lesser failure here.
+ */
+export async function releaseBudgetWarning(prisma: PrismaClient, botId: string): Promise<void> {
+  await prisma.bot.updateMany({ where: { id: botId }, data: { budgetWarnedAt: null } });
 }
 
 export async function monthlyTokenBudgetExceeded(

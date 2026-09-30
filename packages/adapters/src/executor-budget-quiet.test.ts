@@ -1,7 +1,12 @@
 import { runStopKind } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { describe, expect, it, vi } from "vitest";
-import { claimBudgetWarning, monthlyTokenBudgetExceeded, monthlyTokensUsed } from "./executor.js";
+import {
+  claimBudgetWarning,
+  monthlyTokenBudgetExceeded,
+  monthlyTokensUsed,
+  releaseBudgetWarning,
+} from "./executor.js";
 
 /** Only the two delegates these helpers touch, so a test can inspect the queries they build. */
 type PrismaStub = PrismaClient & {
@@ -78,5 +83,17 @@ describe("claimBudgetWarning", () => {
     const prisma = prismaStub();
     prisma.bot.updateMany.mockResolvedValue({ count: 0 });
     await expect(claimBudgetWarning(prisma, "bot-1")).resolves.toBe(false);
+  });
+});
+
+describe("releaseBudgetWarning", () => {
+  it("hands the claim back so a later run still warns", async () => {
+    const prisma = prismaStub();
+    prisma.bot.updateMany.mockResolvedValue({ count: 1 });
+    await releaseBudgetWarning(prisma, "bot-1");
+    const call = prisma.bot.updateMany.mock.calls[0]?.[0];
+    expect(call.where).toEqual({ id: "bot-1" });
+    // Null is what claimBudgetWarning treats as unclaimed, so the next crossing run warns again.
+    expect(call.data.budgetWarnedAt).toBeNull();
   });
 });
