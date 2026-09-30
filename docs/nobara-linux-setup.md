@@ -22,7 +22,11 @@ docker run --rm hello-world
 
 ## 2. Node 22 + pnpm 9 über nvm
 
-Das Projekt verlangt Node 22.22.2+ (22.x), 24.x oder 26+. **Nicht 23.x, nicht 25.x.** Nobara/Fedora bringt oft kein passendes Node in DNF — nvm umgeht das Problem komplett:
+Das Projekt pinnt in `engines` auf `^22.22.2 || ^24.0.0 || >=26.0.0` — **nicht 23.x, nicht 25.x.** In der Praxis nimm trotzdem die neueste 22.x: `@composio/core` verlangt inzwischen `>=22.22.3`, und ein exakt auf 22.22.2 gebautes Node bricht `pnpm install` ab mit:
+
+```
+ERR_PNPM_UNSUPPORTED_ENGINE  Expected version: >=22.22.3  Got: v22.22.2
+```
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
@@ -33,14 +37,16 @@ corepack enable
 corepack prepare pnpm@9.15.0 --activate
 ```
 
-Prüfen: `node -v` → v22.x, `pnpm -v` → 9.15.0.
+Prüfen: `node -v` → v22.23.x oder neuer (mindestens 22.22.3), `pnpm -v` → 9.15.0. Mit `nvm alias default 22` bleibt die Version auch in neuen Shells stehen.
 
-Falls `corepack` meckert: `npm install -g pnpm@9` geht auch.
+Falls `corepack` meckert: `npm install -g pnpm@9.15.0` geht auch — aber **mit** exakter Version, siehe Stolperfalle 3.
 
 ## 3. Repository klonen und .env
 
+Dieser Guide liegt in `citrondon/rakazo`; die Abschnitte 1–5 sind aus `README.md` und `.env.example` abgeleitet, die Nobara-Hinweise am Ende nicht.
+
 ```bash
-git clone https://github.com/elie222/rakazo.git
+git clone https://github.com/citrondon/rakazo.git
 cd rakazo
 cp .env.example .env
 ```
@@ -128,9 +134,9 @@ Playwright-Browser einmalig installieren:
    ```
    Und in `.env` `API_HOST=0.0.0.0` statt `127.0.0.1` — sonst lauscht die API nur auf loopback.
 
-3. **pnpm-Warnung zum overrides-Feld**: kommt beim Install („The pnpm field in package.json is no longer read"). Bekannt und für das Setup harmlos — pnpm 9.15.0 liest `pnpm.overrides` aus `package.json` nicht mehr. Beeinträchtigt die Funktion nicht; die React-Pin-Strategie wäre künftig über `pnpm-workspace.yaml` zu lösen.
+3. **pnpm auf der gepinnten Version halten**: Die Warnung „The pnpm field in package.json is no longer read“ stammt von **pnpm 11**, nicht von 9.15.0 — pnpm 9 liest `pnpm.overrides` und `pnpm.patchedDependencies` normal aus `package.json`. Sie taucht nur auf, wenn versehentlich ein neueres pnpm läuft (typischerweise nach `npm i -g pnpm` ohne Versionsangabe). Dann werden beide Felder **still** ignoriert, das `app-builder-lib`-Patch greift nicht mehr und der Electron-Build bricht später mit einer kryptischen Fehlermeldung ab. Dagegen: Corepack nicht umgehen und die im Repo gepinnte Version fahren — `corepack enable && corepack install -g pnpm@9.15.0` oder `npm i -g pnpm@9.15.0`. Kontrolle: `pnpm -v` muss 9.15.0 ergeben.
 
-4. **Node-Version nicht verlieren**: Wenn `nvm use 22` nach Neustart vergessen geht, in `~/.bashrc` (oder zshrc) `nvm use 22` ergänzen oder im Projekt-Root eine `.nvmrc` mit `22` anlegen — `nvm use` liest die dann automatisch.
+4. **Node-Version dauerhaft festhalten**: Am zuverlässigsten ist eine `.nvmrc` mit `22` im Repo-Root — `nvm use` liest sie automatisch. Für neue Shells zusätzlich `nvm alias default 22`. Ein `nvm use 22` in `~/.bashrc` wirkt nur in interaktiven Shells, weil nvm dort in Cron- oder IDE-Task-Kontexten gar nicht geladen ist — verlass dich nicht darauf allein.
 
 5. **Disk space**: Docker + node_modules + Playwright-Browser + Testcontainers-Images ≈ 10–15 GB. `df -h` vorher checken.
 
@@ -148,10 +154,11 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 # -> Shell neu öffnen <-
 nvm install 22
 nvm use 22
+nvm alias default 22
 corepack enable
 corepack prepare pnpm@9.15.0 --activate
 
-git clone https://github.com/elie222/rakazo.git
+git clone https://github.com/citrondon/rakazo.git
 cd rakazo
 cp .env.example .env
 # .env editieren: die 5 openssl-Werte + DATABASE_URL-Passwort eintragen
