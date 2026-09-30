@@ -9,7 +9,7 @@ Dieses Dokument beschreibt, wie die vier Grokbot-Kernmerkmale in Rakazo umgesetz
 1. [Übersicht der vier Merkmale](#1-übersicht-der-vier-merkmale)
 2. [Team War Room (Multi-Bot-Gruppenchat)](#2-team-war-room-multi-bot-gruppenchat)
 3. [Freigaben vor irreversiblen Aktionen](#3-freigaben-vor-irreversiblen-aktionen)
-4. [Second Brain (geteilter Workspace)](#4-second-brain-geteilter-workspace)
+4. [Second Brain (Notizen im Bot-Home)](#4-second-brain-notizen-im-bot-home)
 5. [Voice: Antworten vorlesen](#5-voice-antworten-vorlesen)
 6. [Walkthrough in der Web-App](#6-walkthrough-in-der-web-app)
 7. [Befehle](#7-befehle)
@@ -24,7 +24,7 @@ Dieses Dokument beschreibt, wie die vier Grokbot-Kernmerkmale in Rakazo umgesetz
 | :--- | :--- | :--- |
 | **Team War Room** | Gruppen im Space, `@`-Erwähnungen, autonome Delegation | `packages/db/src/groups.ts`, `apps/api/src/team-chat-bridge.ts` |
 | **Freigaben** | Konsequente Aktionen erzeugen eine Freigabekarte im Thread | `apps/web/src/components/ApprovalRulesSettings.tsx`, `packages/core/src/action-approval.ts` |
-| **Second Brain** | MCP-Preset auf dem geteilten Workspace des Bots | `apps/web/src/pages/mcp-presets.ts` |
+| **Second Brain** | MCP-Preset auf dem Home-Verzeichnis des Bots (`{home}`) | `apps/web/src/pages/mcp-presets.ts` |
 | **Voice** | „Diese Antwort vorlesen", Diktieren, Bot-Anruf | `apps/web/src/pages/Shell.tsx`, `apps/mobile/lib/voice.ts` |
 
 ---
@@ -41,6 +41,9 @@ das Gruppen-Panel der Web-UI oder per RPC `groups.create` angelegt.
   (`apps/api/src/team-chat-bridge.ts`).
 - **Roster aus Presets:** `ExecutiveChief` (Koordination), `GrokCoder` (Engineering), `TrendScout`
   (Realtime-Recherche), `DataAnalyst` (Kennzahlen), `OpenResearch` (Literatur).
+- **Roster aus Vorlagen:** `bot-library/teams/*.json` beschreibt zehn Teams mit Lead und erster
+  Aufgabe, `bot-library/identities/*.json` acht Identitäten („Wer bist du?" → Startteam); die
+  Bibliothek umfasst 61 Presets. Die Auswahl im UI fehlt noch.
 
 Raster anlegen und das Routing prüfen:
 
@@ -67,19 +70,25 @@ verbundene Konnektoren (Gmail, Slack, …), der Versand erst nach der Freigabe.
 
 ---
 
-## 4. Second Brain (geteilter Workspace)
+## 4. Second Brain (Notizen im Bot-Home)
 
-Jeder Bot hat unter seinem Home einen geteilten Workspace. Im Compose-Stack liegt er als Bind-Mount
-unter `data/homes/<bot>/shared` auf dem Host, im Computer-Container unter `/home/rakazo/shared`.
+Jeder Bot hat ein Home-Verzeichnis. Im Compose-Stack liegt es unter `data/homes/<bot>` auf dem Host,
+in den Containern von API und Worker als `/data/homes/<bot>`, und im Sandbox-Container desselben
+Bots als `/home/rakazo`.
 
-MCP-Preset **„Markdown Second Brain"** (`apps/web/src/pages/mcp-presets.ts`) mountet
-`/home/rakazo/shared/notes` — Obsidian-kompatible Markdown-Notizen. Weitere Presets derselben
-Liste: „Workspace Files", „Terminal & Code Runner", „Web-Recherche & Fetch", „SQLite & Data
-Explorer", „GitHub Connect".
+stdio-MCP-Server starten **neben der API bzw. dem Worker**, nicht im Sandbox-Container. Ein Preset
+darf deshalb keinen Sandbox-Pfad nennen: die Presets mit Dateibezug arbeiten mit dem Platzhalter
+`{home}` (`apps/web/src/pages/mcp-presets.ts`), den der Connector pro Sitzung durch das Home
+**dieses** Bots ersetzt (`expandStdioHomeToken` in `packages/adapters/src/mcp-transport.ts`). Eine
+stdio-Sitzung ist daher zusätzlich nach Bot getrennt — Bot A erbt nie das gemountete Home von Bot B.
+„Markdown Second Brain" mountet so `{home}/notes` (Obsidian-kompatible Markdown-Notizen),
+„Workspace Files" `{home}`, „SQLite & Data Explorer" `{home}/data.db`. Lässt sich kein Home
+auflösen, schlägt der Start fehl, statt einen Server mit wörtlichem `{home}`-Argument zu starten.
 
 Voraussetzung: stdio-MCP startet auf dem Server nur, wenn es freigegeben ist (`MCP_STDIO_ENABLED=true`
 und der Befehl in `MCP_STDIO_ALLOWED_COMMANDS`). Die UI nennt den fehlenden Schalter direkt am
-Preset, statt einen Server zu speichern, der nie startet.
+Preset, statt einen Server zu speichern, der nie startet. Achtung: „Terminal & Code Runner" führt
+Befehle im Server-Prozess aus — die Allowlist ist hier die Sicherheitsschwelle, nicht die Sandbox.
 
 Host-Mirror zum Bearbeiten auf dem Rechner:
 
@@ -147,10 +156,11 @@ pnpm test:integration   # Postgres-Journeys, braucht Docker
 Diese Beschreibung nennt bewusst **keine** Python-Tools: `workspace/tools/*.py` und
 `workspace/tools/voice_briefing.py` existieren in diesem Repository nicht, ebenso keine
 automatisch erzeugten `.wav`-Briefings. E-Mail-Entwürfe laufen über verbundene Konnektoren mit
-Freigabekarte, der Notiz-Vault über das MCP-Preset auf dem geteilten Workspace, Voice über den
+Freigabekarte, der Notiz-Vault über das MCP-Preset im Bot-Home (`{home}/notes`), Voice über den
 Provider in den Voice-Einstellungen.
 
-Kontext-Export für andere LLMs (schließt `.env` und Secrets aus):
+Kontext-Export für andere LLMs (schließt `.env` und Secrets aus). Das Ergebnis bleibt lokal: es
+inlined Pfade aus dem Checkout und ist über `docs/repomix-*.xml` in `.gitignore` gehalten.
 
 ```bash
 npx repomix --include "docs/**/*.md,bot-library/**/*.json" -o docs/repomix-grokbot-context.xml
