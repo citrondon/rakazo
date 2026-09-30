@@ -29,7 +29,9 @@ test("shows this month's spend and a per-run receipt", async ({ page }, testInfo
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("user-settings")).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Show settings" }).click();
+  // The bot's settings panel opens from the bot name in the transcript header; "Show settings"
+  // only exists once the panel is already showing the computer.
+  await page.locator("main").getByRole("button", { name: "Chief", exact: true }).click();
   const panel = page.getByTestId("side-panel");
   await expect(panel).toHaveAttribute("data-panel", "settings");
   await panel.getByTestId("bot-settings-advanced").locator("summary").click();
