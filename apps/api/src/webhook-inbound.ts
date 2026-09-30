@@ -3,7 +3,7 @@ import type { JobPublisher } from "@rakazo/adapter-kit";
 import { runContinueJob } from "@rakazo/adapter-kit";
 import type { EncryptedSecretStore } from "@rakazo/adapters";
 import type { Trigger, TriggerEvent } from "@rakazo/contracts";
-import { selectTriggeredRoutines, applyTriggerMappings, type TriggerCandidate } from "@rakazo/core";
+import { selectTriggeredRoutines, type TriggerCandidate } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 

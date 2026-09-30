@@ -18,6 +18,7 @@ function createDeps(
     approvedMember?: unknown;
     sendResult?: { messageId: string; runId: string | null; seq: number };
     routines?: Array<{ id: string; name: string; prompt: string }>;
+    triggers?: Array<Record<string, unknown>>;
   } = {},
 ) {
   const identity =
@@ -119,6 +120,7 @@ function createDeps(
     messagingLinkCode,
     bot: { findUnique: vi.fn(async () => ({ name: "Chief" })) },
     routine: { findMany: vi.fn(async () => overrides.routines ?? []) },
+    trigger: { findMany: vi.fn(async () => overrides.triggers ?? []) },
     thread: { findFirst: vi.fn(async () => ({ id: "thread-1" })) },
     messagingChannel: {
       findUnique: vi.fn(async () => channel),

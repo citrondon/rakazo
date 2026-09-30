@@ -24,6 +24,7 @@ import {
 } from "@rakazo/ui-web";
 import { ChevronLeft, Clock, GitBranch, Globe, MessageSquare, Pause, Plus, X } from "lucide-react";
 import { useId } from "react";
+import { ReactiveTriggerSection } from "./ReactiveTriggerSection";
 import { RoutineSchedule } from "./RoutineSchedule";
 
 function toDatetimeLocalValue(date: Date): string {
@@ -483,6 +484,8 @@ export function RoutineEditor({
           </p>
         ) : null}
       </div>
+
+      {editing ? <ReactiveTriggerSection routineId={editing.id} /> : null}
 
       <div className="mt-5">
         <Button disabled={saving || running || !hasTriggers} onClick={onSave}>

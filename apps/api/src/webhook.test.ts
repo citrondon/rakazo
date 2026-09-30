@@ -28,6 +28,7 @@ function createDeps(
     secret?: { ciphertext: string; kind: string; userId: string; spaceId: string } | null;
     load?: (ciphertext: string) => string;
     routines?: Array<{ id: string; name: string; prompt: string }>;
+    triggers?: Array<Record<string, unknown>>;
   } = {},
 ): WebhookDeps & {
   sendUserMessage: ReturnType<typeof vi.fn>;
@@ -61,6 +62,7 @@ function createDeps(
   }));
   const enqueue = vi.fn(async () => undefined);
   const findRoutines = vi.fn(async () => overrides.routines ?? []);
+  const findTriggers = vi.fn(async () => overrides.triggers ?? []);
 
   return {
     prisma: {
@@ -72,6 +74,9 @@ function createDeps(
       },
       routine: {
         findMany: findRoutines,
+      },
+      trigger: {
+        findMany: findTriggers,
       },
     } as unknown as WebhookDeps["prisma"],
     secrets: {
