@@ -18,6 +18,47 @@ pnpm dev        # web http://127.0.0.1:5173, api, worker, sandbox-supervisor
 Requirements: Node 22.22.2 (or 24.x / 26+), pnpm 9, Docker. Node 23.x / 25.x are not
 supported.
 
+## 1b. Windows laptop (recommended: WSL2 + Docker Desktop)
+
+Source development for the computer/sandbox path expects a Linux filesystem, so run the
+checkout inside WSL2. This mirrors `docs/self-host.md` (WSL note + Docker Desktop mount notes).
+
+1. Install **WSL2** with an Ubuntu distro, then **Docker Desktop** and enable
+   *Settings → Resources → WSL integration* for that distro.
+2. Install Node + pnpm **inside WSL** (not on Windows):
+   ```bash
+   # in WSL:  nvm install 22 && nvm use 22   &&   corepack enable && corepack prepare pnpm@9.15.0 --activate
+   ```
+3. Clone into the **WSL Linux filesystem**, not `/mnt/c/...`:
+   ```bash
+   cd ~ && git clone <your-repo-url> rakazo && cd rakazo   # relative to /home/<you>, NOT /mnt/c
+   git pull origin main                                     # the pushed commits land here
+   ```
+   A native Windows checkout (`C:\...`) makes the daemon mount and file-watching paths fragile;
+   keep the checkout and its `data` directory in `~/rakazo`.
+4. Same setup as above (`pnpm install`, `.env`, `pnpm db:generate`, `pnpm db:migrate`, `pnpm dev`),
+   all from the WSL shell.
+5. If the web UI loads but the bot's computer stays unreachable (Docker Desktop container IPs are
+   not routable from WSL), add to `.env`:
+   ```
+   SANDBOX_CONTROL_VIA_LOOPBACK=true
+   ```
+   Leave it unset when using the Compose-hosted supervisor.
+
+Windows-specific fixes, if needed:
+
+- **Line endings from an older Windows clone** (`bash\r` in sandbox logs, computer pane hangs on
+  boot): from a clean worktree —
+  `git config core.autocrlf false && git add --renormalize . && git checkout -- . && pnpm sandbox:build`.
+- **Workspace mirror** is now cross-platform: `pnpm workspace:pull|push|watch`
+  (`scripts/sync-workspace.mjs`). The old `sync-workspace.ps1` is gone — no PowerShell needed; run
+  it from WSL.
+
+Alternative (no WSL): build the desktop app on Windows (`pnpm --filter @rakazo/desktop dev`) and
+pick **This computer**, which runs the published images via Docker Compose itself
+(`docs/desktop-release.md`); or connect it to a server with **Existing instance**. Use this to
+*use* Rakazo on Windows; for *source development* prefer WSL.
+
 ## 2. What shipped
 
 A trust-based, event-driven routine system, provider-neutral (no vendor env vars).
