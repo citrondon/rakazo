@@ -225,8 +225,11 @@ class RakazoNotificationService : Service() {
 
   private fun post(run: RunRecord, copy: NotificationCopy) {
     if (!run.notificationsEnabled || isOpenThread(run)) return
-    val notification = builder(copy.channel)
+    // One group per bot, so a roster reads as a stack per bot rather than one pile of
+    // alerts from every bot at once, and the owner sees who spoke without opening anything.
+    val alert = builder(copy.channel)
       .setSmallIcon(R.drawable.ic_rakazo_notification)
+      .setGroup(botGroupKey(run.botId))
       .setContentTitle(copy.title)
       .setContentText(copy.body)
       .setStyle(Notification.BigTextStyle().bigText(copy.body))
@@ -238,7 +241,10 @@ class RakazoNotificationService : Service() {
       })
       .setAutoCancel(true)
       .setCategory(Notification.CATEGORY_MESSAGE)
-      .build()
+    // Reuse the bot's own avatar where the product already draws one, so the group is
+    // recognizable at a glance instead of carrying the same generic icon as everything else.
+    if (selectedAvatarStyle == "organic") alert.setLargeIcon(botAvatarBitmap(run))
+    val notification = alert.build()
     manager.notify(run.threadId.hashCode(), notification)
   }
 
@@ -283,6 +289,11 @@ class RakazoNotificationService : Service() {
     if (avatarStyle != "organic") {
       return Icon.createWithResource(this, R.drawable.ic_rakazo_notification)
     }
+    return Icon.createWithBitmap(botAvatarBitmap(run))
+  }
+
+  /** The same deterministic avatar the live status draws, for an alert's large icon. */
+  private fun botAvatarBitmap(run: RunRecord): Bitmap {
     val bitmap = Bitmap.createBitmap(96, 96, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val seed = run.botId.fold(0) { hash, character -> hash * 31 + character.code }
@@ -303,7 +314,7 @@ class RakazoNotificationService : Service() {
     }
     canvas.drawRoundRect(35f, 36f, 41f, 58f, 3f, 3f, eyes)
     canvas.drawRoundRect(55f, 36f, 61f, 58f, 3f, 3f, eyes)
-    return Icon.createWithBitmap(bitmap)
+    return bitmap
   }
 
   private fun clearLive() {
@@ -318,6 +329,8 @@ class RakazoNotificationService : Service() {
   @Suppress("DEPRECATION")
   private fun builder(channel: String): Notification.Builder =
     if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, channel) else Notification.Builder(this)
+
+  private fun botGroupKey(botId: String): String = "rakazo.bot.$botId"
 
   private fun openApp(run: RunRecord? = null): PendingIntent {
     val intent = if (run == null) {

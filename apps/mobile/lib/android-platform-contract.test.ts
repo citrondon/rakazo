@@ -75,6 +75,15 @@ describe("Android mobile platform contract", () => {
     );
     expect(service).toContain("val generation = synchronized(sessionLock)");
     expect(service).toContain("ACTION_THREAD_CHANGED");
+    // Alerts name the bot that spoke: its own group per bot, and the avatar the product
+    // already draws, rather than one shared pile with a generic icon.
+    expect(service).toContain("setGroup(botGroupKey(run.botId))");
+    expect(service).toContain(
+      'private fun botGroupKey(botId: String): String = "rakazo.bot.$botId"',
+    );
+    expect(service).toContain(
+      'if (selectedAvatarStyle == "organic") alert.setLargeIcon(botAvatarBitmap(run))',
+    );
     expect(service).toContain(
       "private fun runIfCurrent(generation: Long, action: () -> Unit): Boolean",
     );
