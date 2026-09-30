@@ -290,7 +290,6 @@ const PluginsOverlay = lazy(() =>
 const McpServersOverlay = lazy(() =>
   import("./McpServersOverlay").then((module) => ({ default: module.McpServersOverlay })),
 );
-const CallView = lazy(() => import("./CallView").then((module) => ({ default: module.CallView })));
 const BotImportOverlay = lazy(() =>
   import("./BotImportOverlay").then((module) => ({ default: module.BotImportOverlay })),
 );

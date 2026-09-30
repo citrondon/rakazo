@@ -23,12 +23,12 @@ msgid "{0, plural, one {# model} other {# models}}"
 msgstr "{0, plural, one {# model} other {# models}}"
 
 #. placeholder {0}: preview.memoryCount
-#: src/pages/BotImportOverlay.tsx:185
+#: src/pages/BotImportOverlay.tsx
 msgid "{0, plural, zero {No memories} one {# memory} other {# memories}}"
 msgstr "{0, plural, zero {No memories} one {# memory} other {# memories}}"
 
 #. placeholder {0}: preview.routineNames.length
-#: src/pages/BotImportOverlay.tsx:193
+#: src/pages/BotImportOverlay.tsx
 msgid "{0, plural, zero {No routines} one {Routine: #} other {Routines: #}}"
 msgstr "{0, plural, zero {No routines} one {Routine: #} other {Routines: #}}"
 
@@ -50,7 +50,7 @@ msgstr "{0} {unitLabel}"
 #. placeholder {0}: usage.totalTokens.toLocaleString(i18n.locale)
 #. placeholder {1}: usage.monthlyTokenBudget.toLocaleString(i18n.locale)
 #. placeholder {2}: usage.usedPercent ?? 0
-#: src/pages/shell/bot-panel.tsx:569
+#: src/pages/shell/bot-panel.tsx
 msgid "{0} / {1} tokens this month ({2}%)"
 msgstr "{0} / {1} tokens this month ({2}%)"
 
@@ -65,7 +65,7 @@ msgid "{0} default"
 msgstr "{0} default"
 
 #. placeholder {0}: bot.routineTokens.toLocaleString(locale)
-#: src/pages/AccountSettingsOverlay.tsx:266
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "{0} from routines"
 msgstr "{0} from routines"
 
@@ -96,7 +96,7 @@ msgid "{0} runs · {1} tokens"
 msgstr "{0} runs · {1} tokens"
 
 #. placeholder {0}: usage.totalTokens.toLocaleString(i18n.locale)
-#: src/pages/shell/bot-panel.tsx:570
+#: src/pages/shell/bot-panel.tsx
 msgid "{0} tokens this month"
 msgstr "{0} tokens this month"
 
@@ -181,21 +181,25 @@ msgstr "{workingBotName} is working"
 msgid "@{0}"
 msgstr "@{0}"
 
-#: src/pages/McpServersOverlay.tsx:449
+#: src/pages/McpServersOverlay.tsx
 msgid "1-Klick Aktivieren"
 msgstr "1-Klick Aktivieren"
 
-#: src/pages/McpServersOverlay.tsx:350
+#: src/pages/McpServersOverlay.tsx
 msgid "1-Klick Connectors (Empfohlen)"
 msgstr "1-Klick Connectors (Empfohlen)"
 
-#: src/pages/PluginsOverlay.tsx:781
+#: src/pages/PluginsOverlay.tsx
 msgid "1-Klick Connectors (Grok-Bot Style)"
 msgstr "1-Klick Connectors (Grok-Bot Style)"
 
-#: src/pages/shell/message-cards.tsx:137
+#: src/pages/shell/message-cards.tsx
 msgid "A bit of everything"
 msgstr "A bit of everything"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Abbrechen"
+msgstr "Abbrechen"
 
 #: src/pages/shell/bot-picker.tsx
 msgid "About groups"
@@ -379,6 +383,14 @@ msgstr "Agent connections"
 msgid "Agents:"
 msgstr "Agents:"
 
+#: src/pages/PluginsOverlay.tsx
+msgid "Aktiv"
+msgstr "Aktiv"
+
+#: src/pages/McpServersOverlay.tsx
+msgid "Aktivieren…"
+msgstr "Aktivieren…"
+
 #: src/pages/Artifacts.tsx
 msgid "All bots"
 msgstr "All bots"
@@ -442,6 +454,10 @@ msgstr "Always allowed"
 msgid "Answer"
 msgstr "Answer"
 
+#: src/components/ai/RunReceiptRow.tsx
+msgid "answered"
+msgstr "answered"
+
 #: src/components/AskCard.tsx
 msgid "Answered"
 msgstr "Answered"
@@ -472,18 +488,21 @@ msgstr "API key"
 msgid "API key header"
 msgstr "API key header"
 
-#: src/pages/AccountSettingsOverlay.tsx:612
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "App Installation"
 msgstr "App Installation"
 
-#: src/pages/AccountSettingsOverlay.tsx:116
-#: src/pages/AccountSettingsOverlay.tsx:444
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "Appearance"
 msgstr "Appearance"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Approval boundaries"
 msgstr "Approval boundaries"
+
+#: src/components/ai/RunReceiptRow.tsx
+msgid "Approvals"
+msgstr "Approvals"
 
 #: src/pages/MessagingSettingsOverlay.tsx
 #: src/pages/shell/message-cards.tsx
@@ -514,6 +533,7 @@ msgstr "Archived. Chat, memory, and files kept."
 msgid "Arguments"
 msgstr "Arguments"
 
+#: src/components/ai/RunReceiptRow.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/Shell.tsx
 msgid "Artifacts"
@@ -600,6 +620,10 @@ msgstr "Automated senders"
 msgid "Automated senders will appear after they post here."
 msgstr "Automated senders will appear after they post here."
 
+#: src/pages/PluginsOverlay.tsx
+msgid "Automatisch für alle Bots aktiv"
+msgstr "Automatisch für alle Bots aktiv"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Available after the routine is saved"
 msgstr "Available after the routine is saved"
@@ -655,6 +679,11 @@ msgstr "Bot"
 msgid "Bot"
 msgstr "Bot"
 
+#. placeholder {0}: imported.name
+#: src/pages/BotImportOverlay.tsx
+msgid "Bot <0>{0}</0> was created."
+msgstr "Bot <0>{0}</0> was created."
+
 #: src/pages/Shell.tsx
 msgid "Bot screen"
 msgstr "Bot screen"
@@ -679,10 +708,6 @@ msgstr "Bots are working"
 msgid "Brain label"
 msgstr "Brain label"
 
-#: src/pages/PluginsOverlay.tsx
-msgid "Browse MCP servers"
-msgstr "Browse MCP servers"
-
 #: src/components/computer/ComputerWorkspace.tsx
 msgid "Browser"
 msgstr "Browser"
@@ -696,6 +721,7 @@ msgstr "Can't reach the server."
 #: src/components/ComputerUpdateProgress.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/BotImportOverlay.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/dialogs.tsx
@@ -851,6 +877,10 @@ msgstr "Close computer"
 #: src/pages/shell/message-cards.tsx
 msgid "Close image preview"
 msgstr "Close image preview"
+
+#: src/pages/BotImportOverlay.tsx
+msgid "Close import"
+msgstr "Close import"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Close integrations"
@@ -1233,9 +1263,18 @@ msgstr "Could not download {name}. Try again."
 msgid "Could not download file"
 msgstr "Could not download file"
 
+#: src/pages/BotImportOverlay.tsx
+msgid "Could not import this bot"
+msgstr "Could not import this bot"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not install connector"
 msgstr "Could not install connector"
+
+#: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
+msgid "Could not install preset"
+msgstr "Could not install preset"
 
 #: src/components/computer/FilesApp.tsx
 msgid "Could not list files"
@@ -1324,6 +1363,10 @@ msgstr "Could not reach the server"
 msgid "Could not reach this model server"
 msgstr "Could not reach this model server"
 
+#: src/pages/BotImportOverlay.tsx
+msgid "Could not read this preset."
+msgstr "Could not read this preset."
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Could not remove"
 msgstr "Could not remove"
@@ -1336,12 +1379,12 @@ msgstr "Could not remove connector"
 msgid "Could not remove group"
 msgstr "Could not remove group"
 
-#: src/pages/McpServersOverlay.tsx:127
-#: src/pages/PluginsOverlay.tsx:205
+#: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "Could not remove preset"
 msgstr "Could not remove preset"
 
-#: src/components/ApprovalRulesSettings.tsx:92
+#: src/components/ApprovalRulesSettings.tsx
 msgid "Could not remove rule"
 msgstr "Could not remove rule"
 
@@ -1672,11 +1715,11 @@ msgstr "Describe what this bot does"
 msgid "Description"
 msgstr "Description"
 
-#: src/pages/AccountSettingsOverlay.tsx:626
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "Desktop & Mobile App"
 msgstr "Desktop & Mobile App"
 
-#: src/components/DesktopUpdates.tsx:140
+#: src/components/DesktopUpdates.tsx
 msgid "Desktop app"
 msgstr "Desktop app"
 
@@ -1730,6 +1773,7 @@ msgid "Don’t have an account?"
 msgstr "Don’t have an account?"
 
 #: src/pages/ActivityList.tsx
+#: src/pages/BotImportOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Done"
 msgstr "Done"
@@ -1770,9 +1814,17 @@ msgstr "Draft skill"
 msgid "Drag, drop, or paste an image"
 msgstr "Drag, drop, or paste an image"
 
+#: src/pages/BotImportOverlay.tsx
+msgid "Drop a preset file here, or click to choose"
+msgstr "Drop a preset file here, or click to choose"
+
 #: src/pages/BotContextMenu.tsx
 msgid "Duplicate"
 msgstr "Duplicate"
+
+#: src/components/ai/RunReceiptRow.tsx
+msgid "Duration"
+msgstr "Duration"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "e.g. Hivenet Agent, Presales, Timesheets bot"
@@ -1789,6 +1841,10 @@ msgstr "Edit first"
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
 msgstr "Edit Profile"
+
+#: src/components/ai/RunReceiptRow.tsx
+msgid "Effects"
+msgstr "Effects"
 
 #: src/pages/Auth.tsx
 msgid "Email"
@@ -1818,6 +1874,10 @@ msgstr "Enter a whole number from 1 to 1000 for the image limit."
 #: src/pages/Onboarding.tsx
 msgid "Enter this code at <0>{0}</0>"
 msgstr "Enter this code at <0>{0}</0>"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Erweiterte Server"
+msgstr "Erweiterte Server"
 
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -1967,11 +2027,11 @@ msgstr "Forgot password?"
 msgid "Free"
 msgstr "Free"
 
-#: src/pages/McpServersOverlay.tsx:472
+#: src/pages/McpServersOverlay.tsx
 msgid "Füge einen GitHub-Token (mit repo/read-Rechten) ein, um den Connector zu aktivieren:"
 msgstr "Füge einen GitHub-Token (mit repo/read-Rechten) ein, um den Connector zu aktivieren:"
 
-#: src/pages/WindowChrome.tsx:31
+#: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "Fullscreen"
 
@@ -1995,13 +2055,12 @@ msgstr "Getting ready"
 msgid "Git event"
 msgstr "Git event"
 
-#: src/pages/McpServersOverlay.tsx:465
+#: src/pages/McpServersOverlay.tsx
 msgid "GitHub Personal Access Token erforderlich"
 msgstr "GitHub Personal Access Token erforderlich"
 
-#: src/pages/MessagingSettingsOverlay.tsx:204
-#: src/pages/Shell.tsx:3429
-#: src/pages/Shell.tsx:3584
+#: src/pages/MessagingSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Group"
 msgstr "Group"
 
@@ -2101,13 +2160,41 @@ msgstr "Ignore"
 msgid "Image upload area"
 msgstr "Image upload area"
 
+#: src/pages/BotImportOverlay.tsx
+msgid "Import"
+msgstr "Import"
+
+#: src/pages/BotImportOverlay.tsx
+msgid "Import bot"
+msgstr "Import bot"
+
+#: src/pages/shell/bot-picker.tsx
+msgid "Import bot…"
+msgstr "Import bot…"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Import OpenAPI JSON"
 msgstr "Import OpenAPI JSON"
 
+#: src/pages/BotImportOverlay.tsx
+msgid "Importing…"
+msgstr "Importing…"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Inbox & email"
 msgstr "Inbox & email"
+
+#: src/pages/BotImportOverlay.tsx
+msgid "Include files"
+msgstr "Include files"
+
+#: src/pages/BotImportOverlay.tsx
+msgid "Include memories"
+msgstr "Include memories"
+
+#: src/pages/BotImportOverlay.tsx
+msgid "Include routines (imported inactive)"
+msgstr "Include routines (imported inactive)"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
@@ -2117,20 +2204,20 @@ msgstr "Inherit default"
 msgid "Inputs"
 msgstr "Inputs"
 
-#: src/pages/AccountSettingsOverlay.tsx:639
-#: src/pages/Shell.tsx:3314
+#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Install app"
 msgstr "Install app"
 
-#: src/pages/AccountSettingsOverlay.tsx:629
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "Install Rakazo as a standalone app without browser borders."
 msgstr "Install Rakazo as a standalone app without browser borders."
 
-#: src/pages/AccountSettingsOverlay.tsx:643
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "Install via browser menu"
 msgstr "Install via browser menu"
 
-#: src/pages/memory-providers/SupermemorySettingsForm.tsx:61
+#: src/pages/memory-providers/SupermemorySettingsForm.tsx
 msgid "Instance API key"
 msgstr "Instance API key"
 
@@ -2204,11 +2291,11 @@ msgstr "just now"
 msgid "Keep memories"
 msgstr "Keep memories"
 
-#: src/pages/McpServersOverlay.tsx:354
+#: src/pages/McpServersOverlay.tsx
 msgid "Keine manuelle Konfiguration nötig"
 msgstr "Keine manuelle Konfiguration nötig"
 
-#: src/pages/RoutineEditor.tsx:605
+#: src/pages/RoutineEditor.tsx
 msgid "key"
 msgstr "key"
 
@@ -2255,6 +2342,10 @@ msgstr "Listen"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Listening"
 msgstr "Listening"
+
+#: src/pages/BotImportOverlay.tsx
+msgid "Load a bot from an exported preset file."
+msgstr "Load a bot from an exported preset file."
 
 #: src/pages/Shell.tsx
 msgid "Load earlier messages"
@@ -2383,11 +2474,11 @@ msgstr "Maximum output tokens"
 msgid "MCP endpoint"
 msgstr "MCP endpoint"
 
-#: src/pages/PluginsOverlay.tsx:798
+#: src/pages/PluginsOverlay.tsx
 msgid "MCP Server konfigurieren"
 msgstr "MCP Server konfigurieren"
 
-#: src/pages/McpServersOverlay.tsx:327
+#: src/pages/McpServersOverlay.tsx
 msgid "MCP servers"
 msgstr "MCP servers"
 
@@ -2528,6 +2619,10 @@ msgstr "Models from server"
 #: src/pages/RoutineSchedule.tsx
 msgid "Monthly"
 msgstr "Monthly"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Monthly token budget"
+msgstr "Monthly token budget"
 
 #: src/pages/Shell.tsx
 msgid "More"
@@ -2910,6 +3005,14 @@ msgstr "Paste your API key"
 msgid "Paused"
 msgstr "Paused"
 
+#: src/components/ai/RunReceiptRow.tsx
+msgid "pending"
+msgstr "pending"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Personal Access Token"
+msgstr "Personal Access Token"
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Personal credential"
 msgstr "Personal credential"
@@ -2973,15 +3076,15 @@ msgstr "Queued"
 msgid "Quote"
 msgstr "Quote"
 
-#: src/pages/Shell.tsx:5409
+#: src/pages/Shell.tsx
 msgid "Raise budget"
 msgstr "Raise budget"
 
-#: src/pages/AccountSettingsOverlay.tsx:615
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "Rakazo is installed as a standalone app."
 msgstr "Rakazo is installed as a standalone app."
 
-#: src/pages/Shell.tsx:5902
+#: src/pages/Shell.tsx
 msgid "React"
 msgstr "React"
 
@@ -3009,6 +3112,14 @@ msgstr "Recall and write"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Recall only"
 msgstr "Recall only"
+
+#: src/components/ai/RunReceiptRow.tsx
+msgid "Receipt"
+msgstr "Receipt"
+
+#: src/components/ai/RunReceiptRow.tsx
+msgid "Receipt unavailable"
+msgstr "Receipt unavailable"
 
 #: src/pages/ActivityList.tsx
 msgid "Recent"
@@ -3596,6 +3707,10 @@ msgstr "Speak this reply"
 msgid "Speech model"
 msgstr "Speech model"
 
+#: src/pages/PluginsOverlay.tsx
+msgid "Speichern"
+msgstr "Speichern"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Start recording"
 msgstr "Start recording"
@@ -3714,6 +3829,10 @@ msgstr "Test"
 msgid "Test run"
 msgstr "Test run"
 
+#: src/pages/BotImportOverlay.tsx
+msgid "That file is not valid JSON."
+msgstr "That file is not valid JSON."
+
 #: src/components/SoftwareUpdateSection.tsx
 msgid "The API did not come back. Refresh this page."
 msgstr "The API did not come back. Refresh this page."
@@ -3751,6 +3870,10 @@ msgstr "this computer"
 msgid "This deletes all {0} versions of this artifact. This can't be undone."
 msgstr "This deletes all {0} versions of this artifact. This can't be undone."
 
+#: src/pages/BotImportOverlay.tsx
+msgid "This file is not a Rakazo bot preset (export format 1)."
+msgstr "This file is not a Rakazo bot preset (export format 1)."
+
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "This file is not valid UTF-8 text."
@@ -3759,6 +3882,7 @@ msgstr "This file is not valid UTF-8 text."
 msgid "this Mac"
 msgstr "this Mac"
 
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Artifacts.tsx
 msgid "This month"
 msgstr "This month"
@@ -3807,10 +3931,15 @@ msgstr "To:"
 msgid "Today"
 msgstr "Today"
 
+#: src/components/ai/RunReceiptRow.tsx
+msgid "Tokens"
+msgstr "Tokens"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Tool sources"
 msgstr "Tool sources"
 
+#: src/components/ai/RunReceiptRow.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Tools"
 msgstr "Tools"
@@ -3827,12 +3956,12 @@ msgstr "Treat like a person"
 msgid "Treg token"
 msgstr "Treg token"
 
-#: src/pages/McpServersOverlay.tsx:423
-#: src/pages/PluginsOverlay.tsx:866
+#: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "Trennen"
 msgstr "Trennen"
 
-#: src/pages/Onboarding.tsx:696
+#: src/pages/Onboarding.tsx
 msgid "Try again"
 msgstr "Try again"
 
@@ -3855,6 +3984,10 @@ msgstr "Unavailable"
 #: src/pages/PluginsOverlay.tsx
 msgid "Uninstall"
 msgstr "Uninstall"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Unlimited"
+msgstr "Unlimited"
 
 #: src/pages/MessagingSettingsOverlay.tsx
 msgid "Unlink"
@@ -3961,13 +4094,12 @@ msgstr "Use this model"
 msgid "Username"
 msgstr "Username"
 
-#: src/pages/McpServersOverlay.tsx:500
-#: src/pages/PluginsOverlay.tsx:917
-#: src/pages/PluginsOverlay.tsx:933
+#: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "Verbinden"
 msgstr "Verbinden"
 
-#: src/pages/PluginsOverlay.tsx:1324
+#: src/pages/PluginsOverlay.tsx
 msgid "Verify and add"
 msgstr "Verify and add"
 
