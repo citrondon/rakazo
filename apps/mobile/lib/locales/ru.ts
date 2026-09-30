@@ -638,4 +638,18 @@ export const RU_MESSAGES: Record<string, string> = {
   "Voice chat": "Голосовой чат",
   "Show transcript": "Показать расшифровку",
   "Hide transcript": "Скрыть расшифровку",
+  // lib/run-receipt.ts
+  Duration: "Длительность",
+  Tokens: "Токены",
+  Artifacts: "Артефакты",
+  Effects: "Внешние действия",
+  Approvals: "Согласования",
+  answered: "отвечено",
+  pending: "ожидает",
+  // app/thread.tsx
+  Receipt: "Отчёт",
+  "Receipt unavailable": "Отчёт недоступен",
+  // app/account.tsx
+  "This month": "В этом месяце",
+  "{used} / {budget}": "{used} / {budget}",
 };

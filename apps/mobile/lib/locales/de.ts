@@ -638,4 +638,18 @@ export const DE_MESSAGES: Record<string, string> = {
   Transcript: "Transkript",
   Unmute: "Stummschaltung aufheben",
   "Voice chat": "Sprachchat",
+  // lib/run-receipt.ts
+  Duration: "Dauer",
+  Tokens: "Tokens",
+  Artifacts: "Artefakte",
+  Effects: "Externe Aktionen",
+  Approvals: "Freigaben",
+  answered: "beantwortet",
+  pending: "offen",
+  // app/thread.tsx
+  Receipt: "Protokoll",
+  "Receipt unavailable": "Protokoll nicht verfügbar",
+  // app/account.tsx
+  "This month": "Diesen Monat",
+  "{used} / {budget}": "{used} / {budget}",
 };

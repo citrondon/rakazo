@@ -620,4 +620,18 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Voice chat": "语音通话",
   "Show transcript": "显示字幕",
   "Hide transcript": "隐藏字幕",
+  // lib/run-receipt.ts
+  Duration: "耗时",
+  Tokens: "词元",
+  Artifacts: "产物",
+  Effects: "外部操作",
+  Approvals: "审批",
+  answered: "已回复",
+  pending: "待处理",
+  // app/thread.tsx
+  Receipt: "回执",
+  "Receipt unavailable": "回执不可用",
+  // app/account.tsx
+  "This month": "本月",
+  "{used} / {budget}": "{used} / {budget}",
 };
