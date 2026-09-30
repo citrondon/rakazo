@@ -1,10 +1,12 @@
 import { hasValidBearerToken } from "@rakazo/core";
+import { createTriggerRepos } from "@rakazo/db";
 import type { Hono } from "hono";
 import { mountGithubWebhookRoute } from "./github-webhook.js";
 import { readBoundedBody } from "./http-body.js";
 import {
   deliverWebhookEvent,
   formatWebhookPrompt,
+  inboundEventName,
   loadWebhookTarget,
   parseWebhookPayload,
   WEBHOOK_MAX_BODY_BYTES,
@@ -63,6 +65,16 @@ export function mountWebhookHttpRoutes(app: Hono, deps: WebhookDeps) {
       take: 5,
     });
 
+    // A stored trigger narrows which of those routines may run and folds in mapped fields.
+    const eventType =
+      typeof payload.event === "string" ? inboundEventName(payload.event) : "generic";
+    const triggers = await createTriggerRepos(deps.prisma).listEnabledTriggersForEvent({
+      spaceId: target.bot.spaceId,
+      botId: target.bot.id,
+      provider: "webhook",
+      eventType,
+    });
+
     const idempotencyKey =
       c.req.header("idempotency-key")?.trim() ||
       c.req.header("x-idempotency-key")?.trim() ||
@@ -76,6 +88,8 @@ export function mountWebhookHttpRoutes(app: Hono, deps: WebhookDeps) {
         routines: webhookRoutines,
         source: "webhook",
         idempotencyKey,
+        triggers,
+        event: { source: "webhook", provider: "webhook", type: eventType, payload },
       }),
     );
   });

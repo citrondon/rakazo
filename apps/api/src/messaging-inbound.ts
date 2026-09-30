@@ -12,6 +12,7 @@ import type {
 } from "@rakazo/db";
 import {
   createThreadMessage,
+  createTriggerRepos,
   normalizeMessagingLinkCode,
   redeemMessagingLinkCode,
 } from "@rakazo/db";
@@ -222,7 +223,7 @@ export async function wakeMessageRoutines(
   }
 
   const provider = inboundEventName(event.provider);
-  const prompt = formatUntrustedDeliveryPayload(`[Messaging Event: ${provider}]`, {
+  const payload = {
     provider: event.provider,
     kind: event.isDirect ? "direct" : "channel",
     handle: event.handle,
@@ -231,6 +232,13 @@ export async function wakeMessageRoutines(
     channelName: event.channelName,
     content: event.content,
     mediaUrl: event.mediaUrl,
+  };
+  const prompt = formatUntrustedDeliveryPayload(`[Messaging Event: ${provider}]`, payload);
+  const triggers = await createTriggerRepos(deps.prisma).listEnabledTriggersForEvent({
+    spaceId: target.spaceId,
+    botId: target.botId,
+    provider: event.provider,
+    eventType: "message",
   });
   await deliverWebhookEvent(
     { events: deps.events, jobs: deps.jobs },
@@ -248,6 +256,8 @@ export async function wakeMessageRoutines(
       ),
       // TeamChat channel wakes may share a live thread with an active chat run.
       allowParallelRun: true,
+      triggers,
+      event: { source: "connector", provider: event.provider, type: "message", payload },
     },
   );
   return true;

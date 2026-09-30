@@ -17,3 +17,4 @@ export * from "./runs.js";
 export * from "./search.js";
 export * from "./teams.js";
 export * from "./terminal.js";
+export * from "./triggers.js";

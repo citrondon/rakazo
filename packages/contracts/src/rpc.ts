@@ -89,6 +89,7 @@ import {
   IntegrationProviderConfigSchema,
   IntegrationSetupStateSchema,
 } from "./integration-settings.js";
+import { McpStdioStatusSchema } from "./mcp.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RunReceiptSchema, RunsListOutputSchema } from "./runs.js";
 import { SearchQueryOutputSchema } from "./search.js";
@@ -98,6 +99,12 @@ import {
   TeamCreateOutputSchema,
   TeamTemplateSchema,
 } from "./teams.js";
+import {
+  CreateTriggerInput,
+  EventDefinitionSchema,
+  TriggerSchema,
+  UpdateTriggerInput,
+} from "./triggers.js";
 
 const botId = z.object({ botId: Id });
 const groupId = z.object({ groupId: Id });
@@ -514,6 +521,16 @@ export const appContract = {
       )
       .output(z.object({ runId: Id })),
   },
+  triggers: {
+    list: oc.input(z.object({ routineId: Id })).output(z.array(TriggerSchema)),
+    create: oc.input(CreateTriggerInput).output(TriggerSchema),
+    update: oc.input(UpdateTriggerInput).output(TriggerSchema),
+    remove: oc.input(z.object({ triggerId: Id })).output(z.object({ ok: z.literal(true) })),
+  },
+  events: {
+    /** The discoverable events a trigger can listen for, provider-neutral. */
+    list: oc.output(z.array(EventDefinitionSchema)),
+  },
   scratchpad: {
     list: oc
       .input(
@@ -618,6 +635,7 @@ export const appContract = {
   mcp: {
     servers: {
       list: oc.output(z.array(McpServerSchema)),
+      stdioStatus: oc.output(McpStdioStatusSchema),
       create: oc.input(McpServerConfigInput).output(McpServerSchema),
       update: oc
         .input(
@@ -677,6 +695,8 @@ export const appContract = {
     start: oc.input(z.object({ botId: Id })).output(z.object({ ok: z.literal(true) })),
     /** Post the focus choice card when the thread is still idle. */
     promptFocus: oc.input(z.object({ botId: Id })).output(z.object({ ok: z.literal(true) })),
+    /** Post the team template choice card when the thread is still idle and no bots exist. */
+    promptTeamTemplate: oc.input(z.object({ botId: Id })).output(z.object({ ok: z.literal(true) })),
     /** Answer the focus choice; posts the app cards. Does not rename the bot. */
     choose: oc
       .input(z.object({ botId: Id, optionId: z.string() }))

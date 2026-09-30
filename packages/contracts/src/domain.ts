@@ -501,6 +501,11 @@ export type TaughtSkill = z.infer<typeof TaughtSkillSchema>;
 export const AgentSkillSourceSchema = z.enum(["user", "builtin", "plugin"]);
 export type AgentSkillSource = z.infer<typeof AgentSkillSourceSchema>;
 
+/** A skill is a name plus a SKILL.md body; both the edit inputs and an exported skill pack
+ * are capped by these two numbers. */
+export const AGENT_SKILL_NAME_MAX_LENGTH = 80;
+export const AGENT_SKILL_CONTENT_MAX_LENGTH = 100_000;
+
 export const AgentSkillSchema = z.object({
   id: Id,
   name: z.string(),
@@ -524,10 +529,10 @@ export type AgentSkillCatalogEntry = z.infer<typeof AgentSkillCatalogEntrySchema
 
 export const CreateAgentSkillInput = z
   .object({
-    content: z.string().min(1).max(100_000).optional(),
-    name: z.string().min(1).max(80).optional(),
+    content: z.string().min(1).max(AGENT_SKILL_CONTENT_MAX_LENGTH).optional(),
+    name: z.string().min(1).max(AGENT_SKILL_NAME_MAX_LENGTH).optional(),
     description: z.string().min(1).max(2000).optional(),
-    body: z.string().max(100_000).optional(),
+    body: z.string().max(AGENT_SKILL_CONTENT_MAX_LENGTH).optional(),
   })
   .superRefine((input, ctx) => {
     if (input.content?.trim()) return;
@@ -543,10 +548,10 @@ export const CreateAgentSkillInput = z
 export const UpdateAgentSkillInput = z
   .object({
     skillId: Id,
-    content: z.string().min(1).max(100_000).optional(),
-    name: z.string().min(1).max(80).optional(),
+    content: z.string().min(1).max(AGENT_SKILL_CONTENT_MAX_LENGTH).optional(),
+    name: z.string().min(1).max(AGENT_SKILL_NAME_MAX_LENGTH).optional(),
     description: z.string().min(1).max(2000).optional(),
-    body: z.string().max(100_000).optional(),
+    body: z.string().max(AGENT_SKILL_CONTENT_MAX_LENGTH).optional(),
   })
   .superRefine((input, ctx) => {
     if (
@@ -1297,6 +1302,15 @@ export type AppBootstrap = z.infer<typeof AppBootstrapSchema>;
 export const BOT_INTEGRATIONS_MAX_COUNT = 12;
 export const BOT_INTEGRATION_NAME_MAX_LENGTH = 64;
 
+/** A skill pack travels as SKILL.md text: an imported bot's `@Skill` mentions only resolve
+ * again if the skills themselves come along. Capped by the same numbers as the edit inputs. */
+export const BOT_EXPORT_SKILLS_MAX_COUNT = 32;
+export const BotExportSkillSchema = z.object({
+  name: z.string().trim().min(1).max(AGENT_SKILL_NAME_MAX_LENGTH),
+  content: z.string().min(1).max(AGENT_SKILL_CONTENT_MAX_LENGTH),
+});
+export type BotExportSkill = z.infer<typeof BotExportSkillSchema>;
+
 export const ExportManifestSchema = z.object({
   version: z.literal(1),
   exportedAt: z.string(),
@@ -1306,6 +1320,7 @@ export const ExportManifestSchema = z.object({
     .array(z.string().trim().min(1).max(BOT_INTEGRATION_NAME_MAX_LENGTH))
     .max(BOT_INTEGRATIONS_MAX_COUNT)
     .default([]),
+  skills: z.array(BotExportSkillSchema).max(BOT_EXPORT_SKILLS_MAX_COUNT).default([]),
   memory: z.array(z.object({ path: z.string(), content: z.string() })),
   routines: z.array(RoutineSchema.pick({ name: true, prompt: true, crons: true, timezone: true })),
   files: z.array(z.object({ path: z.string(), content: z.string() })),
@@ -1320,12 +1335,14 @@ const BOT_IMPORT_ITEM_MAX = 1_000_000;
 const BOT_IMPORT_ITEM_COUNT_MAX = 200;
 
 /** Import input: the export manifest plus which durable parts to bring along. History is
- * deliberately not importable — an imported bot starts with a fresh thread. */
+ * deliberately not importable — an imported bot starts with a fresh thread. Skills are
+ * space-level, so `includeSkills` writes into the importer's own skill list, not into the bot. */
 export const BotImportInputSchema = z
   .object({
     manifest: ExportManifestSchema,
     includeMemory: z.boolean().default(true),
     includeRoutines: z.boolean().default(true),
+    includeSkills: z.boolean().default(true),
     includeFiles: z.boolean().default(false),
   })
   .superRefine((value, ctx) => {
@@ -1370,6 +1387,7 @@ export const ImportPreviewSchema = z.object({
   instructionsPreview: z.string(),
   memoryCount: z.number().int().nonnegative(),
   routineNames: z.array(z.string()),
+  skillNames: z.array(z.string()),
   fileCount: z.number().int().nonnegative(),
   historyCount: z.number().int().nonnegative(),
   warnings: z.array(z.string()),

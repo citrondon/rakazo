@@ -253,6 +253,13 @@ import {
   threadHead,
   threadSnapshot,
 } from "./thread-target.js";
+import {
+  createTrigger,
+  deleteTrigger,
+  listEvents,
+  listTriggers,
+  updateTrigger,
+} from "./triggers.js";
 import { loadUsageMonth } from "./usage-month.js";
 import {
   disconnectVoiceCredential,
@@ -3345,6 +3352,23 @@ export function createRouter(deps: RouterDeps) {
         });
         return { runId: run.id };
       }),
+    },
+    triggers: {
+      list: authed.triggers.list.handler(async ({ context, input }) =>
+        listTriggers(deps, context.actor, input),
+      ),
+      create: authed.triggers.create.handler(async ({ context, input }) =>
+        createTrigger(deps, context.actor, input),
+      ),
+      update: authed.triggers.update.handler(async ({ context, input }) =>
+        updateTrigger(deps, context.actor, input),
+      ),
+      remove: authed.triggers.remove.handler(async ({ context, input }) =>
+        deleteTrigger(deps, context.actor, input),
+      ),
+    },
+    events: {
+      list: authed.events.list.handler(async () => listEvents()),
     },
     scratchpad: {
       list: authed.scratchpad.list.handler(async ({ context, input }) => {

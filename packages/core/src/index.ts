@@ -51,4 +51,8 @@ export * from "./thread-message-updates.js";
 export * from "./thread-subscription.js";
 export * from "./token-budget.js";
 export * from "./tool-activity.js";
+export * from "./trigger-engine.js";
+export * from "./trigger-filter.js";
+export * from "./trust-effects.js";
+export * from "./trust-runner.js";
 export * from "./voice-chat-groups.js";

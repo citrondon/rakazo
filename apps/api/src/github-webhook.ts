@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { createTriggerRepos } from "@rakazo/db";
 import type { Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
 import {
@@ -205,12 +206,22 @@ export function mountGithubWebhookRoute(app: Hono, deps: WebhookDeps) {
     const githubEvent = githubEventName(c.req.header("x-github-event"));
     const eventPrompt = formatGithubEventPrompt(githubEvent, payload);
 
+    // A stored trigger narrows which GitHub routines may run and folds in mapped fields.
+    const triggers = await createTriggerRepos(deps.prisma).listEnabledTriggersForEvent({
+      spaceId: target.bot.spaceId,
+      botId: target.bot.id,
+      provider: "github",
+      eventType: githubEvent,
+    });
+
     return c.json(
       await deliverWebhookEvent(deps, target, {
         prompt: eventPrompt,
         routines: githubRoutines,
         source: "github",
         idempotencyKey: deliveryId,
+        triggers,
+        event: { source: "connector", provider: "github", type: githubEvent, payload },
       }),
     );
   });

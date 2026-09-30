@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import type { JobPublisher } from "@rakazo/adapter-kit";
 import { runContinueJob } from "@rakazo/adapter-kit";
 import type { EncryptedSecretStore } from "@rakazo/adapters";
+import type { Trigger, TriggerEvent } from "@rakazo/contracts";
+import { selectTriggeredRoutines, applyTriggerMappings, type TriggerCandidate } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 
@@ -153,19 +155,31 @@ export async function deliverWebhookEvent(
   target: InboundTarget,
   input: {
     prompt: string;
-    routines: Array<{ name: string; prompt: string }>;
+    routines: Array<{ id?: string; name: string; prompt: string }>;
     source: "webhook" | "github" | "messaging";
     idempotencyKey?: string;
     /** Messaging wakes share the live chat thread; keep a separate webhook run. */
     allowParallelRun?: boolean;
+    /** Stored reactive triggers for this bot/provider; narrows the routines that may run. */
+    triggers?: Trigger[];
+    /** Normalized inbound event the triggers filter against. */
+    event?: TriggerEvent;
   },
 ) {
+  const candidates: TriggerCandidate[] = input.routines.map((routine) => ({
+    routineId: routine.id ?? "",
+    name: routine.name,
+    prompt: routine.prompt,
+  }));
+  const routines =
+    input.triggers && input.triggers.length > 0 && input.event
+      ? selectTriggeredRoutines(candidates, input.triggers, input.event)
+      : candidates.map(({ name, prompt }) => ({ name, prompt }));
+
   const promptText =
-    input.routines.length > 0
+    routines.length > 0
       ? [
-          ...input.routines.map(
-            (routine) => `Run routine "${routine.name}":\n${routine.prompt.trim()}`,
-          ),
+          ...routines.map((routine) => `Run routine "${routine.name}":\n${routine.prompt.trim()}`),
           "",
           input.source === "github"
             ? "Inbound GitHub event metadata:"

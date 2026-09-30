@@ -181,6 +181,7 @@ model Space {
   tasks                       Task[]
   runs                        Run[]
   routines                    Routine[]
+  triggers                    Trigger[]
   scratchpadItems             ScratchpadItem[]
   taughtSkills                TaughtSkill[]
   agentSkills                 AgentSkill[]
@@ -382,6 +383,7 @@ model Bot {
   teamChatAmbientEnabled Boolean @default(false)
   teamChatRules          String  @default("")
   routines          Routine[]
+  triggers          Trigger[]
   scratchpadItems   ScratchpadItem[]
   taughtSkills      TaughtSkill[]
   memoryDocuments   MemoryDocument[]
@@ -730,6 +732,7 @@ model Routine {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   runs           Run[]
+  triggers       Trigger[]
 
   @@index([active, nextRunAt])
   @@index([spaceId, botId])
@@ -1341,4 +1344,27 @@ model IntegrationProviderConfig {
   updatedAt  DateTime @updatedAt
 
   @@map("integration_provider_configs")
+}
+
+model Trigger {
+  id           String              @id @default(cuid())
+  spaceId      String
+  space        Space               @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  routineId    String
+  routine      Routine             @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  botId        String
+  bot          Bot                 @relation(fields: [botId], references: [id], onDelete: Cascade)
+  userId       String
+  source       String
+  provider     String
+  eventType    String?
+  filter       Json                @default("{\"predicates\":[]}")
+  mappings     Json                @default("[]")
+  enabled      Boolean             @default(true)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([routineId])
+  @@index([spaceId, provider, eventType, enabled])
+  @@map("triggers")
 }
