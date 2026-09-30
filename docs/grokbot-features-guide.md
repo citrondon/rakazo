@@ -77,6 +77,10 @@ MCP-Preset **„Markdown Second Brain"** (`apps/web/src/pages/mcp-presets.ts`) m
 Liste: „Workspace Files", „Terminal & Code Runner", „Web-Recherche & Fetch", „SQLite & Data
 Explorer", „GitHub Connect".
 
+Voraussetzung: stdio-MCP startet auf dem Server nur, wenn es freigegeben ist (`MCP_STDIO_ENABLED=true`
+und der Befehl in `MCP_STDIO_ALLOWED_COMMANDS`). Die UI nennt den fehlenden Schalter direkt am
+Preset, statt einen Server zu speichern, der nie startet.
+
 Host-Mirror zum Bearbeiten auf dem Rechner:
 
 ```bash
