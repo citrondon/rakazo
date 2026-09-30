@@ -19,6 +19,7 @@ export function BotCreatePicker({
   onOpenBot,
   onCreateGroup,
   onCreateSpace,
+  onCreateTeamFromTemplate,
   onShowGroupInfo,
   onShowSpaceInfo,
 }: {
@@ -28,6 +29,7 @@ export function BotCreatePicker({
   onOpenBot: (botId: string) => void;
   onCreateGroup: () => void;
   onCreateSpace: () => void;
+  onCreateTeamFromTemplate: () => void;
   onShowGroupInfo: () => void;
   onShowSpaceInfo: () => void;
 }) {
@@ -115,6 +117,34 @@ export function BotCreatePicker({
                 data-testid="picker-info-group"
                 aria-label={t`About groups`}
                 title={t`About groups`}
+                onPointerDown={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  onShowGroupInfo();
+                }}
+                onKeyDown={(event) => event.stopPropagation()}
+                className="-mr-2 shrink-0 rounded p-1 text-muted-foreground/70 opacity-0 transition-opacity duration-150 group-focus-within/command-item:opacity-100 group-hover/command-item:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <Info size={14} strokeWidth={1.8} aria-hidden="true" />
+              </button>
+            </CommandItem>
+            <CommandItem
+              value="create-team-from-template"
+              data-testid="create-team-from-template"
+              onSelect={() => onCreateTeamFromTemplate()}
+              className="gap-2"
+            >
+              <Users size={16} strokeWidth={1.8} aria-hidden="true" />
+              <span className="min-w-0 flex-1 truncate">
+                <Trans>Team from template</Trans>
+              </span>
+              <button
+                type="button"
+                data-testid="picker-info-team-template"
+                aria-label={t`About team templates`}
+                title={t`About team templates`}
                 onPointerDown={(event) => event.stopPropagation()}
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={(event) => {

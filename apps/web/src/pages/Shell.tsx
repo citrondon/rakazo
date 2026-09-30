@@ -293,6 +293,9 @@ const McpServersOverlay = lazy(() =>
 const BotImportOverlay = lazy(() =>
   import("./BotImportOverlay").then((module) => ({ default: module.BotImportOverlay })),
 );
+const TeamTemplateOverlay = lazy(() =>
+  import("./TeamTemplateOverlay").then((module) => ({ default: module.TeamTemplateOverlay })),
+);
 
 type Panel =
   | "computer"
@@ -525,6 +528,7 @@ export function ShellPage() {
   const [mcpOpen, setMcpOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [teamTemplateOpen, setTeamTemplateOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
   const [messagingSettingsOpen, setMessagingSettingsOpen] = useState(false);
   const [messagingSurfaceEnabled, setMessagingSurfaceEnabled] = useState(false);
@@ -2836,6 +2840,11 @@ export function ShellPage() {
                       setMobileSidebarOpen(false);
                       setNewSpaceOpen(true);
                     }}
+                    onCreateTeamFromTemplate={() => {
+                      setCreateMenuOpen(false);
+                      setMobileSidebarOpen(false);
+                      setTeamTemplateOpen(true);
+                    }}
                     onShowGroupInfo={() => {
                       setCreateMenuOpen(false);
                       setMobileSidebarOpen(false);
@@ -4351,6 +4360,14 @@ export function ShellPage() {
             }}
           />
         ) : null}
+        {teamTemplateOpen ? (
+          <TeamTemplateOverlay
+            onClose={() => {
+              setTeamTemplateOpen(false);
+              void refreshBots().catch(() => undefined);
+            }}
+          />
+        ) : null}
       </Suspense>
 
       <Suspense fallback={null}>
@@ -5365,7 +5382,7 @@ const Composer = memo(function Composer({
           skill.description.toLowerCase().includes(query)
         );
       })
-      .slice(0, 8);
+      .slice(0, 16);
   }, [agentSkills, slashQuery]);
 
   const slashActionOptions = useMemo(() => {
@@ -5659,7 +5676,7 @@ const Composer = memo(function Composer({
       {showSlashPicker ? (
         <div
           data-testid="slash-picker"
-          className="mb-2 overflow-hidden rounded-[14px] border border-border bg-muted"
+          className="mb-2 max-h-[320px] overflow-x-hidden overflow-y-auto rounded-[14px] border border-border bg-muted"
         >
           {slashSkillOptions.map((skill) => (
             <button
