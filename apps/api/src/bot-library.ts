@@ -1,12 +1,10 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  type Identity,
-  IdentitySchema,
-  type TeamTemplate,
-  TeamTemplateSchema,
-} from "@rakazo/contracts";
+import type { ExportManifest, Identity, TeamTemplate } from "@rakazo/contracts";
+import { ExportManifestSchema, IdentitySchema, TeamTemplateSchema } from "@rakazo/contracts";
+import type { PreparedBotImport } from "./bot-import.js";
+import { prepareBotImport } from "./bot-import.js";
 
 /**
  * Shipped library data. Rosters and identities sit as JSON next to the bot presets
@@ -56,4 +54,63 @@ export function findIdentity(id: string): Identity | undefined {
 export function teamPresetManifestPath(preset: string): string | undefined {
   const file = path.join(BOT_LIBRARY_DIR, `${preset}.v1.json`);
   return existsSync(file) ? file : undefined;
+}
+
+/**
+ * The roster a start request names. An identity stands for the team a new space
+ * begins with, so it resolves to that team; an unknown id resolves to nothing
+ * rather than to a default, because starting the wrong team is worse than
+ * showing that the id was wrong.
+ */
+export function resolveStartTeam(input: {
+  templateId?: string;
+  identityId?: string;
+}): TeamTemplate | undefined {
+  if (input.templateId) return findTeamTemplate(input.templateId);
+  if (!input.identityId) return undefined;
+  const identity = findIdentity(input.identityId);
+  return identity ? findTeamTemplate(identity.team) : undefined;
+}
+
+export type PreparedTeamStart = {
+  template: TeamTemplate;
+  /** Roster order: the first entry is the lead that receives the first task. */
+  bots: Array<{ preset: string; role: string; prepared: PreparedBotImport }>;
+};
+
+/**
+ * Everything a team start needs, resolved before the first bot exists: a roster
+ * naming a preset the library does not ship fails here, so creation can never
+ * leave half a team behind. A starter team is an import of N presets, so each
+ * member brings what a preset import brings — memory, routines and skills, no
+ * home files — and the routines stay inactive until someone arms them, exactly
+ * as an import leaves them.
+ */
+export function prepareTeamStart(template: TeamTemplate): PreparedTeamStart {
+  const bots = template.members.map((member) => {
+    const file = teamPresetManifestPath(member.preset);
+    if (!file) throw new Error(`Team ${template.id} names an unknown preset: ${member.preset}`);
+    const manifest: ExportManifest = ExportManifestSchema.parse(
+      JSON.parse(readFileSync(file, "utf8")),
+    );
+    const warnings: string[] = [];
+    const prepared = prepareBotImport(
+      {
+        manifest,
+        includeMemory: true,
+        includeRoutines: true,
+        includeSkills: true,
+        includeFiles: false,
+      },
+      warnings,
+    );
+    // A shipped preset that imports with warnings is a repository bug, and the
+    // preset test catches it; failing here keeps a team from starting with a
+    // member whose preset was silently trimmed.
+    if (warnings.length > 0) {
+      throw new Error(`Team ${template.id}, preset ${member.preset}: ${warnings.join(" ")}`);
+    }
+    return { preset: member.preset, role: member.role, prepared };
+  });
+  return { template, bots };
 }

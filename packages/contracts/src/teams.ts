@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { BotSchema, GroupSchema } from "./domain.js";
 
 /**
  * A team template is the roster a Grokbot team starts from: which presets become
@@ -47,3 +48,29 @@ export const IdentitySchema = z.object({
 });
 
 export type Identity = z.infer<typeof IdentitySchema>;
+
+/**
+ * Starting a team is one call: the caller names the roster, or the identity that
+ * stands for it, and the server builds every bot, the group and the lead's first
+ * task together. No `spaceId` — the caller already acts inside a space.
+ */
+export const TeamCreateInputSchema = z
+  .object({
+    templateId: z.string().trim().regex(TEAM_SLUG).optional(),
+    identityId: z.string().trim().regex(TEAM_SLUG).optional(),
+    /** Overrides the group name; the template label is the default. */
+    name: z.string().trim().min(1).max(80).optional(),
+  })
+  .refine((value) => (value.templateId ? value.identityId === undefined : !!value.identityId), {
+    error: "Name either a template or an identity.",
+  });
+
+export type TeamCreateInput = z.infer<typeof TeamCreateInputSchema>;
+
+/** The group and the bots that were created, in roster order. */
+export const TeamCreateOutputSchema = z.object({
+  group: GroupSchema,
+  bots: z.array(BotSchema),
+});
+
+export type TeamCreateOutput = z.infer<typeof TeamCreateOutputSchema>;

@@ -92,6 +92,12 @@ import {
 import { MessageReactionSchema } from "./reactions.js";
 import { RunReceiptSchema, RunsListOutputSchema } from "./runs.js";
 import { SearchQueryOutputSchema } from "./search.js";
+import {
+  IdentitySchema,
+  TeamCreateInputSchema,
+  TeamCreateOutputSchema,
+  TeamTemplateSchema,
+} from "./teams.js";
 
 const botId = z.object({ botId: Id });
 const groupId = z.object({ groupId: Id });
@@ -276,6 +282,13 @@ export const appContract = {
     archive: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
     restore: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
     remove: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
+  },
+  teams: {
+    /** The shipped rosters, so a client can offer what the library actually has. */
+    templates: oc.output(z.array(TeamTemplateSchema)),
+    /** The shipped identities: each one names the team a new space begins with. */
+    identities: oc.output(z.array(IdentitySchema)),
+    create: oc.input(TeamCreateInputSchema).output(TeamCreateOutputSchema),
   },
   botSections: {
     list: oc.output(z.array(BotSectionSchema)),

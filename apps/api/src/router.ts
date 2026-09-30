@@ -188,7 +188,14 @@ import {
   listArtifactVersions,
   listSpaceArtifacts,
 } from "./artifacts.js";
+import type { PreparedBotImport } from "./bot-import.js";
 import { prepareBotImport } from "./bot-import.js";
+import {
+  listIdentities,
+  listTeamTemplates,
+  prepareTeamStart,
+  resolveStartTeam,
+} from "./bot-library.js";
 import { botProfileLabelsChanged, commitBotUpdate } from "./bot-update.js";
 import {
   executionBlocksUserTakeover,
@@ -628,6 +635,59 @@ export async function enqueueBotIntroRun(deps: RouterDeps, actor: Actor, bot: Bo
     });
   });
   await deps.jobs.enqueue(runContinueJob(run.id));
+}
+
+/**
+ * Applies the durable parts of a preset to a bot inside the caller's transaction:
+ * memory documents are upserted by path, and routines stay inactive until someone
+ * arms them, exactly as an import leaves them. `bots.import` and a team start both
+ * write these rows, so both write them here.
+ */
+async function applyPreparedImport(
+  tx: Prisma.TransactionClient,
+  actor: Actor,
+  botId: string,
+  prepared: PreparedBotImport,
+): Promise<void> {
+  for (const [path, content] of prepared.memory) {
+    const existingDoc = await tx.memoryDocument.findFirst({
+      where: { spaceId: actor.spaceId, scope: "bot", botId, path },
+      select: { id: true },
+    });
+    if (existingDoc) {
+      await tx.memoryDocument.update({
+        where: { id: existingDoc.id },
+        data: { content },
+      });
+    } else {
+      await tx.memoryDocument.create({
+        data: {
+          spaceId: actor.spaceId,
+          userId: actor.userId,
+          botId,
+          scope: "bot",
+          path,
+          content,
+        },
+      });
+    }
+  }
+  for (const routine of prepared.routines) {
+    await tx.routine.create({
+      data: {
+        spaceId: actor.spaceId,
+        botId,
+        userId: actor.userId,
+        name: routine.name,
+        prompt: routine.prompt,
+        crons: routine.crons,
+        timezone: routine.timezone,
+        notify: false,
+        // Routines import inactive; the user arms them deliberately.
+        active: false,
+      },
+    });
+  }
 }
 
 export function createRouter(deps: RouterDeps) {
@@ -1598,45 +1658,7 @@ export function createRouter(deps: RouterDeps) {
               ],
             },
           });
-          for (const [path, content] of prepared.memory) {
-            const existingDoc = await tx.memoryDocument.findFirst({
-              where: { spaceId: context.actor.spaceId, scope: "bot", botId: bot.id, path },
-              select: { id: true },
-            });
-            if (existingDoc) {
-              await tx.memoryDocument.update({
-                where: { id: existingDoc.id },
-                data: { content },
-              });
-            } else {
-              await tx.memoryDocument.create({
-                data: {
-                  spaceId: context.actor.spaceId,
-                  userId: context.actor.userId,
-                  botId: bot.id,
-                  scope: "bot",
-                  path,
-                  content,
-                },
-              });
-            }
-          }
-          for (const routine of prepared.routines) {
-            await tx.routine.create({
-              data: {
-                spaceId: context.actor.spaceId,
-                botId: bot.id,
-                userId: context.actor.userId,
-                name: routine.name,
-                prompt: routine.prompt,
-                crons: routine.crons,
-                timezone: routine.timezone,
-                notify: false,
-                // Routines import inactive; the user arms them deliberately.
-                active: false,
-              },
-            });
-          }
+          await applyPreparedImport(tx, context.actor, bot.id, prepared);
           return bot;
         });
         if (prepared.files.length > 0) {
@@ -1821,6 +1843,75 @@ export function createRouter(deps: RouterDeps) {
             getLogger().error("group artifact cleanup", result.reason);
         }
         return { ok: true as const };
+      }),
+    },
+    teams: {
+      templates: authed.teams.templates.handler(async () => listTeamTemplates()),
+      identities: authed.teams.identities.handler(async () => listIdentities()),
+      create: authed.teams.create.handler(async ({ context, input }) => {
+        const template = resolveStartTeam(input);
+        if (!template) throw new ORPCError("NOT_FOUND", { message: "Unknown team or identity." });
+        // Every member's preset is resolved before the first bot exists, so a roster
+        // that names something the library does not ship cannot leave half a team.
+        const start = prepareTeamStart(template);
+        // A team whose lead never ran is not a team yet, so the start carries the
+        // same model requirement the first send has, instead of creating a roster
+        // that could only sit idle.
+        if ((await modelSetup(deps, context.actor)).needsModel) {
+          throw new ORPCError("BAD_REQUEST", { message: "Connect a model to start a run." });
+        }
+        // Skills live in the space, not in the bot, so they are written before the
+        // bots. Two members may bring the same skill, and a name an earlier team
+        // already created is reachable either way: a conflict is not a failed start.
+        const skills = new Map(
+          start.bots.flatMap((member) =>
+            member.prepared.skills.map((skill) => [skill.name, skill] as const),
+          ),
+        );
+        for (const skill of skills.values()) {
+          try {
+            await agentSkills.create(context.actor, { content: skill.content });
+          } catch (error) {
+            if (!(error instanceof ORPCError) || error.code !== "CONFLICT") throw error;
+          }
+        }
+        const bots: Bot[] = [];
+        for (const member of start.bots) {
+          bots.push(
+            await deps.prisma
+              .$transaction(async (tx) => {
+                const bot = await repos.createBot(context.actor, {
+                  ...member.prepared.profile,
+                  notifyOnFinish: true,
+                  computerMode: "team",
+                });
+                await applyPreparedImport(tx, context.actor, bot.id, member.prepared);
+                return bot;
+              })
+              .catch((error: unknown) => {
+                throw mapSpaceLifecycleError(error);
+              }),
+          );
+        }
+        const group = await groupRepos
+          .createGroup(context.actor, {
+            name: input.name ?? template.label,
+            botIds: bots.map((bot) => bot.id),
+          })
+          .catch((error: unknown) => {
+            throw mapSpaceLifecycleError(error);
+          });
+        // The roster's first task takes the path a typed message takes, and it names
+        // the lead: a group send without a mention wakes whichever member the group
+        // lists first, and the roster's order must not hinge on insert timestamps.
+        const lead = bots[0];
+        if (!lead) throw new IsolationError();
+        const target = await resolveThreadTarget(deps.prisma, context.actor, { groupId: group.id });
+        await sendThreadMessage(deps, context.actor, target, {
+          text: template.firstTask,
+          mentions: [{ kind: "bot", id: lead.id }],
+        });
+        return { group, bots };
       }),
     },
     botSections: {

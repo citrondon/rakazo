@@ -11,6 +11,7 @@ import { openScreenCapability } from "@rakazo/core/node/screen-capability";
 import type { PrismaClient } from "@rakazo/db";
 import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { teamPresetManifestPath } from "./bot-library.js";
 import { createRouter, enqueueBotIntroRun, type RouterDeps } from "./router.js";
 
 describe("account preferences", () => {
@@ -3175,5 +3176,160 @@ describe("groups.archive", () => {
       }),
     );
     expect(calls).toEqual(["cancel run work", "release screen", "expire lease"]);
+  });
+});
+
+describe("team start", () => {
+  /**
+   * The gates run before anything is written, so a prisma whose first write fails
+   * is the honest fake for a refusal: reaching it means the start tried to create
+   * a roster it had already refused.
+   */
+  function teamDeps(options: { agentRuntime?: string } = {}) {
+    const createBot = vi.fn();
+    const createGroup = vi.fn();
+    const prisma = {
+      spaceModelPreference: { findFirst: vi.fn().mockResolvedValue(null) },
+      deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
+      bot: { create: createBot },
+      chatGroup: { create: createGroup },
+      $transaction: vi.fn(() => {
+        throw new Error("team start wrote before its gates passed");
+      }),
+    } as unknown as PrismaClient;
+    const deps = {
+      prisma,
+      env: {
+        agentRuntime: options.agentRuntime ?? "scripted",
+        defaultProvider: "fake",
+        defaultModel: "fake-model",
+        webOrigin: "http://127.0.0.1:5173",
+        screenProxySecret: "fake-test-secret",
+        sandboxProvider: "fake",
+      },
+      dataDir: "/tmp/rakazo-router-test",
+    } as unknown as RouterDeps;
+    const actor = {
+      spaceId: "workspace-1",
+      userId: "user-1",
+      email: "user@rakazo.test",
+      isDeploymentOwner: true,
+    } satisfies Actor;
+    return { actor, deps, createBot, createGroup, handler: new RPCHandler(createRouter(deps)) };
+  }
+
+  async function call(handler: RPCHandler<never>, actor: Actor, path: string, body: unknown) {
+    const { response } = await handler.handle(
+      new Request(`http://127.0.0.1/rpc/${path}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ json: body }),
+      }),
+      { prefix: "/rpc", context: { actor } },
+    );
+    return response;
+  }
+
+  it("offers the rosters the library ships, each one startable", async () => {
+    const { actor, handler } = teamDeps();
+
+    const response = await call(handler, actor, "teams/templates", null);
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      json: Array<{
+        id: string;
+        label: string;
+        members: Array<{ preset: string; role: string }>;
+        integrations: string[];
+        firstTask: string;
+      }>;
+    };
+    const ids = body.json.map((template) => template.id);
+    expect(ids).toContain("eng");
+    expect(ids.length).toBeGreaterThanOrEqual(6);
+    for (const template of body.json) {
+      expect(template.members.length, template.id).toBeGreaterThanOrEqual(2);
+      expect(template.members.length, template.id).toBeLessThanOrEqual(4);
+      expect(template.firstTask.length, template.id).toBeGreaterThan(0);
+      // The contract defaults the advisory list, so a roster without one still
+      // answers with an array a client can map over.
+      expect(Array.isArray(template.integrations), template.id).toBe(true);
+      for (const member of template.members) {
+        expect(
+          teamPresetManifestPath(member.preset),
+          `${template.id}: ${member.preset}`,
+        ).toBeDefined();
+      }
+    }
+  });
+
+  it("answers with identities that each name a roster it also offers", async () => {
+    const { actor, handler } = teamDeps();
+
+    const [templates, identities] = await Promise.all([
+      call(handler, actor, "teams/templates", null),
+      call(handler, actor, "teams/identities", null),
+    ]);
+
+    expect(identities.status).toBe(200);
+    const shipped = new Set(
+      ((await templates.json()) as { json: Array<{ id: string }> }).json.map((t) => t.id),
+    );
+    const body = (await identities.json()) as {
+      json: Array<{ id: string; label: string; team: string }>;
+    };
+    expect(body.json.length).toBeGreaterThanOrEqual(6);
+    for (const identity of body.json) {
+      expect(shipped.has(identity.team), `${identity.id} names ${identity.team}`).toBe(true);
+    }
+  });
+
+  it("refuses an unknown roster without creating anything", async () => {
+    const { actor, handler, createBot, createGroup } = teamDeps();
+
+    const response = await call(handler, actor, "teams/create", { templateId: "no-such-team" });
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      json: expect.objectContaining({ code: "NOT_FOUND" }),
+    });
+    expect(createBot).not.toHaveBeenCalled();
+    expect(createGroup).not.toHaveBeenCalled();
+  });
+
+  it("refuses an unknown identity without creating anything", async () => {
+    const { actor, handler, createBot, createGroup } = teamDeps();
+
+    const response = await call(handler, actor, "teams/create", { identityId: "no-such-identity" });
+
+    expect(response.status).toBe(404);
+    expect(createBot).not.toHaveBeenCalled();
+    expect(createGroup).not.toHaveBeenCalled();
+  });
+
+  it("starts no roster while no model can run its first task", async () => {
+    const { actor, handler, createBot, createGroup } = teamDeps({ agentRuntime: "pi" });
+
+    const response = await call(handler, actor, "teams/create", { templateId: "eng" });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      json: expect.objectContaining({
+        code: "BAD_REQUEST",
+        message: "Connect a model to start a run.",
+      }),
+    });
+    expect(createBot).not.toHaveBeenCalled();
+    expect(createGroup).not.toHaveBeenCalled();
+  });
+
+  it("asks for exactly one roster", async () => {
+    const { actor, handler, createBot } = teamDeps();
+
+    const response = await call(handler, actor, "teams/create", {});
+
+    expect(response.status).toBe(400);
+    expect(createBot).not.toHaveBeenCalled();
   });
 });
