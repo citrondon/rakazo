@@ -1,13 +1,11 @@
 {
   "id": "ops",
   "label": "Ops team",
-  "summary": "Tageslage, Vorfälle, Kosten, Lieferanten",
+  "summary": "Tageslage und Morgen-Briefing",
   "members": [
-    { "preset": "chief-of-staff", "role": "Lead: Tageslage, offene Entscheidungen, Zusagen" },
-    { "preset": "incident-desk", "role": "Vorfälle: Timeline, Ursache, Nachbereitung" },
-    { "preset": "cloud-spend", "role": "Kosten und Auslastung prüfen" },
-    { "preset": "vendor-inbox", "role": "Rechnungen, Verträge, Fristen" }
+    { "preset": "chief-of-staff", "role": "Lead: Tageslage aus Kalender, Slack und Notion" },
+    { "preset": "daily-brief", "role": "Morgen-Briefing aus Kalender und Postfach" }
   ],
-  "integrations": ["Slack", "Google Calendar", "Notion", "Gmail", "Google Drive", "GitHub"],
-  "firstTask": "Erstelle die Tageslage: Chief of Staff sammelt Termine, offene Entscheidungen und Zusagen aus Kalender, Slack und Notion; Incident Desk prüft offene Vorfälle und was noch nachbereitet werden muss; Cloud Spend bringt die größten Kostenposten, Vendor Inbox die fälligen Rechnungen und Verträge. Antworte in drei Blöcken: heute wichtig, was hängt, was als Nächstes entschieden werden muss."
+  "integrations": ["Slack", "Google Calendar", "Notion", "Gmail"],
+  "firstTask": "Erstelle die Tageslage: Chief of Staff sammelt Termine, offene Entscheidungen und Zusagen aus Kalender, Slack und Notion und nennt die eine Entscheidung, die hängt; Daily Brief ergänzt die Kalender- und Postfachpunkte für den Morgen. Antworte in drei Blöcken: heute wichtig, was hängt, wer es lösen kann."
 }

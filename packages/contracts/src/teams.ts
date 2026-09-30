@@ -31,3 +31,19 @@ export const TeamTemplateSchema = z.object({
 
 export type TeamTemplate = z.infer<typeof TeamTemplateSchema>;
 export type TeamTemplateMember = z.infer<typeof TeamTemplateMemberSchema>;
+
+/**
+ * The answer to "Who are you?" at the start. An identity does not describe a bot;
+ * it names the team a new space begins with, so the first screen asks one question
+ * instead of showing an empty roster.
+ */
+export const IdentitySchema = z.object({
+  id: z.string().trim().regex(TEAM_SLUG),
+  /** The label the original library uses, shown as written. */
+  label: z.string().trim().min(1).max(80),
+  summary: z.string().trim().min(1).max(200),
+  /** A team template id in `bot-library/teams`; the caller resolves it before use. */
+  team: z.string().trim().regex(TEAM_SLUG),
+});
+
+export type Identity = z.infer<typeof IdentitySchema>;

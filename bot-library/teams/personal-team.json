@@ -1,13 +1,11 @@
 {
   "id": "personal",
   "label": "Personal team",
-  "summary": "Alltag, Reisen, Abos, Lesestoff",
+  "summary": "Familienkalender und Reisen",
   "members": [
-    { "preset": "household-ops", "role": "Lead: Termine, Aufgaben, Konflikte im Alltag" },
-    { "preset": "trip-concierge", "role": "Reiseplan aus Buchungen" },
-    { "preset": "subscription-pruner", "role": "Abos und Trials prüfen" },
-    { "preset": "reading-digest", "role": "Gespeicherte Artikel verdichten" }
+    { "preset": "trip-concierge", "role": "Lead: Reiseplan aus Buchungen und Kalender" },
+    { "preset": "household-ops", "role": "Termine, Aufgaben, Konflikte im Alltag" }
   ],
-  "integrations": ["Google Calendar", "Slack", "Gmail", "Notion"],
-  "firstTask": "Sieh dir die Woche an: Household Ops listet Termine, Zuständigkeiten und den einen Konflikt, Trip Concierge prüft die nächste Reise auf fehlende Nächte und enge Umstiege, Subscription Pruner nennt die Abos, die in den nächsten zwei Wochen verlängert werden, Reading Digest zieht fünf gespeicherte Artikel heraus, die sich lohnen. Antworte sortiert nach Wochentag."
+  "integrations": ["Gmail", "Google Calendar", "Slack"],
+  "firstTask": "Sieh dir die nächsten zwei Wochen an: Trip Concierge baut aus Buchungsmails und Kalender-Einträgen die Reise als Tag-für-Tag-Plan und markiert fehlende Nächte, enge Umstiege und Zeitzonen-Konflikte; Household Ops prüft den Familienkalender auf Termine, Zuständigkeiten und den einen Konflikt. Antworte nach Wochentag sortiert."
 }

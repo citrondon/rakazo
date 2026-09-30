@@ -1,0 +1,15 @@
+{
+  "id": "creator",
+  "label": "Creator team",
+  "summary": "Was auf X zieht, in eigene Entwürfe übersetzen",
+  "members": [
+    { "preset": "viral-tweet-scout", "role": "Lead: findet Hooks und Formate, die gerade ziehen" },
+    { "preset": "content-remix", "role": "macht daraus Entwürfe in eigener Stimme" },
+    {
+      "preset": "reddit-comment-finder",
+      "role": "findet Diskussionen, in denen eine Antwort lohnt"
+    }
+  ],
+  "integrations": ["X", "Notion", "Reddit"],
+  "firstTask": "Finde für mein Thema, was diese Woche zieht: Viral Tweet Scout liefert acht Posts mit Hook und der Begründung, warum sie funktionieren, Content Remix macht daraus zwei Entwürfe in meiner Stimme, Reddit Comment Finder nennt zwei Diskussionen, in denen eine Antwort etwas bringt. Nicht posten, nicht antworten — nur Entwürfe und Links."
+}

@@ -1,13 +1,11 @@
 {
   "id": "sales",
   "label": "Sales team",
-  "summary": "Termine vorbereiten, nachfassen, Angebote",
+  "summary": "Gespräch recherchieren, danach nachfassen",
   "members": [
-    { "preset": "meeting-prep", "role": "Lead: bereitet den nächsten Termin vor" },
-    { "preset": "call-followup", "role": "Follow-up direkt nach dem Gespräch" },
-    { "preset": "proposal-desk", "role": "Angebotsgerüst aus Notizen und Docs" },
-    { "preset": "win-loss", "role": "Review nach dem Abschluss" }
+    { "preset": "outbound-voice", "role": "Lead: recherchiert das Konto und den Leitfaden" },
+    { "preset": "call-followup", "role": "schreibt den Follow-up-Entwurf nach dem Call" }
   ],
-  "integrations": ["Google Calendar", "Gmail", "Slack", "Google Docs", "Notion"],
-  "firstTask": "Bereite den nächsten Kundentermin vor: Meeting Prep fasst Mail-Verlauf, Notizen und die letzten Slack-Signale zur Firma zusammen, Call Followup legt den Follow-up-Entwurf zum letzten Gespräch bereit, Proposal Desk macht daraus das Angebotsgerüst. Nenne am Ende den nächsten konkreten Schritt, den Empfänger und was noch fehlt, bevor es rausgeht."
+  "integrations": ["Gmail", "LinkedIn", "Google Calendar"],
+  "firstTask": "Bereite den nächsten Anruf vor: Outbound Voice recherchiert das Konto und legt einen Leitfaden mit den drei Fragen an, die den Deal weiterbewegen. Danach schreibt Call Followup den Follow-up aus dem letzten Gespräch: was vereinbart wurde, wer was übernimmt und der nächste Schritt. Nichts wird versendet — Entwürfe gehen an mich."
 }

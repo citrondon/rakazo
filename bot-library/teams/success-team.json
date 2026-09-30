@@ -1,0 +1,11 @@
+{
+  "id": "success",
+  "label": "Success team",
+  "summary": "Konten beobachten, Kundenantworten entwerfen",
+  "members": [
+    { "preset": "account-health", "role": "Lead: Watchlist der Konten, die kippen" },
+    { "preset": "support-replies", "role": "entwirft die Antwort an den Kunden" }
+  ],
+  "integrations": ["Slack", "Notion", "Gmail"],
+  "firstTask": "Erstelle die Konten-Watchlist: Account Health prüft Slack, Notion und das Postfach auf Nutzungsrückgang, Beschwerden und offene Rechnungen und nennt die Konten, die Aufmerksamkeit brauchen — mit Signal und Dringlichkeit. Support Replies entwirft für das dringendste Konto die Antwort mit der Lösung zuerst. Keine Mail geht ohne meine Freigabe raus."
+}

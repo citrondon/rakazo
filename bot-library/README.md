@@ -61,23 +61,47 @@ Der Import liest `PROFILE.md` und schreibt `bot-library/<slug>.v1.json`. Jedes P
 Image ausliefert, und jede Routine braucht Prompt und Zeitplan. Ein Profil, das das verletzt, wird
 nicht übernommen.
 
+## Identitäten
+
+`identities/*.json` sind die Antwort auf „Wer bist du?" beim Start: acht Identitäten der Vorlage
+(X creator, Engineer, Independent founder, Manager, Marketer, Sales, Researcher, Parent). Eine
+Identität beschreibt keinen Bot, sie nennt nur das Team, mit dem ein neuer Space anfängt — damit
+stellt der erste Bildschirm eine Frage statt eines leeren Rosters.
+
+| Datei | Identität | Startteam |
+| --- | --- | --- |
+| `creator.json` | X creator | Creator team |
+| `engineer.json` | Engineer | Eng team |
+| `founder.json` | Independent founder | Desk team |
+| `manager.json` | Manager | Ops team |
+| `marketer.json` | Marketer | Marketing team |
+| `parent.json` | Parent | Personal team |
+| `researcher.json` | Researcher | Research team |
+| `sales.json` | Sales | Sales team |
+
 ## Teams
 
 `teams/*.json` sind Roster statt einzelner Bots: das erste Mitglied ist der Lead und bekommt beim
 Anlegen die `firstTask`. Ein Team bleibt bei 2–4 Bots, weil ein fünfter Bot ein zweites Team ist.
 
+Sechs Roster sind die Starter-Teams der Vorlage, unverändert in der Auswahl übernommen
+(`goals/*.md` der Sammlung); die übrigen vier sind eigene Zusammenstellungen aus derselben
+Bibliothek.
+
 | Datei | Team | Lead zuerst |
 | --- | --- | --- |
-| `eng-team.json` | Eng team | ExecutiveChief, GrokCoder, DataAnalyst |
+| `eng-team.json` | Eng team | Bug Reproduction, Issue Drafter, PR Reviewer |
+| `sales-team.json` | Sales team | Outbound Voice, Call Followup |
+| `success-team.json` | Success team | Account Health, Support Replies |
+| `marketing-team.json` | Marketing team | Social Queue, Content Remix |
+| `ops-team.json` | Ops team | Chief of Staff, Daily Brief |
+| `personal-team.json` | Personal team | Trip Concierge, Household Ops |
 | `research-team.json` | Research team | ExecutiveChief, TrendScout, OpenResearch |
-| `ops-team.json` | Ops team | Chief of Staff, Incident Desk, Cloud Spend, Vendor Inbox |
-| `marketing-team.json` | Marketing team | Social Queue, Viral Tweet Scout, SEO Pages, Newsletter Desk |
-| `sales-team.json` | Sales team | Meeting Prep, Call Followup, Proposal Desk, Win Loss |
-| `support-team.json` | Support team | Support Replies, Churn Watch, Feature Ask Finder |
+| `creator-team.json` | Creator team | Viral Tweet Scout, Content Remix, Reddit Comment Finder |
 | `desk-team.json` | Desk team | Inbox Triage, Meeting Notes, Standup Desk, Focus Defender |
-| `personal-team.json` | Personal team | Household Ops, Trip Concierge, Subscription Pruner, Reading Digest |
 | `finance-team.json` | Finance team | Cloud Spend, Expense Manager, SaaS Finance |
 
-Geladen werden sie mit `listTeamTemplates()` (`apps/api/src/team-templates.ts`). Jedes genannte
-Preset wird gegen die Bibliothek aufgelöst; ein Tippfehler fällt im Test auf statt beim Anlegen.
+Geladen werden sie mit `listTeamTemplates()` und `listIdentities()` (`apps/api/src/bot-library.ts`).
+Jedes genannte Preset und jedes Startteam wird gegen die Bibliothek aufgelöst; ein Tippfehler fällt
+im Test auf statt beim Anlegen.
 

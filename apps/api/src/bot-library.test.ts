@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { findTeamTemplate, listTeamTemplates, teamPresetManifestPath } from "./team-templates.js";
+import {
+  findIdentity,
+  findTeamTemplate,
+  listIdentities,
+  listTeamTemplates,
+  teamPresetManifestPath,
+} from "./bot-library.js";
 
 describe("shipped team templates", () => {
   const templates = listTeamTemplates();
@@ -42,5 +48,29 @@ describe("shipped team templates", () => {
   it("keeps preset lookup inside the library directory", () => {
     expect(teamPresetManifestPath("../package")).toBeUndefined();
     expect(teamPresetManifestPath("executive-chief")).toBeDefined();
+  });
+});
+
+describe("shipped identities", () => {
+  const identities = listIdentities();
+
+  it("parses every identity and keeps ids unique", () => {
+    expect(identities.length).toBeGreaterThan(0);
+    expect(new Set(identities.map((identity) => identity.id)).size).toBe(identities.length);
+  });
+
+  // The first screen sends a new space from an identity straight into team
+  // creation, so an identity pointing at a team nobody ships leads nowhere.
+  it("names a team the library ships", () => {
+    for (const identity of identities) {
+      expect(findTeamTemplate(identity.team), `${identity.id} -> ${identity.team}`).toBeDefined();
+    }
+  });
+
+  it("finds an identity by id and ignores an unknown one", () => {
+    const first = identities[0];
+    if (!first) throw new Error("no identities shipped");
+    expect(findIdentity(first.id)).toEqual(first);
+    expect(findIdentity("does-not-exist")).toBeUndefined();
   });
 });
