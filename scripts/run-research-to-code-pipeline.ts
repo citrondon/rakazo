@@ -119,7 +119,10 @@ async function main() {
             });
             if (reply) {
               const textBlock = reply.blocks.find((b: any) => b.kind === "text");
-              console.log(`\nResponse from ${botName}:\n`, textBlock ? (textBlock as any).text : "[Non-text response]");
+              console.log(
+                `\nResponse from ${botName}:\n`,
+                textBlock ? (textBlock as any).text : "[Non-text response]",
+              );
             }
           }
           return currentRun.status === "completed";

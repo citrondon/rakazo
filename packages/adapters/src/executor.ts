@@ -4877,10 +4877,7 @@ export async function monthlyTokensUsed(prisma: PrismaClient, botId: string): Pr
  * A conditional update keeps the warning to one per month even when runs of the same bot
  * finish at the same time.
  */
-export async function claimBudgetWarning(
-  prisma: PrismaClient,
-  botId: string,
-): Promise<boolean> {
+export async function claimBudgetWarning(prisma: PrismaClient, botId: string): Promise<boolean> {
   const claimed = await prisma.bot.updateMany({
     where: {
       id: botId,

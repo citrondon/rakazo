@@ -11,7 +11,5 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   // Let network handle dynamic requests, fallback to fetch
   if (event.request.method !== "GET") return;
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
-  );
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });

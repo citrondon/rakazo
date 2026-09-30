@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildRunReceipt, type RunReceiptInput, sumRunTokens, summarizeRunTools } from "./run-receipt.js";
+import {
+  buildRunReceipt,
+  type RunReceiptInput,
+  summarizeRunTools,
+  sumRunTokens,
+} from "./run-receipt.js";
 
 const run = {
   id: "run-1",
@@ -31,11 +36,20 @@ describe("summarizeRunTools", () => {
   it("folds calls and completions per tool name and sums durations", () => {
     const tools = summarizeRunTools([
       { type: "agent.tool.called", payload: { name: "page_browser", executionId: "e1" } },
-      { type: "agent.tool.completed", payload: { name: "page_browser", outcome: "succeeded", durationMs: 120 } },
+      {
+        type: "agent.tool.completed",
+        payload: { name: "page_browser", outcome: "succeeded", durationMs: 120 },
+      },
       { type: "agent.tool.called", payload: { name: "page_browser", executionId: "e2" } },
-      { type: "agent.tool.completed", payload: { name: "page_browser", outcome: "error", durationMs: 30, error: "boom" } },
+      {
+        type: "agent.tool.completed",
+        payload: { name: "page_browser", outcome: "error", durationMs: 30, error: "boom" },
+      },
       { type: "agent.tool.called", payload: { name: "read_file", executionId: "e3" } },
-      { type: "agent.tool.completed", payload: { name: "read_file", outcome: "succeeded", durationMs: 5 } },
+      {
+        type: "agent.tool.completed",
+        payload: { name: "read_file", outcome: "succeeded", durationMs: 5 },
+      },
     ]);
     expect(tools).toHaveLength(2);
     expect(tools[0]).toMatchObject({
@@ -53,9 +67,7 @@ describe("summarizeRunTools", () => {
     const tools = summarizeRunTools([
       { type: "agent.tool.completed", payload: { name: "mcp__treg", outcome: "error" } },
     ]);
-    expect(tools).toEqual([
-      { name: "mcp__treg", calls: 1, failures: 1, paused: 0, durationMs: 0 },
-    ]);
+    expect(tools).toEqual([{ name: "mcp__treg", calls: 1, failures: 1, paused: 0, durationMs: 0 }]);
   });
 
   it("ignores events without a usable tool name and pauses stay separate from failures", () => {
@@ -94,7 +106,10 @@ describe("buildRunReceipt", () => {
       input({
         toolEvents: [
           { type: "agent.tool.called", payload: { name: "page_browser" } },
-          { type: "agent.tool.completed", payload: { name: "page_browser", outcome: "succeeded", durationMs: 40 } },
+          {
+            type: "agent.tool.completed",
+            payload: { name: "page_browser", outcome: "succeeded", durationMs: 40 },
+          },
         ],
         usage: [{ inputTokens: 900, outputTokens: 120, cacheReadTokens: 0, cacheWriteTokens: 0 }],
         artifacts: [

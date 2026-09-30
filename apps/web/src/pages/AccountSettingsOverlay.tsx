@@ -2,7 +2,6 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type { AvatarStyle, UsageMonth } from "@rakazo/contracts";
 import { BotAvatar, Button, Field, FieldLabel, Input, Label, Switch, Toggle } from "@rakazo/ui-web";
 import { ChevronDown, Download } from "lucide-react";
-import { usePwaInstall } from "../lib/use-pwa-install";
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type RefObject,
@@ -33,6 +32,7 @@ import {
   setUiAppearance,
 } from "../lib/ui-appearance";
 import { UI_LOCALE_LABELS, UI_LOCALES, type UiLocale } from "../lib/ui-locale";
+import { usePwaInstall } from "../lib/use-pwa-install";
 
 export type SettingsGeneralProps = {
   email?: string | null;
@@ -662,4 +662,3 @@ function PwaInstallSection() {
     </section>
   );
 }
-
