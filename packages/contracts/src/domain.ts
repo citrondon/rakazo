@@ -1293,10 +1293,19 @@ export const AppBootstrapSchema = z.object({
 });
 export type AppBootstrap = z.infer<typeof AppBootstrapSchema>;
 
+/** A preset names the connectors it expects. Advisory: import never connects one by itself. */
+export const BOT_INTEGRATIONS_MAX_COUNT = 12;
+export const BOT_INTEGRATION_NAME_MAX_LENGTH = 64;
+
 export const ExportManifestSchema = z.object({
   version: z.literal(1),
   exportedAt: z.string(),
   bot: BotSchema.pick({ name: true, title: true, description: true, instructions: true }),
+  // Defaulted so a v1 export written before this field stays importable.
+  integrations: z
+    .array(z.string().trim().min(1).max(BOT_INTEGRATION_NAME_MAX_LENGTH))
+    .max(BOT_INTEGRATIONS_MAX_COUNT)
+    .default([]),
   memory: z.array(z.object({ path: z.string(), content: z.string() })),
   routines: z.array(RoutineSchema.pick({ name: true, prompt: true, crons: true, timezone: true })),
   files: z.array(z.object({ path: z.string(), content: z.string() })),

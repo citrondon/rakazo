@@ -3,11 +3,15 @@ import {
   appContract,
   BOT_DESCRIPTION_MAX_LENGTH,
   BOT_INSTRUCTIONS_MAX_LENGTH,
+  BOT_INTEGRATION_NAME_MAX_LENGTH,
+  BOT_INTEGRATIONS_MAX_COUNT,
   BOT_TITLE_MAX_LENGTH,
+  BotImportInputSchema,
   CreateBotInput,
   CreateGroupInput,
   CreateRoutineInput,
   canReactToThreadMessage,
+  ExportManifestSchema,
   McpServerConfigInput,
   MessageBlock,
   ModelConnectInputSchema,
@@ -413,6 +417,48 @@ describe("contracts", () => {
         name: "combined",
         spec: { marks: [{ data: rows.slice(0, 2_500) }] },
         data: rows.slice(0, 2_501),
+      }).success,
+    ).toBe(false);
+  });
+});
+describe("bot import manifest", () => {
+  const manifest = {
+    version: 1,
+    exportedAt: "2026-09-30T09:00:00.000Z",
+    bot: { name: "Preset", title: "", description: "", instructions: "Do the work." },
+    memory: [],
+    routines: [],
+    files: [],
+    history: [],
+  };
+
+  it("defaults integrations for a manifest written before the field existed", () => {
+    expect(ExportManifestSchema.parse(manifest).integrations).toEqual([]);
+    expect(
+      BotImportInputSchema.parse({ manifest, includeMemory: true }).manifest.integrations,
+    ).toEqual([]);
+  });
+
+  it("keeps the connectors a preset expects", () => {
+    expect(
+      ExportManifestSchema.parse({ ...manifest, integrations: [" Gmail ", "Slack"] }).integrations,
+    ).toEqual(["Gmail", "Slack"]);
+  });
+
+  it("rejects unusable integration lists", () => {
+    expect(ExportManifestSchema.safeParse({ ...manifest, integrations: [" "] }).success).toBe(
+      false,
+    );
+    expect(
+      ExportManifestSchema.safeParse({
+        ...manifest,
+        integrations: Array.from({ length: BOT_INTEGRATIONS_MAX_COUNT + 1 }, (_, i) => `app-${i}`),
+      }).success,
+    ).toBe(false);
+    expect(
+      ExportManifestSchema.safeParse({
+        ...manifest,
+        integrations: ["a".repeat(BOT_INTEGRATION_NAME_MAX_LENGTH + 1)],
       }).success,
     ).toBe(false);
   });

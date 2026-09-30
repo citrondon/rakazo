@@ -30,6 +30,7 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
   const [includeRoutines, setIncludeRoutines] = useState(true);
   const [includeFiles, setIncludeFiles] = useState(false);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [integrations, setIntegrations] = useState<string[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,7 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (!manifestJson) {
       setPreview(null);
+      setIntegrations([]);
       setParseError(null);
       return;
     }
@@ -59,6 +61,7 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
       return;
     }
     setParseError(null);
+    setIntegrations(parsed.data.manifest.integrations);
     let cancelled = false;
     rpc.bots
       .importPreview(parsed.data)
@@ -198,6 +201,11 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
                     />
                   ) : null}
                 </div>
+                {integrations.length > 0 ? (
+                  <div className="text-[13px] text-muted-foreground">
+                    <Trans>Integrations</Trans>: {integrations.join(", ")}
+                  </div>
+                ) : null}
                 <div className="flex flex-col gap-2 text-[13.5px]">
                   <label className="flex items-center gap-2">
                     <input
