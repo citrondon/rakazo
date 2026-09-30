@@ -1,9 +1,11 @@
 import type { JobPublisher, JobWorkerHost } from "@rakazo/adapter-kit";
-import { ComposioConnector, IntegrationProviderSettings } from "@rakazo/adapters";
+import { ComposioConnector, IntegrationProviderSettings, pruneRunHistory } from "@rakazo/adapters";
 import { loadRootEnv } from "@rakazo/core/node/load-root-env";
 
 loadRootEnv();
 
+import { readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 import {
   ChatSdkMessagingSurface,
   CodexCatalogCache,
@@ -237,6 +239,17 @@ async function main() {
       await new Promise((resolve) => setTimeout(resolve, databaseCapacityBackoffMs(attempt)));
     }
   }
+  // Run-history retention needs a daily cadence, not the reconciler's 30s one. The stamp
+  // lives on local disk because pruning is idempotent: a lost stamp only re-deletes
+  // nothing, and a second worker writing the same stamp is harmless.
+  const retentionStampPath = path.join(dataDir, "run-retention-stamp");
+  const RETENTION_INTERVAL_MS = 24 * 60 * 60_000;
+  let lastRetention = 0;
+  try {
+    lastRetention = Number((await readFile(retentionStampPath, "utf8")) || 0);
+  } catch {
+    // No stamp yet; prune on the first reconciliation tick after startup.
+  }
   const reconciler = createJobReconciler({
     prisma,
     jobs,
@@ -244,6 +257,12 @@ async function main() {
     leadership: createPostgresReconciliationLeadership(pool),
     reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
     reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
+    pruneRunHistory: async () => {
+      if (Date.now() - lastRetention < RETENTION_INTERVAL_MS) return;
+      lastRetention = Date.now();
+      await writeFile(retentionStampPath, String(lastRetention)).catch(() => undefined);
+      await pruneRunHistory(prisma);
+    },
   });
   reconciler.start();
 

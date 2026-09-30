@@ -95,6 +95,7 @@ export * from "./private-endpoint.js";
 export * from "./realtime.js";
 export * from "./release-watch.js";
 export * from "./remote-mcp.js";
+export * from "./run-retention.js";
 export * from "./run-secret.js";
 export * from "./sandbox-factory.js";
 export * from "./sandbox-provider-env.js";
