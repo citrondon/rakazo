@@ -1017,13 +1017,15 @@ describe("space computer limit enforcement", () => {
 });
 
 describe("screen release status", () => {
-  const headers = {
+  // Resolve per request: importing ./index.js loads the root .env, so a token
+  // captured at collection time would not match the supervisor's own credential.
+  const headers = () => ({
     authorization: `Bearer ${resolveSupervisorToken(process.env)}`,
     "content-type": "application/json",
     "x-rakazo-bot-id": "bot",
     "x-rakazo-space-id": "space",
     "x-rakazo-screen-id": "writer",
-  };
+  });
 
   function managedContainer(exec?: ReturnType<typeof vi.fn>) {
     return {
@@ -1056,7 +1058,7 @@ describe("screen release status", () => {
     mocks.docker.getContainer.mockReturnValue(missing);
     const response = await supervisorApp.request("/computers/missing-screen/screen", {
       method: "DELETE",
-      headers,
+      headers: headers(),
     });
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({ error: "computer not found" });
@@ -1075,7 +1077,7 @@ describe("screen release status", () => {
     mocks.docker.getContainer.mockReturnValue(container);
     const response = await supervisorApp.request("/computers/identity-screen/screen", {
       method: "DELETE",
-      headers,
+      headers: headers(),
     });
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({ error: "invalid computer identity" });
@@ -1098,7 +1100,7 @@ describe("screen release status", () => {
     mocks.docker.getContainer.mockReturnValue(container);
     const opened = await supervisorApp.request("/computers/release-failed/screen-mode", {
       method: "POST",
-      headers,
+      headers: headers(),
       body: JSON.stringify({ interactive: false, revokeControl: false }),
     });
     expect(opened.status).toBe(200);
@@ -1106,7 +1108,7 @@ describe("screen release status", () => {
     failStop = true;
     const released = await supervisorApp.request("/computers/release-failed/screen", {
       method: "DELETE",
-      headers: { ...headers, "x-rakazo-screen-lease-id": "run-1:1" },
+      headers: { ...headers(), "x-rakazo-screen-lease-id": "run-1:1" },
     });
     expect(released.status).toBe(500);
     await expect(released.json()).resolves.toEqual({ error: "computer screen failed to stop" });
@@ -1127,7 +1129,7 @@ describe("screen release status", () => {
     mocks.docker.getContainer.mockReturnValue(container);
     const opened = await supervisorApp.request("/computers/exec-start-404/screen-mode", {
       method: "POST",
-      headers,
+      headers: headers(),
       body: JSON.stringify({ interactive: false, revokeControl: false }),
     });
     expect(opened.status).toBe(200);
@@ -1136,7 +1138,7 @@ describe("screen release status", () => {
     failStart = true;
     const released = await supervisorApp.request("/computers/exec-start-404/screen", {
       method: "DELETE",
-      headers: { ...headers, "x-rakazo-screen-lease-id": "run-1:1" },
+      headers: { ...headers(), "x-rakazo-screen-lease-id": "run-1:1" },
     });
     expect(released.status).toBe(500);
     await expect(released.json()).resolves.toEqual({ error: "no such exec" });
