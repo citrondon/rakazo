@@ -774,6 +774,11 @@ export const BotUsageSummarySchema = TokenTotalsSchema.extend({
   archived: z.boolean(),
   /** Distinct runs that spent tokens this month; a refused run never reached a model. */
   runs: z.number().int().nonnegative(),
+  /**
+   * Part of `totalTokens` that came from runs the bot started on its own routine schedule,
+   * so an owner can tell a forgotten routine burning the ceiling from their own work.
+   */
+  routineTokens: z.number().int().nonnegative(),
   monthlyTokenBudget: z.number().int().positive().nullable(),
   /** Null without a budget; otherwise the share of the ceiling already used. */
   usedPercent: z.number().nonnegative().nullable(),

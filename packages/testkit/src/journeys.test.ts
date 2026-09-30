@@ -1214,6 +1214,15 @@ describeJourneys("required product journeys", () => {
       where: { botId: bot.id, trigger: "routine" },
     });
     expect(routineRuns).toBe(1);
+    // Spend a schedule caused is charged to the schedule, so the owner can see a routine
+    // burning the month rather than reading it as their own work.
+    await waitForDatabase(
+      async () => (await prisma.usageRecord.count({ where: { botId: bot.id } })) > 0,
+    );
+    const routineMonth = await rpc<UsageMonth>(app, cookie, "usage/month");
+    expect(
+      routineMonth.bots.find((row) => row.botId === bot.id)?.routineTokens ?? 0,
+    ).toBeGreaterThan(0);
     const advanced = await prisma.routine.findUniqueOrThrow({ where: { id: routine.id } });
     expect(advanced.nextRunAt?.getTime()).toBeGreaterThan(dueAt.getTime());
 
@@ -2933,6 +2942,9 @@ describeJourneys("required product journeys", () => {
     const month = await rpc<UsageMonth>(app, cookie, "usage/month");
     const usedTokens = month.bots.find((row) => row.botId === bot.id)?.totalTokens ?? 0;
     expect(usedTokens).toBeGreaterThan(0);
+    // Every turn here was the owner's, so no share of the month is charged to a routine.
+    expect(month.bots.find((row) => row.botId === bot.id)?.routineTokens ?? 0).toBe(0);
+    expect(month.totals.totalTokens).toBeGreaterThanOrEqual(usedTokens);
 
     // A ceiling the next run carries usage across warns its owner once. The scripted runtime
     // reports a fixed count per run, so a ceiling of twice this run's spend lands the month

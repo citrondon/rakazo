@@ -281,6 +281,12 @@ export function UsageSettingsPanel({
                     ? `${bot.totalTokens.toLocaleString(locale)} / ${bot.monthlyTokenBudget.toLocaleString(locale)}`
                     : bot.totalTokens.toLocaleString(locale)}
                 </span>
+                {/* Only worth a column when a routine actually spent something this month. */}
+                {bot.routineTokens > 0 ? (
+                  <span className="shrink-0 text-[12.5px] text-muted-foreground/80">
+                    <Trans>{bot.routineTokens.toLocaleString(locale)} from routines</Trans>
+                  </span>
+                ) : null}
               </div>
             ))}
           </div>

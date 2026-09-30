@@ -652,4 +652,5 @@ export const DE_MESSAGES: Record<string, string> = {
   // app/account.tsx
   "This month": "Diesen Monat",
   "{used} / {budget}": "{used} / {budget}",
+  "{tokens} from routines": "{tokens} aus Routinen",
 };

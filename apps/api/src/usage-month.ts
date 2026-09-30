@@ -56,13 +56,31 @@ export async function loadUsageMonth(
     }),
   ]);
 
+  // One lookup for the month's runs, so each group can be charged to the routine that caused
+  // it. Runs the owner started are deliberately the rest of the total, never a second bucket.
+  const runIds = groups
+    .map((group) => group.runId)
+    .filter((runId): runId is string => runId !== null);
+  const routineRunIds = new Set<string>();
+  if (runIds.length) {
+    const routineRuns = await prisma.run.findMany({
+      where: { id: { in: runIds }, trigger: "routine" },
+      select: { id: true },
+    });
+    for (const run of routineRuns) routineRunIds.add(run.id);
+  }
+
   const byBot = new Map<
     string | null,
-    { tokenTotals: ReturnType<typeof tokenTotals>; runs: number }
+    { tokenTotals: ReturnType<typeof tokenTotals>; runs: number; routineTokens: number }
   >();
   for (const group of groups) {
     const key = group.botId;
-    const entry = byBot.get(key) ?? { tokenTotals: tokenTotals(undefined), runs: 0 };
+    const entry = byBot.get(key) ?? {
+      tokenTotals: tokenTotals(undefined),
+      runs: 0,
+      routineTokens: 0,
+    };
     const tokens = tokenTotals(group._sum);
     entry.tokenTotals.inputTokens += tokens.inputTokens;
     entry.tokenTotals.outputTokens += tokens.outputTokens;
@@ -71,6 +89,7 @@ export async function loadUsageMonth(
     entry.tokenTotals.totalTokens += tokens.totalTokens;
     // A usage row without a run is spend that happened outside a countable run.
     if (group.runId) entry.runs += 1;
+    if (group.runId && routineRunIds.has(group.runId)) entry.routineTokens += tokens.totalTokens;
     byBot.set(key, entry);
   }
 
@@ -97,6 +116,7 @@ export async function loadUsageMonth(
       archived: bot.archivedAt !== null,
       ...totals,
       runs: entry?.runs ?? 0,
+      routineTokens: entry?.routineTokens ?? 0,
       monthlyTokenBudget: budget && budget > 0 ? budget : null,
       usedPercent: budgetUsedPercent(totals.totalTokens, budget),
     };
@@ -110,6 +130,7 @@ export async function loadUsageMonth(
       archived: true,
       ...entry.tokenTotals,
       runs: entry.runs,
+      routineTokens: entry.routineTokens,
       monthlyTokenBudget: null,
       usedPercent: null,
     });

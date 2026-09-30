@@ -146,6 +146,12 @@ export default function Account() {
                     })
                   : String(bot.totalTokens)}
               </Text>
+              {/* Only worth a line when a routine actually spent something this month. */}
+              {bot.routineTokens > 0 ? (
+                <Text style={styles.monthRoutine}>
+                  {t("{tokens} from routines", { tokens: bot.routineTokens })}
+                </Text>
+              ) : null}
             </View>
           ))}
         </View>
@@ -704,6 +710,11 @@ function createAccountStyles() {
       color: native.secondaryLabel,
       fontSize: 14,
       fontVariant: ["tabular-nums"],
+    },
+    monthRoutine: {
+      flexShrink: 1,
+      color: native.tertiaryLabel,
+      fontSize: 12.5,
     },
     archivedRow: {
       flexDirection: "row",

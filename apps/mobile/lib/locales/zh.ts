@@ -634,4 +634,5 @@ export const ZH_MESSAGES: Record<string, string> = {
   // app/account.tsx
   "This month": "本月",
   "{used} / {budget}": "{used} / {budget}",
+  "{tokens} from routines": "{tokens} 来自例行任务",
 };

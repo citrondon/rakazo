@@ -64,6 +64,11 @@ msgstr "{0}-Verbindung"
 msgid "{0} default"
 msgstr ""
 
+#. placeholder {0}: bot.routineTokens.toLocaleString(locale)
+#: src/pages/AccountSettingsOverlay.tsx:266
+msgid "{0} from routines"
+msgstr ""
+
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} handling"
@@ -176,7 +181,19 @@ msgstr "{workingBotName} arbeitet"
 msgid "@{0}"
 msgstr "@{0}"
 
-#: src/pages/shell/message-cards.tsx
+#: src/pages/McpServersOverlay.tsx:449
+msgid "1-Klick Aktivieren"
+msgstr ""
+
+#: src/pages/McpServersOverlay.tsx:350
+msgid "1-Klick Connectors (Empfohlen)"
+msgstr ""
+
+#: src/pages/PluginsOverlay.tsx:781
+msgid "1-Klick Connectors (Grok-Bot Style)"
+msgstr "1-Klick Connectors (Grok-Bot Style)"
+
+#: src/pages/shell/message-cards.tsx:137
 msgid "A bit of everything"
 msgstr ""
 
@@ -455,7 +472,12 @@ msgstr "API-Schlüssel"
 msgid "API key header"
 msgstr "API-Schlüssel-Header"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AccountSettingsOverlay.tsx:612
+msgid "App Installation"
+msgstr "App-Installation"
+
+#: src/pages/AccountSettingsOverlay.tsx:116
+#: src/pages/AccountSettingsOverlay.tsx:444
 msgid "Appearance"
 msgstr "Erscheinungsbild"
 
@@ -1314,7 +1336,12 @@ msgstr "Connector konnte nicht entfernt werden"
 msgid "Could not remove group"
 msgstr "Gruppe konnte nicht entfernt werden"
 
-#: src/components/ApprovalRulesSettings.tsx
+#: src/pages/McpServersOverlay.tsx:127
+#: src/pages/PluginsOverlay.tsx:205
+msgid "Could not remove preset"
+msgstr ""
+
+#: src/components/ApprovalRulesSettings.tsx:92
 msgid "Could not remove rule"
 msgstr "Regel konnte nicht entfernt werden"
 
@@ -1645,7 +1672,11 @@ msgstr "Beschreibe, was dieser Bot macht"
 msgid "Description"
 msgstr "Beschreibung"
 
-#: src/components/DesktopUpdates.tsx
+#: src/pages/AccountSettingsOverlay.tsx:626
+msgid "Desktop & Mobile App"
+msgstr "Desktop- & Mobile-App"
+
+#: src/components/DesktopUpdates.tsx:140
 msgid "Desktop app"
 msgstr ""
 
@@ -1936,7 +1967,11 @@ msgstr "Passwort vergessen?"
 msgid "Free"
 msgstr "Kostenlos"
 
-#: src/pages/WindowChrome.tsx
+#: src/pages/McpServersOverlay.tsx:472
+msgid "Füge einen GitHub-Token (mit repo/read-Rechten) ein, um den Connector zu aktivieren:"
+msgstr ""
+
+#: src/pages/WindowChrome.tsx:31
 msgid "Fullscreen"
 msgstr "Vollbild"
 
@@ -1960,8 +1995,13 @@ msgstr ""
 msgid "Git event"
 msgstr ""
 
-#: src/pages/MessagingSettingsOverlay.tsx
-#: src/pages/Shell.tsx
+#: src/pages/McpServersOverlay.tsx:465
+msgid "GitHub Personal Access Token erforderlich"
+msgstr ""
+
+#: src/pages/MessagingSettingsOverlay.tsx:204
+#: src/pages/Shell.tsx:3429
+#: src/pages/Shell.tsx:3584
 msgid "Group"
 msgstr "Gruppe"
 
@@ -2077,7 +2117,20 @@ msgstr "Standard übernehmen"
 msgid "Inputs"
 msgstr "Eingaben"
 
-#: src/pages/memory-providers/SupermemorySettingsForm.tsx
+#: src/pages/AccountSettingsOverlay.tsx:639
+#: src/pages/Shell.tsx:3314
+msgid "Install app"
+msgstr "App installieren"
+
+#: src/pages/AccountSettingsOverlay.tsx:629
+msgid "Install Rakazo as a standalone app without browser borders."
+msgstr "Rakazo als eigenständige App ohne Browser-Ränder installieren."
+
+#: src/pages/AccountSettingsOverlay.tsx:643
+msgid "Install via browser menu"
+msgstr "Über Browser-Menü installieren"
+
+#: src/pages/memory-providers/SupermemorySettingsForm.tsx:61
 msgid "Instance API key"
 msgstr "Instanz-API-Schlüssel"
 
@@ -2151,7 +2204,11 @@ msgstr "gerade eben"
 msgid "Keep memories"
 msgstr "Erinnerungen behalten"
 
-#: src/pages/RoutineEditor.tsx
+#: src/pages/McpServersOverlay.tsx:354
+msgid "Keine manuelle Konfiguration nötig"
+msgstr ""
+
+#: src/pages/RoutineEditor.tsx:605
 msgid "key"
 msgstr ""
 
@@ -2326,7 +2383,11 @@ msgstr "Maximale Ausgabetokens"
 msgid "MCP endpoint"
 msgstr ""
 
-#: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx:798
+msgid "MCP Server konfigurieren"
+msgstr ""
+
+#: src/pages/McpServersOverlay.tsx:327
 msgid "MCP servers"
 msgstr "MCP-Server"
 
@@ -2912,7 +2973,15 @@ msgstr "In Warteschlange"
 msgid "Quote"
 msgstr ""
 
-#: src/pages/Shell.tsx
+#: src/pages/Shell.tsx:5409
+msgid "Raise budget"
+msgstr ""
+
+#: src/pages/AccountSettingsOverlay.tsx:615
+msgid "Rakazo is installed as a standalone app."
+msgstr "Rakazo ist als eigenständige App installiert."
+
+#: src/pages/Shell.tsx:5902
 msgid "React"
 msgstr "Reagieren"
 
@@ -3758,7 +3827,12 @@ msgstr ""
 msgid "Treg token"
 msgstr "Treg-Token"
 
-#: src/pages/Onboarding.tsx
+#: src/pages/McpServersOverlay.tsx:423
+#: src/pages/PluginsOverlay.tsx:866
+msgid "Trennen"
+msgstr ""
+
+#: src/pages/Onboarding.tsx:696
 msgid "Try again"
 msgstr "Erneut versuchen"
 
@@ -3887,7 +3961,13 @@ msgstr "Dieses Modell verwenden"
 msgid "Username"
 msgstr ""
 
-#: src/pages/PluginsOverlay.tsx
+#: src/pages/McpServersOverlay.tsx:500
+#: src/pages/PluginsOverlay.tsx:917
+#: src/pages/PluginsOverlay.tsx:933
+msgid "Verbinden"
+msgstr ""
+
+#: src/pages/PluginsOverlay.tsx:1324
 msgid "Verify and add"
 msgstr "Prüfen und hinzufügen"
 

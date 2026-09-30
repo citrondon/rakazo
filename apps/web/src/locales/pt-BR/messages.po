@@ -64,6 +64,11 @@ msgstr "Conexão {0}"
 msgid "{0} default"
 msgstr ""
 
+#. placeholder {0}: bot.routineTokens.toLocaleString(locale)
+#: src/pages/AccountSettingsOverlay.tsx:266
+msgid "{0} from routines"
+msgstr ""
+
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} handling"
@@ -176,7 +181,19 @@ msgstr "{workingBotName} está trabalhando"
 msgid "@{0}"
 msgstr "@{0}"
 
-#: src/pages/shell/message-cards.tsx
+#: src/pages/McpServersOverlay.tsx:449
+msgid "1-Klick Aktivieren"
+msgstr ""
+
+#: src/pages/McpServersOverlay.tsx:350
+msgid "1-Klick Connectors (Empfohlen)"
+msgstr ""
+
+#: src/pages/PluginsOverlay.tsx:781
+msgid "1-Klick Connectors (Grok-Bot Style)"
+msgstr ""
+
+#: src/pages/shell/message-cards.tsx:137
 msgid "A bit of everything"
 msgstr ""
 
@@ -455,7 +472,12 @@ msgstr "Chave de API"
 msgid "API key header"
 msgstr "Cabeçalho da chave API"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AccountSettingsOverlay.tsx:612
+msgid "App Installation"
+msgstr ""
+
+#: src/pages/AccountSettingsOverlay.tsx:116
+#: src/pages/AccountSettingsOverlay.tsx:444
 msgid "Appearance"
 msgstr "Aparência"
 
@@ -1314,7 +1336,12 @@ msgstr "Não foi possível remover o conector"
 msgid "Could not remove group"
 msgstr "Não foi possível remover o grupo"
 
-#: src/components/ApprovalRulesSettings.tsx
+#: src/pages/McpServersOverlay.tsx:127
+#: src/pages/PluginsOverlay.tsx:205
+msgid "Could not remove preset"
+msgstr ""
+
+#: src/components/ApprovalRulesSettings.tsx:92
 msgid "Could not remove rule"
 msgstr "Não foi possível remover."
 
@@ -1645,7 +1672,11 @@ msgstr "Descreva o que este bot faz"
 msgid "Description"
 msgstr "Descrição"
 
-#: src/components/DesktopUpdates.tsx
+#: src/pages/AccountSettingsOverlay.tsx:626
+msgid "Desktop & Mobile App"
+msgstr ""
+
+#: src/components/DesktopUpdates.tsx:140
 msgid "Desktop app"
 msgstr ""
 
@@ -1936,7 +1967,11 @@ msgstr "Esqueceu a senha?"
 msgid "Free"
 msgstr ""
 
-#: src/pages/WindowChrome.tsx
+#: src/pages/McpServersOverlay.tsx:472
+msgid "Füge einen GitHub-Token (mit repo/read-Rechten) ein, um den Connector zu aktivieren:"
+msgstr ""
+
+#: src/pages/WindowChrome.tsx:31
 msgid "Fullscreen"
 msgstr "Tela Cheia"
 
@@ -1960,8 +1995,13 @@ msgstr ""
 msgid "Git event"
 msgstr ""
 
-#: src/pages/MessagingSettingsOverlay.tsx
-#: src/pages/Shell.tsx
+#: src/pages/McpServersOverlay.tsx:465
+msgid "GitHub Personal Access Token erforderlich"
+msgstr ""
+
+#: src/pages/MessagingSettingsOverlay.tsx:204
+#: src/pages/Shell.tsx:3429
+#: src/pages/Shell.tsx:3584
 msgid "Group"
 msgstr "Grupo"
 
@@ -2077,7 +2117,20 @@ msgstr "Herdar (padrão)"
 msgid "Inputs"
 msgstr "Entradas"
 
-#: src/pages/memory-providers/SupermemorySettingsForm.tsx
+#: src/pages/AccountSettingsOverlay.tsx:639
+#: src/pages/Shell.tsx:3314
+msgid "Install app"
+msgstr ""
+
+#: src/pages/AccountSettingsOverlay.tsx:629
+msgid "Install Rakazo as a standalone app without browser borders."
+msgstr ""
+
+#: src/pages/AccountSettingsOverlay.tsx:643
+msgid "Install via browser menu"
+msgstr ""
+
+#: src/pages/memory-providers/SupermemorySettingsForm.tsx:61
 msgid "Instance API key"
 msgstr "Chave de API da instância"
 
@@ -2151,7 +2204,11 @@ msgstr "agora mesmo"
 msgid "Keep memories"
 msgstr "Manter memórias"
 
-#: src/pages/RoutineEditor.tsx
+#: src/pages/McpServersOverlay.tsx:354
+msgid "Keine manuelle Konfiguration nötig"
+msgstr ""
+
+#: src/pages/RoutineEditor.tsx:605
 msgid "key"
 msgstr ""
 
@@ -2326,7 +2383,11 @@ msgstr "Máximo de tokens de saída"
 msgid "MCP endpoint"
 msgstr ""
 
-#: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx:798
+msgid "MCP Server konfigurieren"
+msgstr ""
+
+#: src/pages/McpServersOverlay.tsx:327
 msgid "MCP servers"
 msgstr "Servidores MCP"
 
@@ -2912,7 +2973,15 @@ msgstr "Na fila"
 msgid "Quote"
 msgstr ""
 
-#: src/pages/Shell.tsx
+#: src/pages/Shell.tsx:5409
+msgid "Raise budget"
+msgstr ""
+
+#: src/pages/AccountSettingsOverlay.tsx:615
+msgid "Rakazo is installed as a standalone app."
+msgstr ""
+
+#: src/pages/Shell.tsx:5902
 msgid "React"
 msgstr "Reagir"
 
@@ -3758,7 +3827,12 @@ msgstr ""
 msgid "Treg token"
 msgstr "Token Treg"
 
-#: src/pages/Onboarding.tsx
+#: src/pages/McpServersOverlay.tsx:423
+#: src/pages/PluginsOverlay.tsx:866
+msgid "Trennen"
+msgstr ""
+
+#: src/pages/Onboarding.tsx:696
 msgid "Try again"
 msgstr "Tentar novamente"
 
@@ -3887,7 +3961,13 @@ msgstr "Use este modelo"
 msgid "Username"
 msgstr ""
 
-#: src/pages/PluginsOverlay.tsx
+#: src/pages/McpServersOverlay.tsx:500
+#: src/pages/PluginsOverlay.tsx:917
+#: src/pages/PluginsOverlay.tsx:933
+msgid "Verbinden"
+msgstr ""
+
+#: src/pages/PluginsOverlay.tsx:1324
 msgid "Verify and add"
 msgstr "Verificar e adicionar"
 
