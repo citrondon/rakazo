@@ -207,6 +207,29 @@ export function extractRoutineSkillMentions(prompt: string, knownNames?: string[
   return names;
 }
 
+/** The skills these prompts mention, in first-mention order, matched case-insensitively.
+ * Names that resolve to no skill are ignored: an export carries what the bot really has. */
+export function selectReferencedSkills<T extends { name: string }>(
+  texts: readonly string[],
+  skills: readonly T[],
+): T[] {
+  const knownNames = skills.map((skill) => skill.name);
+  const byName = new Map(skills.map((skill) => [skill.name.toLowerCase(), skill]));
+  const picked: T[] = [];
+  const seen = new Set<string>();
+  for (const text of texts) {
+    for (const name of extractRoutineSkillMentions(text, knownNames)) {
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      const skill = byName.get(key);
+      if (!skill) continue;
+      seen.add(key);
+      picked.push(skill);
+    }
+  }
+  return picked;
+}
+
 /** Keep user-owned skills reachable when a later builtin claims the same name. */
 export function mergeBuiltinSkills<T extends { name: string }>(
   builtins: readonly T[],

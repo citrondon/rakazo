@@ -3179,6 +3179,125 @@ describe("groups.archive", () => {
   });
 });
 
+describe("bot export skill pack", () => {
+  const BRIEF = {
+    name: "Daily Brief",
+    content: "---\nname: Daily Brief\ndescription: Summarise the day\n---\nRead the calendar.\n",
+  };
+  const TRIAGE = {
+    name: "Inbox Triage",
+    content: "---\nname: Inbox Triage\ndescription: Sort the inbox\n---\nList the senders.\n",
+  };
+
+  function exportDeps(skillRows: Array<{ name: string; content: string }>) {
+    const findAgentSkills = vi.fn().mockResolvedValue(skillRows);
+    const prisma = {
+      bot: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "bot-1",
+          spaceId: "workspace-1",
+          userId: "user-1",
+          name: "Chief",
+          title: "Chief of staff",
+          description: "Runs the day.",
+          instructions: "Start the morning with @Daily Brief.",
+          color: "#111111",
+          notifyOnFinish: false,
+          pinned: false,
+          sectionId: null,
+          archivedAt: null,
+          parentBotId: null,
+          memoryScope: null,
+          createdAt: new Date(0),
+          updatedAt: new Date(0),
+          thread: { id: "thread-1", unread: false },
+          computer: { scope: "team" },
+        }),
+      },
+      memoryDocument: { findMany: vi.fn().mockResolvedValue([]) },
+      routine: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            name: "Morning",
+            prompt: "Run @Inbox Triage then write the brief",
+            crons: [],
+            timezone: "UTC",
+          },
+        ]),
+      },
+      agentSkill: { findMany: findAgentSkills },
+      message: {
+        findMany: vi.fn().mockResolvedValue([]),
+        findFirst: vi.fn().mockResolvedValue(null),
+        count: vi.fn().mockResolvedValue(0),
+      },
+    } as unknown as PrismaClient;
+    const deps = {
+      prisma,
+      env: {
+        defaultProvider: "fake",
+        defaultModel: "fake-model",
+        webOrigin: "http://127.0.0.1:5173",
+        screenProxySecret: "fake-test-secret",
+        sandboxProvider: "fake",
+      },
+      dataDir: "/tmp/rakazo-router-test",
+      home: {
+        exportHome: async function* () {},
+      },
+    } as unknown as RouterDeps;
+    return { prisma, findAgentSkills, handler: new RPCHandler(createRouter(deps)) };
+  }
+
+  const actor = {
+    spaceId: "workspace-1",
+    userId: "user-1",
+    email: "user@rakazo.test",
+    isDeploymentOwner: true,
+  } satisfies Actor;
+
+  async function exportManifest(fix: ReturnType<typeof exportDeps>) {
+    const { matched, response } = await fix.handler.handle(
+      new Request("http://127.0.0.1/rpc/export/bot", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ json: { botId: "bot-1" } }),
+      }),
+      { prefix: "/rpc", context: { actor } },
+    );
+    expect(matched).toBe(true);
+    expect(response.status).toBe(200);
+    return (await response.json()) as {
+      json: { skills: Array<{ name: string; content: string }> };
+    };
+  }
+
+  it("carries the skills the instructions and the routines mention", async () => {
+    const fix = exportDeps([TRIAGE, BRIEF]);
+    const body = await exportManifest(fix);
+    expect(body.json.skills).toEqual([BRIEF, TRIAGE]);
+  });
+
+  it("leaves a skill the bot never mentions in the space", async () => {
+    const fix = exportDeps([BRIEF, TRIAGE]);
+    vi.mocked(fix.prisma.routine.findMany).mockResolvedValue([
+      { name: "Morning", prompt: "Write the summary", crons: [], timezone: "UTC" },
+    ]);
+    const body = await exportManifest(fix);
+    expect(body.json.skills).toEqual([BRIEF]);
+  });
+
+  it("reads only the skills the user wrote, never built-in or plugin copies", async () => {
+    const fix = exportDeps([BRIEF]);
+    await exportManifest(fix);
+    expect(fix.findAgentSkills).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ source: "user" }),
+      }),
+    );
+  });
+});
+
 describe("team start", () => {
   /**
    * The gates run before anything is written, so a prisma whose first write fails

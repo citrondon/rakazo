@@ -802,6 +802,16 @@ describe("MCP connector session cache", () => {
     await connector.discoverTools(contextFor("w1", "u1"));
     expect(state.initializations).toBe(3);
 
+    // Remote sessions are not bot-scoped: nothing per bot is mounted into them.
+    // Stdio differs, because there one server holds one bot's home directory.
+    await connector.discoverTools({
+      spaceId: "w1",
+      userId: "u1",
+      botId: "bot-2",
+      signal: new AbortController().signal,
+    } as never);
+    expect(state.initializations).toBe(3);
+
     await connector.close();
   });
 });

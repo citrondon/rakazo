@@ -1,3 +1,5 @@
+import type { McpStdioStatus } from "@rakazo/contracts";
+
 export interface McpPreset {
   id: string;
   slug: string;
@@ -20,20 +22,19 @@ export const MCP_PRESETS: McpPreset[] = [
     id: "workspace-files",
     slug: "workspace-files",
     name: "Workspace Files",
-    description:
-      "Direkter Lese- und Schreibzugriff auf deinen synchronisierten Windows-Ordner (workspace/).",
+    description: "Direkter Lese- und Schreibzugriff auf das Home-Verzeichnis dieses Bots ({home}).",
     badge: "Empfohlen",
     iconName: "FolderKanban",
     transport: "stdio",
     command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-filesystem", "/home/rakazo/shared"],
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "{home}"],
   },
   {
     id: "workspace-exec",
     slug: "workspace-exec",
     name: "Terminal & Code Runner",
     description:
-      "Führt Python-, Node- und Shell-Befehle direkt im geteilten Workspace aus (inklusive Tests).",
+      "Führt Befehle im Server-Prozess aus, nicht im Sandbox-Container des Bots. Nur mit bedachtem Allowlist-Eintrag.",
     badge: "Power",
     iconName: "Terminal",
     transport: "stdio",
@@ -57,24 +58,24 @@ export const MCP_PRESETS: McpPreset[] = [
     slug: "markdown-notes",
     name: "Markdown Second Brain",
     description:
-      "Verwaltet ein dauerhaftes Wissens- und Notizarchiv im Workspace (Obsidian-kompatibel).",
+      "Verwaltet ein dauerhaftes Wissens- und Notizarchiv dieses Bots (Obsidian-kompatibel).",
     badge: "Gedächtnis",
     iconName: "BookOpen",
     transport: "stdio",
     command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-filesystem", "/home/rakazo/shared/notes"],
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "{home}/notes"],
   },
   {
     id: "sqlite-explorer",
     slug: "sqlite-explorer",
     name: "SQLite & Data Explorer",
     description:
-      "Strukturierte SQL-Abfragen und Analysen für lokale SQLite-Datenbanken im Workspace.",
+      "Strukturierte SQL-Abfragen auf einer SQLite-Datenbank im Home-Verzeichnis dieses Bots.",
     badge: "Data",
     iconName: "Database",
     transport: "stdio",
     command: "npx",
-    args: ["-y", "mcp-sqlite", "/home/rakazo/shared/data.db"],
+    args: ["-y", "mcp-sqlite", "{home}/data.db"],
   },
   {
     id: "github",
@@ -93,3 +94,14 @@ export const MCP_PRESETS: McpPreset[] = [
     },
   },
 ];
+
+/** Why this preset cannot start yet. Null when it would run, and while the deployment
+ * capability is still loading. The wording lives in <McpPresetBlockerNote />. */
+export function stdioBlockerReason(
+  preset: McpPreset,
+  status: McpStdioStatus | null,
+): "disabled" | "command" | null {
+  if (!status) return null;
+  if (!status.enabled) return "disabled";
+  return status.allowedCommands.includes(preset.command) ? null : "command";
+}

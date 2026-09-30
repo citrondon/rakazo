@@ -12,7 +12,7 @@
 
 **Tech Stack:** TypeScript, Node.js 22, React / Vite, Prisma / PostgreSQL 16, Docker, Vitest, SpooK API / OpenAI-compatible.
 
-**Spec:** [GrokBot Parity & Bot Catalog Blueprint](file:///c:/Users/pasca/Downloads/ssd/rakazo/bot-library/README.md)
+**Spec:** [GrokBot Parity & Bot Catalog Blueprint](../../../bot-library/README.md)
 
 ## Global Constraints
 - Zero merge conflicts with Track B: do not touch `apps/api/src/router.ts` or database migration scripts in `packages/db`.

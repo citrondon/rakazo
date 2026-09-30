@@ -28,6 +28,7 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
   const [manifestJson, setManifestJson] = useState<string | null>(null);
   const [includeMemory, setIncludeMemory] = useState(true);
   const [includeRoutines, setIncludeRoutines] = useState(true);
+  const [includeSkills, setIncludeSkills] = useState(true);
   const [includeFiles, setIncludeFiles] = useState(false);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [integrations, setIntegrations] = useState<string[]>([]);
@@ -54,6 +55,7 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
       manifest,
       includeMemory,
       includeRoutines,
+      includeSkills,
       includeFiles,
     });
     if (!parsed.success) {
@@ -74,7 +76,7 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
     return () => {
       cancelled = true;
     };
-  }, [manifestJson, includeMemory, includeRoutines, includeFiles, t]);
+  }, [manifestJson, includeMemory, includeRoutines, includeSkills, includeFiles, t]);
 
   async function pickFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -99,6 +101,7 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
       manifest,
       includeMemory,
       includeRoutines,
+      includeSkills,
       includeFiles,
     });
     if (!parsed.success) {
@@ -201,6 +204,11 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
                     />
                   ) : null}
                 </div>
+                {preview.skillNames.length > 0 ? (
+                  <div className="text-[13px] text-muted-foreground">
+                    <Plural value={preview.skillNames.length} one="Skill: #" other="Skills: #" />
+                  </div>
+                ) : null}
                 {integrations.length > 0 ? (
                   <div className="text-[13px] text-muted-foreground">
                     <Trans>Integrations</Trans>: {integrations.join(", ")}
@@ -222,6 +230,14 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
                       onChange={(event) => setIncludeRoutines(event.target.checked)}
                     />
                     <Trans>Include routines (imported inactive)</Trans>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={includeSkills}
+                      onChange={(event) => setIncludeSkills(event.target.checked)}
+                    />
+                    <Trans>Include skills (added to your space)</Trans>
                   </label>
                   <label className="flex items-center gap-2">
                     <input

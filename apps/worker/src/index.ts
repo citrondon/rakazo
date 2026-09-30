@@ -98,6 +98,7 @@ async function main() {
   });
   const allowPrivateEndpoint = process.env.MCP_ALLOW_PRIVATE_ENDPOINT === "true";
   const mcpOAuth = new McpOAuthBroker(prisma, secrets, {}, allowPrivateEndpoint);
+  const home = new LocalAgentHomeStore(dataDir);
   const mcp = new McpConnector(
     prisma,
     secrets,
@@ -107,6 +108,7 @@ async function main() {
         .split(",")
         .map((v) => v.trim())
         .filter(Boolean),
+      resolveStdioHome: (botId) => home.pathFor(botId),
       events,
       allowPrivateEndpoint,
     },
@@ -153,7 +155,6 @@ async function main() {
   await connector.start();
   integrationSettings.warmDirectories();
   const memoryProviders = new SpaceMemoryProviderResolver(prisma, secrets);
-  const home = new LocalAgentHomeStore(dataDir);
   const artifacts = new LocalArtifactStore(dataDir);
   const inMemoryJobs = process.env.WAKEUP_DRIVER === "memory" ? new InMemoryJobQueue() : undefined;
   const jobs: JobPublisher = inMemoryJobs ?? new GraphileJobPublisher(pool);

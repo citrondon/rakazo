@@ -22,6 +22,10 @@ msgstr " (unread)"
 msgid "{0, plural, one {# model} other {# models}}"
 msgstr "{0, plural, one {# model} other {# models}}"
 
+#: src/pages/BotImportOverlay.tsx
+msgid "{0, plural, one {Skill: #} other {Skills: #}}"
+msgstr "{0, plural, one {Skill: #} other {Skills: #}}"
+
 #. placeholder {0}: preview.memoryCount
 #: src/pages/BotImportOverlay.tsx
 msgid "{0, plural, zero {No memories} one {# memory} other {# memories}}"
@@ -266,6 +270,11 @@ msgstr "Activity"
 #: src/pages/ScratchpadSection.tsx
 msgid "Add"
 msgstr "Add"
+
+#. placeholder {0}: preset.command
+#: src/pages/McpPresetBlockerNote.tsx
+msgid "Add {0} to MCP_STDIO_ALLOWED_COMMANDS on the server to start this connector."
+msgstr "Add {0} to MCP_STDIO_ALLOWED_COMMANDS on the server to start this connector."
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Add a model in Settings to use this."
@@ -2196,6 +2205,10 @@ msgstr "Include memories"
 msgid "Include routines (imported inactive)"
 msgstr "Include routines (imported inactive)"
 
+#: src/pages/BotImportOverlay.tsx
+msgid "Include skills (added to your space)"
+msgstr "Include skills (added to your space)"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
 msgstr "Inherit default"
@@ -2233,6 +2246,7 @@ msgstr "Integration domain"
 msgid "Integration options"
 msgstr "Integration options"
 
+#: src/pages/BotImportOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/Shell.tsx
 msgid "Integrations"
@@ -3554,6 +3568,10 @@ msgstr "Server name"
 #: src/pages/Onboarding.tsx
 msgid "Server URL"
 msgstr "Server URL"
+
+#: src/pages/McpPresetBlockerNote.tsx
+msgid "Set MCP_STDIO_ENABLED=true on the server to start this connector."
+msgstr "Set MCP_STDIO_ENABLED=true on the server to start this connector."
 
 #: src/components/call/CallCard.tsx
 #: src/pages/MessagingSettingsOverlay.tsx

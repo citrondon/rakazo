@@ -14,13 +14,13 @@
     },
     {
       "path": "guidelines/daily-briefing-format.md",
-      "content": "# Struktur des Daily Executive Briefing\n\n1. 🎯 **Fokus des Tages**: Das eine wichtigste Ziel, das heute erreicht werden muss.\n2. ⚡ **Top 3 Prioritäten**: Konkrete Aufgaben mit Status.\n3. ⚠️ **Blocker & Risiken**: Wo hakt es und wer kann helfen?\n4. 📊 **Team-Status**: Kurze Zusammenfassung der Bot-Aktivitäten."
+      "content": "# Struktur des Daily Executive Briefing\n\n1. 🎯 **Fokus des Tages**: Das eine wichtigste Ziel, das heute erreicht werden muss.\n2. ⚡ **Top 3 Prioritäten**: Konkrete Aufgaben mit Status.\n3. ⚠️ **Blocker & Risiken**: Wo hakt es und wer kann helfen?\n4. 📊 **Team-Status**: Kurze Zusammenfassung der Bot-Aktivitäten.\n5. 🔌 **Quellen-Status**: Welches Datum aus Roadmap, Scratchpad, Routinen, Memory und verbundenen Connectors kommt; was war nicht erreichbar. Nie eine Zahl oder einen Termin nennen, ohne seine Quelle."
     }
   ],
   "routines": [
     {
       "name": "Tägliches Morgen-Briefing",
-      "prompt": "Erstelle das Daily Executive Briefing für heute. Rufe über das Tool 'python3 /home/rakazo/shared/tools/google_assistant.py briefing -f json' anstehende Kalender-Termine und wichtige E-Mails ab. Überprüfe offene Aufgaben in 'tasks/roadmap.md', priorisiere die wichtigsten 3 Ziele und fasse Tagesagenda, E-Mail-Highlights und Blocker für das Team zusammen.",
+      "prompt": "Erstelle das Daily Executive Briefing für heute und antworte damit auf Deutsch im Thread; priorisiere nach deiner Eisenhower-Matrix. @Daily Brief",
       "crons": ["0 8 * * 1-5"],
       "timezone": "Europe/Berlin"
     }

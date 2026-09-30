@@ -4,6 +4,7 @@ import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { StoredMcpOAuthProvider } from "./mcp-oauth.js";
 import {
+  expandStdioHomeToken,
   McpSession,
   secureFetch,
   validateUrl,
@@ -52,6 +53,15 @@ describe("MCP transport seam", () => {
     ).rejects.toThrow("allowlist");
     await session.close();
     assert.ok(true);
+  });
+
+  it("resolves {home} against the bot's own home before spawning", () => {
+    expect(
+      expandStdioHomeToken(["-y", "server-filesystem", "{home}/notes"], "/data/homes/bot-1"),
+    ).toEqual(["-y", "server-filesystem", "/data/homes/bot-1/notes"]);
+    expect(expandStdioHomeToken(["-y", "mcp-fetch-server"])).toEqual(["-y", "mcp-fetch-server"]);
+    // No home root: fail loudly instead of starting a server pointed at the literal token.
+    expect(() => expandStdioHomeToken(["{home}"])).toThrow("no agent home root");
   });
 
   it("rejects remote endpoints that resolve to a private address", async () => {

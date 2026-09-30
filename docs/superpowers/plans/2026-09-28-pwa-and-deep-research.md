@@ -94,9 +94,9 @@ Run: `pnpm --filter @rakazo/web check` and `pnpm --filter @rakazo/web build`
 
 ### Task 2: Configure OpenResearch & TrendScout for Live Web-Fetch
 **Files:**
-- Database: Verify bot prompts and MCP assignment for `OpenResearch` (`cmujqnpd00000g0pcq38bumth`) and `TrendScout` (`cmujsli820007swpccwq9drl7`)
+- Database: Verify bot prompts and MCP assignment for `OpenResearch` (local database id) and `TrendScout` (local database id)
 - Create: `apps/web/src/pages/mcp-presets.ts` (ensure `web-fetch` provides URL scrape tools)
-- Target Directory: `/data/homes/team-e272d745988bd720ba0c9699ffc5de54/shared/research/`
+- Target Directory: `/data/homes/team-<space-id>/shared/research/`
 
 - [x] **Step 1: Test `web-fetch` MCP Server Tool**
 Verify that `@modelcontextprotocol/server-fetch` successfully resolves external URLs (e.g. `https://news.ycombinator.com` or GitHub READMEs) through the bot execution loop.
@@ -112,7 +112,7 @@ Send a live research task:
 `"@OpenResearch recherchiere bitte die neuesten Trends zu Open-Source MCP Servern unter https://github.com/punkpeye/awesome-mcp-servers und fasse die 5 wichtigsten Kategorien zusammen. Speichere das Ergebnis als 'research/mcp-trends.md' im gemeinsamen Workspace."`
 
 - [x] **Step 4: Verify Host Workspace Sync**
-Verify that `scripts/sync-workspace.ps1` detects the new file and creates `C:\Users\pasca\Downloads\ssd\workspace\research\mcp-trends.md` with complete analysis content.
+Verify that `pnpm workspace:pull` detects the new file and writes it to the configured local workspace folder with complete analysis content.
 
 ---
 

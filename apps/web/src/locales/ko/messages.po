@@ -22,6 +22,10 @@ msgstr " (읽지 않음)"
 msgid "{0, plural, one {# model} other {# models}}"
 msgstr "{0, plural, one {모델 #개} other {모델 #개}}"
 
+#: src/pages/BotImportOverlay.tsx
+msgid "{0, plural, one {Skill: #} other {Skills: #}}"
+msgstr ""
+
 #. placeholder {0}: preview.memoryCount
 #: src/pages/BotImportOverlay.tsx
 msgid "{0, plural, zero {No memories} one {# memory} other {# memories}}"
@@ -266,6 +270,11 @@ msgstr "활동"
 #: src/pages/ScratchpadSection.tsx
 msgid "Add"
 msgstr "추가"
+
+#. placeholder {0}: preset.command
+#: src/pages/McpPresetBlockerNote.tsx
+msgid "Add {0} to MCP_STDIO_ALLOWED_COMMANDS on the server to start this connector."
+msgstr ""
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Add a model in Settings to use this."
@@ -2196,6 +2205,10 @@ msgstr ""
 msgid "Include routines (imported inactive)"
 msgstr ""
 
+#: src/pages/BotImportOverlay.tsx
+msgid "Include skills (added to your space)"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
 msgstr "기본 설정 사용"
@@ -2233,6 +2246,7 @@ msgstr ""
 msgid "Integration options"
 msgstr ""
 
+#: src/pages/BotImportOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/Shell.tsx
 msgid "Integrations"
@@ -3554,6 +3568,10 @@ msgstr "서버 이름"
 #: src/pages/Onboarding.tsx
 msgid "Server URL"
 msgstr "서버 URL"
+
+#: src/pages/McpPresetBlockerNote.tsx
+msgid "Set MCP_STDIO_ENABLED=true on the server to start this connector."
+msgstr ""
 
 #: src/components/call/CallCard.tsx
 #: src/pages/MessagingSettingsOverlay.tsx

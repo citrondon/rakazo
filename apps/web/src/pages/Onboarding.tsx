@@ -364,6 +364,11 @@ export function OnboardingPage() {
         .catch(() => false);
       if (started) {
         await rpc.onboarding.promptFocus({ botId: bot.id }).catch(() => undefined);
+        // After focus, if the user has no other bots, offer a starter team.
+        const bots = await rpc.bots.list();
+        if (bots.length === 1) {
+          await rpc.onboarding.promptTeamTemplate({ botId: bot.id }).catch(() => undefined);
+        }
       }
       navigate(`/app/${bot.id}`);
     } catch (err) {

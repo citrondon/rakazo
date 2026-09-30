@@ -8,6 +8,7 @@ import {
   formatSkillsCatalogInstruction,
   mergeBuiltinSkills,
   parseSkillMd,
+  selectReferencedSkills,
 } from "./agent-skill.js";
 
 describe("built-in skill merging", () => {
@@ -287,5 +288,29 @@ describe("skill prompt helpers", () => {
     expect(line).toContain("- Daily standup: Prepare standup notes");
     expect(line).toContain("skill_read");
     expect(line).toContain("Prefer matching skills");
+  });
+});
+
+describe("selectReferencedSkills", () => {
+  const skills = [
+    { name: "Daily Brief", description: "d" },
+    { name: "Meeting Notes", description: "d" },
+    { name: "Inbox Triage", description: "d" },
+  ];
+  const names = (texts: string[]) => selectReferencedSkills(texts, skills).map((s) => s.name);
+
+  it("collects one prompt's mentions and then the next prompt's", () => {
+    expect(names(["@Daily Brief every morning", "@Inbox Triage too"])).toEqual([
+      "Daily Brief",
+      "Inbox Triage",
+    ]);
+  });
+
+  it("lists a repeated skill once whatever the casing", () => {
+    expect(names(["@daily Brief, then @DAILY BRIEF again"])).toEqual(["Daily Brief"]);
+  });
+
+  it("ignores a mention that names no skill", () => {
+    expect(names(["@No Such Skill then @Inbox Triage"])).toEqual(["Inbox Triage"]);
   });
 });

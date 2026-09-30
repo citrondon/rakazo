@@ -432,7 +432,7 @@ function Thread() {
               skill.description.toLowerCase().includes(slashQueryNormalized)
             );
           })
-          .slice(0, 8)
+          .slice(0, 16)
       : [];
   const slashActionOptions =
     slashQuery !== null && mentionQuery === null
@@ -1975,58 +1975,60 @@ function Thread() {
               overflow: "hidden",
             }}
           >
-            {slashSkillOptions.map((skill) => (
-              <Pressable
-                key={skill.id}
-                accessibilityLabel={t("Skill {name}", { name: skill.name })}
-                onPress={() => insertSkill(skill)}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "flex-start",
-                  gap: 10,
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                }}
-              >
-                <NativeSymbol
-                  ios="cube"
-                  android="cube-outline"
-                  size={16}
-                  color={tokens.mutedForeground}
-                />
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ color: tokens.foreground, fontSize: 14 }}>{skill.name}</Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{ color: tokens.mutedForeground, fontSize: 12.5, marginTop: 2 }}
-                  >
-                    {truncateSlashDescription(skill.description)}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
-            {slashActionOptions.map((action) => (
-              <Pressable
-                key={action.id}
-                accessibilityLabel={t(action.label)}
-                onPress={() => runSlashAction(action.id)}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 10,
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                }}
-              >
-                <NativeSymbol
-                  ios="gearshape"
-                  android="settings-outline"
-                  size={16}
-                  color={tokens.mutedForeground}
-                />
-                <Text style={{ color: tokens.foreground, fontSize: 14 }}>{t(action.label)}</Text>
-              </Pressable>
-            ))}
+            <ScrollView style={{ maxHeight: 260 }}>
+              {slashSkillOptions.map((skill) => (
+                <Pressable
+                  key={skill.id}
+                  accessibilityLabel={t("Skill {name}", { name: skill.name })}
+                  onPress={() => insertSkill(skill)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "flex-start",
+                    gap: 10,
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                  }}
+                >
+                  <NativeSymbol
+                    ios="cube"
+                    android="cube-outline"
+                    size={16}
+                    color={tokens.mutedForeground}
+                  />
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={{ color: tokens.foreground, fontSize: 14 }}>{skill.name}</Text>
+                    <Text
+                      numberOfLines={1}
+                      style={{ color: tokens.mutedForeground, fontSize: 12.5, marginTop: 2 }}
+                    >
+                      {truncateSlashDescription(skill.description)}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
+              {slashActionOptions.map((action) => (
+                <Pressable
+                  key={action.id}
+                  accessibilityLabel={t(action.label)}
+                  onPress={() => runSlashAction(action.id)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                  }}
+                >
+                  <NativeSymbol
+                    ios="gearshape"
+                    android="settings-outline"
+                    size={16}
+                    color={tokens.mutedForeground}
+                  />
+                  <Text style={{ color: tokens.foreground, fontSize: 14 }}>{t(action.label)}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
           </View>
         ) : null}
         <View

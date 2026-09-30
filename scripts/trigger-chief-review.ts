@@ -10,11 +10,15 @@ async function main() {
   const { prisma, pool } = createDb(databaseUrl);
 
   try {
-    const spaceId = "e272d745988bd720ba0c9699ffc5de54";
-    const userId = "A1asxvFeYqmkNHzspbHUFz7MVXygtq8a";
+    const spaceId = process.env.RAKAZO_SPACE_ID;
+    const userId = process.env.RAKAZO_USER_ID;
+    if (!spaceId || !userId) {
+      console.error("RAKAZO_SPACE_ID and RAKAZO_USER_ID must be set to a local test space.");
+      process.exit(1);
+    }
     const groupId = "grp_research_intelligence";
     const threadId = "th_grp_research_intelligence";
-    const chiefBotId = "cmuiuj3po00033ppc28z3fawk";
+    const chiefBotId = process.env.RAKAZO_CHIEF_BOT_ID ?? "";
 
     const promptText =
       "@Chief bitte prüfe die von OpenResearch erstellte Spezifikation 'research/trending-agent-spec.md' und das von GrokCoder implementierte Tool 'tools/trending_monitor.py'. Das Tool wurde im Terminal via MCP run_process ('python3 tools/trending_monitor.py hn -n 3') mit Exit-Code 0 erfolgreich getestet. Gib eine kurze, prägnante Zusammenfassung und Bestätigung des Meilensteins im Chat ab.";

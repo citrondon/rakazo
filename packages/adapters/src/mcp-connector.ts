@@ -81,6 +81,11 @@ export class McpConnector implements ConnectorProvider {
     private readonly options: {
       stdioEnabled?: boolean;
       allowedCommands?: string[];
+      /**
+       * Absolute path of a bot's home as this process sees it. Used only to expand
+       * `{home}` in stdio arguments, so a preset never names a path from another container.
+       */
+      resolveStdioHome?: (botId: string) => string;
       network?: RemoteTransportDependencies;
       /** Audit sink for failed discovery. Without it the log line stays the only trace. */
       events?: Pick<ThreadEvents, "append">;
@@ -290,7 +295,9 @@ export class McpConnector implements ConnectorProvider {
   private sessionKey(server: McpServer, context: AdapterContext): string {
     // Identity headers are applied once, at connect time, so a session is only
     // valid for the identity it connected as. The key has to carry that identity.
-    return `${server.id} ${context.spaceId} ${context.userId}`;
+    // Stdio additionally mounts one bot's home, so it is keyed down to that bot.
+    const botScope = server.transport === "stdio" ? ` ${context.botId ?? ""}` : "";
+    return `${server.id} ${context.spaceId} ${context.userId}${botScope}`;
   }
 
   private async evict(sessionKey: string): Promise<void> {
@@ -349,12 +356,17 @@ export class McpConnector implements ConnectorProvider {
       const args = Array.isArray(server.args) ? server.args.map(String) : [];
       const env = { ...(material.env ?? {}) };
       if (server.transport === "stdio") {
-        if (!this.options.stdioEnabled) throw new Error("MCP stdio is disabled");
+        if (!this.options.stdioEnabled) {
+          throw new Error(
+            "MCP stdio servers are disabled on this deployment (MCP_STDIO_ENABLED=true)",
+          );
+        }
         await session.connectStdio({
           command: String(server.command ?? ""),
           args,
           env,
           allowedCommands: this.options.allowedCommands ?? [],
+          homePath: context.botId ? this.options.resolveStdioHome?.(context.botId) : undefined,
           signal: context.signal,
         });
       } else {

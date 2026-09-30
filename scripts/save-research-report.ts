@@ -27,7 +27,12 @@ async function main() {
       return;
     }
 
-    const targetDir = "/data/homes/team-e272d745988bd720ba0c9699ffc5de54/shared/research";
+    const spaceId = process.env.RAKAZO_SPACE_ID;
+    if (!spaceId) {
+      console.error("RAKAZO_SPACE_ID must be set to a local test space.");
+      process.exit(1);
+    }
+    const targetDir = `/data/homes/team-${spaceId}/shared/research`;
     fs.mkdirSync(targetDir, { recursive: true });
     const targetFile = path.join(targetDir, "mcp-trends.md");
     fs.writeFileSync(targetFile, textBlock.text, "utf8");

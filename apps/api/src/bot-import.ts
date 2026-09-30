@@ -9,6 +9,7 @@ import {
   hasMixedOneShotSchedule,
   isOneShotRoutineCrons,
   nextCronDateAcrossStrict,
+  parseSkillMd,
 } from "@rakazo/core";
 
 export type PreparedBotImport = {
@@ -20,6 +21,8 @@ export type PreparedBotImport = {
   };
   memory: Map<string, string>;
   routines: Array<{ name: string; prompt: string; crons: string[]; timezone: string }>;
+  /** Skill name as its SKILL.md frontmatter states it, plus the content to create. */
+  skills: Array<{ name: string; content: string }>;
   files: Array<{ path: string; content: string }>;
 };
 
@@ -100,6 +103,27 @@ export function prepareBotImport(input: BotImportInput, warnings: string[]): Pre
     }
   }
 
+  const skills: PreparedBotImport["skills"] = [];
+  if (input.includeSkills) {
+    const seen = new Set<string>();
+    for (const skill of manifest.skills) {
+      // The content is the source of truth: a manifest name that disagrees with the
+      // frontmatter would create a skill the bot's `@mention` cannot find.
+      const parsed = parseSkillMd(skill.content);
+      if ("error" in parsed) {
+        warnings.push(`Skill skipped (not valid SKILL.md): ${skill.name}`);
+        continue;
+      }
+      const key = parsed.name.toLowerCase();
+      if (seen.has(key)) {
+        warnings.push(`Duplicate skill skipped: ${parsed.name}`);
+        continue;
+      }
+      seen.add(key);
+      skills.push({ name: parsed.name, content: skill.content });
+    }
+  }
+
   const files: PreparedBotImport["files"] = [];
   if (input.includeFiles) {
     for (const file of manifest.files) {
@@ -112,5 +136,5 @@ export function prepareBotImport(input: BotImportInput, warnings: string[]): Pre
     }
   }
 
-  return { profile, memory, routines, files };
+  return { profile, memory, routines, skills, files };
 }

@@ -1,6 +1,6 @@
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, BotMcpServer, McpServer, McpTransport } from "@rakazo/contracts";
+import type { Bot, BotMcpServer, McpServer, McpStdioStatus, McpTransport } from "@rakazo/contracts";
 import { deriveMcpSlug } from "@rakazo/core";
 import {
   Badge,
@@ -38,7 +38,8 @@ import {
 import { useEffect, useState } from "react";
 import { connectMcpOauth, MCP_OAUTH_CHANNEL } from "../lib/mcp-connect";
 import { rpc } from "../lib/rpc";
-import { MCP_PRESETS, type McpPreset } from "./mcp-presets";
+import { McpPresetBlockerNote } from "./McpPresetBlockerNote";
+import { MCP_PRESETS, type McpPreset, stdioBlockerReason } from "./mcp-presets";
 
 function oauthStatusText(server: McpServer): string | null {
   if (server.oauthStatus === "connected") return t`OAuth connected`;
@@ -70,6 +71,7 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
   const [saving, setSaving] = useState(false);
   const [oauthPending, setOauthPending] = useState<string | null>(null);
   const [presetPending, setPresetPending] = useState<string | null>(null);
+  const [stdioStatus, setStdioStatus] = useState<McpStdioStatus | null>(null);
   const [githubToken, setGithubToken] = useState("");
   const [githubPromptOpen, setGithubPromptOpen] = useState(false);
 
@@ -131,13 +133,15 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
   }
 
   async function refresh() {
-    const [nextServers, nextBots, assignments] = await Promise.all([
+    const [nextServers, nextBots, assignments, nextStdioStatus] = await Promise.all([
       rpc.mcp.servers.list(),
       rpc.bots.list(),
       rpc.mcp.assignments.all(),
+      rpc.mcp.servers.stdioStatus(),
     ]);
     const activeBots = nextBots.filter((bot) => !bot.archivedAt);
     setServers(nextServers);
+    setStdioStatus(nextStdioStatus);
     setBots(activeBots);
     setBotAssignments(
       Object.fromEntries(
@@ -358,6 +362,7 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
               {MCP_PRESETS.map((preset) => {
                 const isInstalled = servers.some((s) => s.slug === preset.slug);
                 const isPending = presetPending === preset.id;
+                const blocker = stdioBlockerReason(preset, stdioStatus);
 
                 const renderIcon = () => {
                   switch (preset.iconName) {
@@ -408,6 +413,7 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
                     </CardHeader>
                     <CardContent className="flex flex-1 flex-col justify-between gap-3 text-xs text-muted-foreground pt-0">
                       <p className="line-clamp-2 leading-relaxed">{preset.description}</p>
+                      <McpPresetBlockerNote preset={preset} reason={blocker} />
                       {isInstalled ? (
                         <Button
                           type="button"

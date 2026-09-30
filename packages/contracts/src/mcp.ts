@@ -3,6 +3,14 @@ import * as z from "zod";
 export const McpTransportSchema = z.enum(["streamable_http", "sse", "stdio"]);
 export type McpTransport = z.infer<typeof McpTransportSchema>;
 
+/** Stdio servers spawn a process on the host, so a deployment has to opt in per command.
+ * Surfaced to the client because a preset that cannot start still saves without erroring. */
+export const McpStdioStatusSchema = z.object({
+  enabled: z.boolean(),
+  allowedCommands: z.array(z.string().max(200)),
+});
+export type McpStdioStatus = z.infer<typeof McpStdioStatusSchema>;
+
 export function isLocalMcpHost(hostname: string): boolean {
   return (
     hostname === "localhost" ||

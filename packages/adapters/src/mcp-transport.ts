@@ -61,6 +61,11 @@ export interface McpStdioOptions {
   env?: Record<string, string>;
   /** Exact executable allowlist. Stdio is otherwise disabled. */
   allowedCommands: readonly string[];
+  /**
+   * The bot's own home directory on this process. Args may reference it as `{home}`;
+   * a preset must not hard-code a path from another container.
+   */
+  homePath?: string;
   maxBufferSize?: number;
   signal?: AbortSignal;
   timeoutMs?: number;
@@ -227,10 +232,27 @@ export function withEndpointOriginFallback(
   };
 }
 
+/** Preset argument token for the bot's own home directory on this process. */
+export const MCP_STDIO_HOME_TOKEN = "{home}";
+
+export function expandStdioHomeToken(args: readonly string[], homePath?: string): string[] {
+  return args.map((arg) => {
+    if (!arg.includes(MCP_STDIO_HOME_TOKEN)) return arg;
+    if (!homePath) {
+      throw new Error(
+        `MCP stdio argument uses ${MCP_STDIO_HOME_TOKEN}, but this deployment has no agent home root`,
+      );
+    }
+    return arg.split(MCP_STDIO_HOME_TOKEN).join(homePath);
+  });
+}
+
 function stdioParams(options: McpStdioOptions): StdioServerParameters {
   const command = options.command.trim();
   if (!command || !options.allowedCommands.includes(command)) {
-    throw new Error("MCP stdio command is not in the configured allowlist");
+    throw new Error(
+      `MCP stdio command "${command || "(empty)"}" is not in the configured allowlist (MCP_STDIO_ALLOWED_COMMANDS)`,
+    );
   }
   const env: Record<string, string> = {};
   for (const [key, value] of Object.entries(options.env ?? {})) {
@@ -238,7 +260,7 @@ function stdioParams(options: McpStdioOptions): StdioServerParameters {
   }
   return {
     command,
-    args: options.args ?? [],
+    args: expandStdioHomeToken(options.args ?? [], options.homePath),
     cwd: options.cwd,
     env,
     stderr: "pipe",

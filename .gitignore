@@ -34,6 +34,7 @@ infra/sandboxes/supervisor/dist
 .cache
 artifacts
 backups
+workspace/
 test-report
 verify-report
 .astro
@@ -47,3 +48,6 @@ apps/web/src/locales/**/*.mjs
 apps/web/src/locales/**/*.js
 apps/web/scripts/msgids.json
 playwright-report-www
+
+# Generated LLM context exports: contain inlined source and local paths, never committed
+docs/repomix-*.xml

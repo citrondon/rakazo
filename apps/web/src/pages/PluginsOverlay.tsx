@@ -6,6 +6,7 @@ import type {
   IntegrationCatalogResult,
   IntegrationCatalogSurface,
   McpServer,
+  McpStdioStatus,
 } from "@rakazo/contracts";
 import {
   abortableDelay,
@@ -47,7 +48,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { IntegrationSetup } from "../components/integrations/IntegrationSetup";
 import { optionalCatalogFeedProbe } from "../lib/optional-catalog-feed";
 import { rpc } from "../lib/rpc";
-import { MCP_PRESETS, type McpPreset } from "./mcp-presets";
+import { McpPresetBlockerNote } from "./McpPresetBlockerNote";
+import { MCP_PRESETS, type McpPreset, stdioBlockerReason } from "./mcp-presets";
 
 type SourceKind = "treg" | "executor" | "mcp" | "api" | "graphql";
 
@@ -123,22 +125,25 @@ export function PluginsOverlay({
   const [toolsOpen, setToolsOpen] = useState(true);
   const [toolsTick, setToolsTick] = useState(0);
   const [mcpServers, setMcpServers] = useState<McpServer[]>([]);
+  const [stdioStatus, setStdioStatus] = useState<McpStdioStatus | null>(null);
   const [presetPending, setPresetPending] = useState<string | null>(null);
   const [githubToken, setGithubToken] = useState("");
   const [githubPromptOpen, setGithubPromptOpen] = useState(false);
   const connectionAttempt = useRef<AbortController | null>(null);
 
   async function refresh() {
-    const [items, installs, rows, catalogFeed, serversList] = await Promise.all([
+    const [items, installs, rows, catalogFeed, serversList, nextStdioStatus] = await Promise.all([
       rpc.connections.catalog({}),
       rpc.capabilities.list(),
       rpc.connections.list(),
       optionalCatalogFeedProbe(rpc.capabilities.catalogSearch({ query: "" })),
       rpc.mcp.servers.list().catch(() => []),
+      rpc.mcp.servers.stdioStatus().catch(() => null),
     ]);
     setCatalog(items);
     setConnections(rows);
     setMcpServers(serversList);
+    setStdioStatus(nextStdioStatus);
     setLabelDrafts((current) => {
       const next: Record<string, string> = {};
       for (const row of rows) {
@@ -805,6 +810,7 @@ export function PluginsOverlay({
               {MCP_PRESETS.map((preset) => {
                 const isInstalled = mcpServers.some((s) => s.slug === preset.slug);
                 const isPending = presetPending === preset.id;
+                const blocker = stdioBlockerReason(preset, stdioStatus);
 
                 const renderIcon = () => {
                   switch (preset.iconName) {
@@ -851,6 +857,7 @@ export function PluginsOverlay({
                     </CardHeader>
                     <CardContent className="flex flex-1 flex-col justify-between gap-3 text-xs text-muted-foreground pt-0">
                       <p className="line-clamp-2 leading-relaxed">{preset.description}</p>
+                      <McpPresetBlockerNote preset={preset} reason={blocker} />
                       {isInstalled ? (
                         <Button
                           type="button"

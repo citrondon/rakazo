@@ -98,6 +98,18 @@ Startet API, Worker, Web und Sandbox-Supervisor via turbo. Danach: [http://127.0
 pnpm --filter @rakazo/desktop dev
 ```
 
+Kommt das `node_modules`-Verzeichnis von einem anderen Rechner, ist `electron` zwar installiert,
+`node_modules/.pnpm/electron@*/node_modules/electron/dist/` fehlt aber — der Start des Desktop-Apps
+schlägt dann fehl. Nachholen:
+
+```bash
+node node_modules/.pnpm/electron@*/node_modules/electron/install.js
+pnpm --filter @rakazo/desktop exec electron --version   # → v44.3.0
+```
+
+`ldd` auf `node_modules/.pnpm/electron@*/node_modules/electron/dist/electron` zeigt unter Nobara
+keine fehlenden Bibliotheken; zusätzliche Systempakete sind dafür nicht nötig.
+
 ## 7. Mobile (Expo, optional)
 
 ```bash
@@ -121,11 +133,19 @@ pnpm test:e2e           # braucht Docker + Playwright-Chromium
 Playwright-Browser einmalig installieren:
 `pnpm --filter @rakazo/web exec playwright install chromium`
 
+Die Offline-Suite läuft hier in rund zwei Minuten gegen 456 Testdateien. Einige Adapter-Tests
+führen die Shell-Skripte der Sandboxes auf dem **Host** aus, und deren `/proc`-Durchläufe
+skalieren mit der Zahl der laufenden Prozesse: Ein Rechner mit ~700 Prozessen und 20 Kernen wirft
+diese Tests leicht über ihre internen Timeouts (10–20 s), erkennbar an `expected null to be +0`
+bei Prozessen, die im Einzellauf bestehen. Zwei Suiten gleichzeitig (z. B. eine zweite
+IDE-Session) verstärken das. Erster Prüfschritt deshalb: einzelne Datei mit `--maxWorkers=1`
+erneut laufen lassen, bevor ein Produktbug vermutet wird.
+
 ---
 
 ## Nobara-spezifische Stolperfallen
 
-1. **SELinux**: Nobara aktiviert es. Wenn Docker Volumes nicht schreiben kann (Permission denied im Compose-Log trotz richtiger Gruppe), sind `:z`/`:Z` an den Volume-Mounts die erste Stelle zum Suchen — normalerweise trifft es hier nicht zu, weil Compose unter `/var/lib/docker` arbeitet.
+1. **SELinux**: Mit `getenforce` prüfen — auf der für diese Anleitung getesteten Nobara-Installation steht es auf `Disabled`, Bind-Mounts aus `./data` waren ohne `:z` beschreibbar. Falls es `Enforcing` meldet und Docker Volumes nicht schreiben kann (Permission denied im Compose-Log trotz richtiger Gruppe), sind `:z`/`:Z` an den Volume-Mounts die erste Stelle zum Suchen.
 
 2. **Firewall**: `firewalld` blockt Fremdzugriff — für reines Loopback-Development (`127.0.0.1`) irrelevant, nichts tun. Erst wenn du von einem anderen Gerät (z.B. Android im LAN) auf die Web-App willst:
    ```bash

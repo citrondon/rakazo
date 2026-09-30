@@ -6,6 +6,7 @@ function manifestFixture(overrides?: {
   name?: string;
   memory?: Array<{ path: string; content: string }>;
   routines?: Array<{ name: string; prompt: string; crons: string[]; timezone: string }>;
+  skills?: Array<{ name: string; content: string }>;
   files?: Array<{ path: string; content: string }>;
 }): BotImportInput {
   return {
@@ -20,13 +21,19 @@ function manifestFixture(overrides?: {
       },
       memory: overrides?.memory ?? [],
       routines: overrides?.routines ?? [],
+      skills: overrides?.skills ?? [],
       files: overrides?.files ?? [],
       history: [],
     },
     includeMemory: true,
     includeRoutines: true,
+    includeSkills: true,
     includeFiles: true,
   };
+}
+
+function skillMd(name: string): string {
+  return `---\nname: ${name}\ndescription: What ${name} does\n---\nSteps to follow.\n`;
 }
 
 describe("prepareBotImport", () => {
@@ -87,15 +94,48 @@ describe("prepareBotImport", () => {
     expect(prepared.files).toHaveLength(0);
   });
 
+  it("drops a skill whose body is not SKILL.md and keeps the rest", () => {
+    const warnings: string[] = [];
+    const prepared = prepareBotImport(
+      manifestFixture({
+        skills: [
+          { name: "Daily Brief", content: skillMd("Daily Brief") },
+          { name: "Broken", content: "no frontmatter here" },
+        ],
+      }),
+      warnings,
+    );
+    expect(prepared.skills.map((skill) => skill.name)).toEqual(["Daily Brief"]);
+    expect(warnings).toContain("Skill skipped (not valid SKILL.md): Broken");
+  });
+
+  it("trusts the frontmatter name and skips a repeated skill", () => {
+    const warnings: string[] = [];
+    const prepared = prepareBotImport(
+      manifestFixture({
+        skills: [
+          { name: "Renamed", content: skillMd("Meeting Notes") },
+          { name: "meeting notes", content: skillMd("Meeting Notes") },
+        ],
+      }),
+      warnings,
+    );
+    expect(prepared.skills.map((skill) => skill.name)).toEqual(["Meeting Notes"]);
+    expect(warnings).toContain("Duplicate skill skipped: Meeting Notes");
+  });
+
   it("respects include flags", () => {
     const input = manifestFixture({
       memory: [{ path: "MEMORY.md", content: "mem" }],
       routines: [{ name: "R", prompt: "p", crons: [], timezone: "UTC" }],
+      skills: [{ name: "Daily Brief", content: skillMd("Daily Brief") }],
       files: [{ path: "notes.txt", content: "f" }],
     });
     const prepared = prepareBotImport({ ...input, includeMemory: false }, []);
     expect(prepared.memory.size).toBe(0);
     expect(prepared.routines).toHaveLength(1);
+    expect(prepared.skills).toHaveLength(1);
     expect(prepared.files).toHaveLength(1);
+    expect(prepareBotImport({ ...input, includeSkills: false }, []).skills).toHaveLength(0);
   });
 });

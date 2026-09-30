@@ -56,7 +56,7 @@ Run: `pnpm --filter @rakazo/web check` and `pnpm --filter @rakazo/web intl:check
 - Target Output: `/home/rakazo/shared/research/trending-agent-spec.md` (OpenResearch)
 - Target Output: `/home/rakazo/shared/tools/trending_monitor.py` (GrokCoder)
 - Target Output: `/home/rakazo/shared/tools/trending_monitor.log` (GrokCoder execution verification)
-- Windows Host Mirror: `C:\Users\pasca\Downloads\ssd\workspace\tools\trending_monitor.py`
+- Host mirror: the same file under the synced host workspace folder (`pnpm workspace:pull`) for inspection in the editor
 
 - [x] **Step 1: Trigger OpenResearch Trend Investigation**
 Prompt OpenResearch to inspect trending tech/AI tools and produce the specification `research/trending-agent-spec.md`.
