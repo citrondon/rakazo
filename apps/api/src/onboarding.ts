@@ -7,6 +7,7 @@ import {
   createThreadMessageInTransaction,
   IsolationError,
 } from "@rakazo/db";
+import { listTeamTemplates } from "./bot-library.js";
 import { requireBotThread, updateBlocks } from "./bot-thread.js";
 
 /**
@@ -342,4 +343,69 @@ export async function markAppConnected(
 
 function capitalize(value: string): string {
   return value.length > 0 ? (value[0] ?? "").toUpperCase() + value.slice(1) : value;
+}
+
+/**
+ * Post the team template choice card when the thread is still idle and no bots exist.
+ * Shows available starter teams from the shipped library.
+ */
+export async function promptTeamTemplate(
+  deps: OnboardingDeps,
+  actor: Actor,
+  botId: string,
+): Promise<void> {
+  const { bot, thread } = await requireBotThread(deps, actor, botId);
+  const target = { spaceId: actor.spaceId, botId: bot.id, threadId: thread.id };
+
+  const recent = await deps.prisma.message.findMany({
+    where: { threadId: thread.id },
+    orderBy: { createdAt: "asc" },
+  });
+  if (recent.some((message) => message.role === "user")) return;
+  if (recent.some((message) => messageHasChoice(message.blocks as MessageBlock[]))) return;
+
+  const templates = listTeamTemplates();
+  if (templates.length === 0) return;
+
+  const blocks: MessageBlock[] = [
+    {
+      kind: "choice",
+      question: "Start with a team?",
+      subtitle: "A pre-built roster takes the first task off your list.",
+      options: templates.map((template, idx) => ({
+        id: template.id,
+        letter: String.fromCharCode(65 + idx),
+        label: template.label,
+      })),
+    },
+  ];
+
+  const committed = await deps.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.$executeRaw`SELECT id FROM threads WHERE id = ${thread.id} FOR UPDATE`;
+    const recent = await tx.message.findMany({
+      where: { threadId: target.threadId },
+      select: { id: true },
+      orderBy: { createdAt: "asc" },
+    });
+    if (recent.length > 0) return null;
+
+    const message = await createThreadMessageInTransaction(tx, {
+      threadId: target.threadId,
+      role: "bot",
+      blocks,
+    });
+
+    const event = await appendEventInTransaction(tx, {
+      spaceId: target.spaceId,
+      threadId: target.threadId,
+      botId: target.botId,
+      type: "thread.message.created",
+      payload: { messageId: message.id, role: "bot", blocks },
+    });
+
+    return { message, event };
+  });
+
+  if (!committed) return;
+  await deps.events.notify(target.threadId, committed.event.seq);
 }

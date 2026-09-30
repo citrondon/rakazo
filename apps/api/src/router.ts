@@ -115,6 +115,7 @@ import type {
 import {
   ATTACHMENT_MAX_BYTES,
   appContract,
+  BOT_EXPORT_SKILLS_MAX_COUNT,
   ComputerCommandSchema,
   foldComputerCommands,
   IntegrationProviderIdSchema,
@@ -131,6 +132,7 @@ import {
   hasMixedOneShotSchedule,
   isOneShotRoutineCrons,
   nextCronDateAcrossStrict,
+  selectReferencedSkills,
 } from "@rakazo/core";
 import type { PrismaClient, ThreadEvents } from "@rakazo/db";
 import {
@@ -220,6 +222,7 @@ import {
   dismissFocus,
   markAppConnected,
   promptFocus,
+  promptTeamTemplate,
   startOnboarding,
 } from "./onboarding.js";
 import { loadRunReceipt } from "./run-receipt.js";
@@ -557,6 +560,8 @@ export interface RouterDeps {
     imageTag?: string;
     integrationsCatalogUrl?: string;
     mcpAllowPrivateEndpoint?: boolean;
+    mcpStdioEnabled?: boolean;
+    mcpStdioAllowedCommands?: string[];
   };
 }
 
@@ -1622,6 +1627,7 @@ export function createRouter(deps: RouterDeps) {
           instructionsPreview: prepared.profile.instructions.slice(0, 500),
           memoryCount: prepared.memory.size,
           routineNames: prepared.routines.map((routine) => routine.name),
+          skillNames: prepared.skills.map((skill) => skill.name),
           fileCount: prepared.files.length,
           historyCount: input.manifest.history.length,
           warnings,
@@ -1637,6 +1643,18 @@ export function createRouter(deps: RouterDeps) {
           userId: context.actor.userId,
           signal: context.signal ?? new AbortController().signal,
         };
+        // Skills live in the space, not in the bot, so they are written before the bot
+        // transaction: a skip can then still land in the import note.
+        for (const skill of prepared.skills) {
+          try {
+            await agentSkills.create(context.actor, { content: skill.content });
+          } catch (error) {
+            // A name taken by an existing skill or a builtin is not a failed import: that
+            // skill is already reachable by name in this space.
+            if (!(error instanceof ORPCError) || error.code !== "CONFLICT") throw error;
+            warnings.push(`Skill not added (name taken): ${skill.name}`);
+          }
+        }
         // One transaction creates the bot (thread, team computer, browser profile,
         // MEMORY.md) and applies every durable part of the preset. Import notes
         // land as a durable system meta message, matching spawn's "Created by" note.
@@ -3658,6 +3676,10 @@ export function createRouter(deps: RouterDeps) {
             ),
           );
         }),
+        stdioStatus: authed.mcp.servers.stdioStatus.handler(async () => ({
+          enabled: deps.env.mcpStdioEnabled === true,
+          allowedCommands: deps.env.mcpStdioAllowedCommands ?? [],
+        })),
         create: authed.mcp.servers.create.handler(async ({ context, input }) => {
           await assertMcpRemoteEndpoint(
             "endpoint" in input ? input.endpoint : null,
@@ -4081,6 +4103,12 @@ export function createRouter(deps: RouterDeps) {
         await promptFocus(onboardingDeps, context.actor, input.botId);
         return { ok: true as const };
       }),
+      promptTeamTemplate: authed.onboarding.promptTeamTemplate.handler(
+        async ({ context, input }) => {
+          await promptTeamTemplate(onboardingDeps, context.actor, input.botId);
+          return { ok: true as const };
+        },
+      ),
       choose: authed.onboarding.choose.handler(async ({ context, input }) => {
         await chooseFocus(onboardingDeps, context.actor, input.botId, input.optionId);
         return { ok: true as const };
@@ -5407,12 +5435,20 @@ export function createRouter(deps: RouterDeps) {
           userId: context.actor.userId,
           signal: new AbortController().signal,
         };
-        const [memory, routines, files, history] = await Promise.all([
+        const [memory, routines, skillRows, files, history] = await Promise.all([
           deps.prisma.memoryDocument.findMany({
             where: { botId: input.botId, spaceId: context.actor.spaceId },
           }),
           deps.prisma.routine.findMany({
             where: { botId: input.botId, spaceId: context.actor.spaceId },
+          }),
+          deps.prisma.agentSkill.findMany({
+            where: {
+              spaceId: context.actor.spaceId,
+              userId: context.actor.userId,
+              source: "user",
+            },
+            orderBy: { name: "asc" },
           }),
           (async () => {
             const exported: Array<{ path: string; content: string }> = [];
@@ -5426,6 +5462,12 @@ export function createRouter(deps: RouterDeps) {
           })(),
           loadAllMessages(deps.prisma, bot.thread.id, EXPORT_MESSAGE_PAGE_SIZE),
         ]);
+        // An export carries the skills this bot mentions, not everything the space owns: the
+        // pack is what makes this bot work, and the rest of the user's skills stay private.
+        const referencedSkills = selectReferencedSkills(
+          [bot.instructions, ...routines.map((r) => r.prompt)],
+          skillRows,
+        ).slice(0, BOT_EXPORT_SKILLS_MAX_COUNT);
         return {
           version: 1 as const,
           exportedAt: new Date().toISOString(),
@@ -5435,6 +5477,10 @@ export function createRouter(deps: RouterDeps) {
             description: bot.description,
             instructions: bot.instructions,
           },
+          skills: referencedSkills.map((skill) => ({
+            name: skill.name,
+            content: skill.content,
+          })),
           memory: memory.map((m) => ({ path: m.path, content: m.content })),
           routines: routines.map((r) => ({
             name: r.name,
