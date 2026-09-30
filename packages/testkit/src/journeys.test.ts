@@ -2931,7 +2931,24 @@ describeJourneys("required product journeys", () => {
     expect(await rpc<RunReceipt | null>(app, otherCookie, "runs/receipt", { runId })).toBeNull();
 
     const month = await rpc<UsageMonth>(app, cookie, "usage/month");
-    expect(month.bots.find((row) => row.botId === bot.id)?.totalTokens ?? 0).toBeGreaterThan(0);
+    const usedTokens = month.bots.find((row) => row.botId === bot.id)?.totalTokens ?? 0;
+    expect(usedTokens).toBeGreaterThan(0);
+
+    // A ceiling the next run carries usage across warns its owner once. The scripted runtime
+    // reports a fixed count per run, so a ceiling of twice this run's spend lands the month
+    // between the warning line and the ceiling: allowed to work, but close enough to warn.
+    await rpc(app, cookie, "bots/update", {
+      botId: bot.id,
+      monthlyTokenBudget: Math.ceil((usedTokens * 2) / 0.9),
+    });
+    await sendAndWait(app, cookie, bot.id, "write a file called notes/warned.md that says hi");
+    await waitForDatabase(async () => {
+      const warned = await prisma.bot.findUnique({
+        where: { id: bot.id },
+        select: { budgetWarnedAt: true },
+      });
+      return warned?.budgetWarnedAt != null;
+    });
 
     // A budget the month already spent refuses the next turn before any model call.
     await rpc(app, cookie, "bots/update", { botId: bot.id, monthlyTokenBudget: 1 });

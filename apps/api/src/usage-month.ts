@@ -4,14 +4,8 @@ import {
   countedTokens,
   type UsageMonth,
 } from "@rakazo/contracts";
-import { currentMonthStart } from "@rakazo/core";
+import { budgetUsedPercent, currentMonthStart } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
-
-/** Share of a bot's ceiling already used. Null when the bot has no ceiling. */
-export function usedPercent(totalTokens: number, monthlyTokenBudget: number | null): number | null {
-  if (!monthlyTokenBudget || monthlyTokenBudget <= 0) return null;
-  return Math.round((totalTokens / monthlyTokenBudget) * 100);
-}
 
 interface TokenSums {
   inputTokens: number | null;
@@ -104,7 +98,7 @@ export async function loadUsageMonth(
       ...totals,
       runs: entry?.runs ?? 0,
       monthlyTokenBudget: budget && budget > 0 ? budget : null,
-      usedPercent: usedPercent(totals.totalTokens, budget && budget > 0 ? budget : null),
+      usedPercent: budgetUsedPercent(totals.totalTokens, budget),
     };
   });
   for (const botId of missingBotIds) {

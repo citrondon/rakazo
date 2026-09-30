@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Routines in plain language instead of raw cron.
 - Spend view: a bot's settings show this month's tokens next to its monthly budget, and Usage lists this month's tokens per bot, including a deleted bot's name from its tombstone. Tokens only — no price table.
 - Run receipt: each completed run in the transcript expands to duration, tokens, tools called, artifacts, recorded effects, approvals, and why it stopped. It reads stored rows, so it never depends on a live computer or provider.
+- A bot's owner is notified once a month when the bot passes 80% of its monthly token budget, instead of only learning about the ceiling when work is refused. The warning fires on the run that crosses the line and does not repeat; changing the budget starts a fresh line.
 
 ### Removed
 
