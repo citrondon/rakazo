@@ -114,6 +114,8 @@ services:
       - ALL
     pids_limit: 256
     mem_limit: 1536m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - .env
     environment:
@@ -178,6 +180,8 @@ services:
       - ALL
     pids_limit: 512
     mem_limit: 2g
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - .env
     environment:

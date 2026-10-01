@@ -68,6 +68,8 @@ services:
     command: ["bash", "-lc", "pnpm --filter @rakazo/db exec prisma migrate deploy && pnpm --filter @rakazo/api start"]
     env_file:
       - ../../.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-rakazo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-rakazo}
       API_HOST: "0.0.0.0"
@@ -103,6 +105,8 @@ services:
     command: ["pnpm", "--filter", "@rakazo/worker", "start"]
     env_file:
       - ../../.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       BETTER_AUTH_SECRET: ""
       DATABASE_URL: postgres://${POSTGRES_USER:-rakazo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-rakazo}
