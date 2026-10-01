@@ -53,6 +53,7 @@ import {
   deletePushToken,
   deploymentAutoReviewDefault,
   describeCredentialCheckFailure,
+  describeMcpFailure,
   destroyBot,
   displayBotWorkspacePath,
   enqueueTakeoverContinuation,
@@ -493,9 +494,20 @@ async function assertMcpRemoteEndpoint(
       allowPrivateEndpoint: mayUsePrivateEndpoint(actor, deps),
     });
   } catch (error) {
+    const host = endpointHost(endpoint);
     throw new ORPCError("BAD_REQUEST", {
-      message: error instanceof Error ? error.message : "MCP endpoint is invalid",
+      message: describeMcpFailure(error, host ? { host } : {}).message,
     });
+  }
+}
+
+/** The endpoint's host for a refusal sentence; `undefined` when the URL cannot be parsed. */
+function endpointHost(endpoint: string | null | undefined): string | undefined {
+  if (!endpoint) return undefined;
+  try {
+    return new URL(endpoint).host;
+  } catch {
+    return undefined;
   }
 }
 
@@ -3619,7 +3631,8 @@ export function createRouter(deps: RouterDeps) {
             config = prepared.config;
           }
         } catch (error) {
-          const message = sanitizeComposioError(error);
+          const message =
+            input.kind === "mcp" ? describeMcpFailure(error).message : sanitizeComposioError(error);
           throw new ORPCError("BAD_REQUEST", {
             message: credential ? message.split(credential).join("[redacted]") : message,
           });

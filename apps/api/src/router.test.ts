@@ -412,7 +412,7 @@ describe("MCP server deletion", () => {
 describe("MCP loopback endpoints", () => {
   const LOOPBACK = "http://localhost:3100/api/auth/get-session";
 
-  function mcpDeps() {
+  function mcpDeps(remoteConnectors?: RouterDeps["remoteConnectors"]) {
     const create = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
       ...data,
       id: "server-1",
@@ -446,6 +446,7 @@ describe("MCP loopback endpoints", () => {
         sandboxProvider: "fake",
       },
       dataDir: "/tmp/rakazo-router-test",
+      remoteConnectors,
     } as unknown as RouterDeps;
     return { create, handler: new RPCHandler(createRouter(deps)) };
   }
@@ -483,6 +484,55 @@ describe("MCP loopback endpoints", () => {
 
     expect(response.status).toBe(400);
     expect(create).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      json: expect.objectContaining({
+        message: expect.stringContaining("MCP_ALLOW_PRIVATE_ENDPOINT=true"),
+      }),
+    });
+  });
+
+  it("names the fix when an MCP endpoint does not resolve", async () => {
+    const resolveHostname = vi
+      .fn()
+      .mockRejectedValue(
+        Object.assign(new Error("getaddrinfo ENOTFOUND mcp.example.test"), { code: "ENOTFOUND" }),
+      );
+    const { create, handler } = mcpDeps({ resolveHostname });
+    const { response } = await handler.handle(
+      rpc("mcp/servers/create", {
+        transport: "streamable_http",
+        slug: "dns",
+        name: "DNS",
+        endpoint: "https://mcp.example.test/mcp",
+      }),
+      { prefix: "/rpc", context: { actor: actor(true) } },
+    );
+
+    expect(response.status).toBe(400);
+    expect(create).not.toHaveBeenCalled();
+    const body = (await response.json()) as { json: { message: string } };
+    expect(body.json.message).toMatch(/Could not resolve mcp\.example\.test/);
+    expect(body.json.message).not.toContain("getaddrinfo");
+  });
+
+  it("refuses plain http on a public host and names the flag", async () => {
+    const resolveHostname = vi.fn().mockResolvedValue([{ address: "203.0.113.10", family: 4 }]);
+    const { create, handler } = mcpDeps({ resolveHostname });
+    const { response } = await handler.handle(
+      rpc("mcp/servers/create", {
+        transport: "streamable_http",
+        slug: "public",
+        name: "Public",
+        endpoint: "http://mcp.example.test/mcp",
+      }),
+      { prefix: "/rpc", context: { actor: actor(true) } },
+    );
+
+    expect(response.status).toBe(400);
+    expect(create).not.toHaveBeenCalled();
+    const body = (await response.json()) as { json: { message: string } };
+    expect(body.json.message).toContain("https://");
+    expect(body.json.message).toContain("MCP_ALLOW_PRIVATE_ENDPOINT=true");
   });
 
   it("lets the deployment owner save a loopback endpoint", async () => {
