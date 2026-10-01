@@ -32,7 +32,8 @@ function fixture() {
       ["-eu", "-c", portable.replaceAll("/tmp/rakazo", runtime).replaceAll("/home/rakazo", home)],
       {
         encoding: "utf8",
-        timeout: 10_000,
+        // Each screen's stop script can spend 2 x 10 s in its shutdown loops.
+        timeout: 25_000,
       },
     );
   };
@@ -63,5 +64,5 @@ describe("durable independent browser profiles", () => {
     expect(run(prepareBrowserProfileCommand("new-bot")).status).toBe(0);
     expect(existsSync(path.join(profile("new-bot"), "login"))).toBe(false);
     expect(readFileSync(path.join(shared, "login"), "utf8")).toBe("legacy-session");
-  });
+  }, 60_000);
 });
