@@ -293,6 +293,9 @@ const McpServersOverlay = lazy(() =>
 const BotImportOverlay = lazy(() =>
   import("./BotImportOverlay").then((module) => ({ default: module.BotImportOverlay })),
 );
+const BotLibraryOverlay = lazy(() =>
+  import("./BotLibraryOverlay").then((module) => ({ default: module.BotLibraryOverlay })),
+);
 const TeamTemplateOverlay = lazy(() =>
   import("./TeamTemplateOverlay").then((module) => ({ default: module.TeamTemplateOverlay })),
 );
@@ -528,6 +531,7 @@ export function ShellPage() {
   const [mcpOpen, setMcpOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [botLibraryOpen, setBotLibraryOpen] = useState(false);
   const [teamTemplateOpen, setTeamTemplateOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
   const [messagingSettingsOpen, setMessagingSettingsOpen] = useState(false);
@@ -2825,6 +2829,11 @@ export function ShellPage() {
                       setMobileSidebarOpen(false);
                       setImportOpen(true);
                     }}
+                    onOpenBotLibrary={() => {
+                      setCreateMenuOpen(false);
+                      setMobileSidebarOpen(false);
+                      setBotLibraryOpen(true);
+                    }}
                     onOpenBot={(id) => {
                       setCreateMenuOpen(false);
                       setMobileSidebarOpen(false);
@@ -4356,6 +4365,14 @@ export function ShellPage() {
           <BotImportOverlay
             onClose={() => {
               setImportOpen(false);
+              void refreshBots().catch(() => undefined);
+            }}
+          />
+        ) : null}
+        {botLibraryOpen ? (
+          <BotLibraryOverlay
+            onClose={() => {
+              setBotLibraryOpen(false);
               void refreshBots().catch(() => undefined);
             }}
           />

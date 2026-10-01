@@ -22,17 +22,21 @@ msgstr " (unread)"
 msgid "{0, plural, one {# model} other {# models}}"
 msgstr "{0, plural, one {# model} other {# models}}"
 
+#. placeholder {0}: preview.skillNames.length
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "{0, plural, one {Skill: #} other {Skills: #}}"
 msgstr "{0, plural, one {Skill: #} other {Skills: #}}"
 
 #. placeholder {0}: preview.memoryCount
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "{0, plural, zero {No memories} one {# memory} other {# memories}}"
 msgstr "{0, plural, zero {No memories} one {# memory} other {# memories}}"
 
 #. placeholder {0}: preview.routineNames.length
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "{0, plural, zero {No routines} one {Routine: #} other {Routines: #}}"
 msgstr "{0, plural, zero {No routines} one {Routine: #} other {Routines: #}}"
 
@@ -201,6 +205,10 @@ msgstr "1-Klick Connectors (Grok-Bot Style)"
 msgid "A bit of everything"
 msgstr "A bit of everything"
 
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "a, b, c"
+msgstr "a, b, c"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Abbrechen"
 msgstr "Abbrechen"
@@ -212,6 +220,10 @@ msgstr "About groups"
 #: src/pages/shell/bot-picker.tsx
 msgid "About spaces"
 msgstr "About spaces"
+
+#: src/pages/shell/bot-picker.tsx
+msgid "About team templates"
+msgstr "About team templates"
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Access token"
@@ -353,6 +365,7 @@ msgstr "Add to routine"
 msgid "Add Treg"
 msgstr "Add Treg"
 
+#: src/pages/ReactiveTriggerSection.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Add trigger"
 msgstr "Add trigger"
@@ -509,6 +522,10 @@ msgstr "Appearance"
 msgid "Approval boundaries"
 msgstr "Approval boundaries"
 
+#: src/components/TrustPolicySettings.tsx
+msgid "Approval threshold"
+msgstr "Approval threshold"
+
 #: src/components/ai/RunReceiptRow.tsx
 msgid "Approvals"
 msgstr "Approvals"
@@ -578,6 +595,10 @@ msgstr "Ask before purchases"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Ask before sending external email"
 msgstr "Ask before sending external email"
+
+#: src/components/TrustPolicySettings.tsx
+msgid "Ask for"
+msgstr "Ask for"
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Ask the server owner to configure this provider."
@@ -690,8 +711,21 @@ msgstr "Bot"
 
 #. placeholder {0}: imported.name
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Bot <0>{0}</0> was created."
 msgstr "Bot <0>{0}</0> was created."
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Bot imported"
+msgstr "Bot imported"
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Bot library"
+msgstr "Bot library"
+
+#: src/pages/shell/bot-picker.tsx
+msgid "Bot library…"
+msgstr "Bot library…"
 
 #: src/pages/Shell.tsx
 msgid "Bot screen"
@@ -731,9 +765,12 @@ msgstr "Can't reach the server."
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/ReactiveTriggerSection.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/TeamTemplateOverlay.tsx
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -828,6 +865,10 @@ msgstr "Choose a bot…"
 msgid "Choose a new password"
 msgstr "Choose a new password"
 
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Choose an event"
+msgstr "Choose an event"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Choose file"
 msgstr "Choose file"
@@ -862,11 +903,13 @@ msgstr "Client ID"
 msgid "Client secret"
 msgstr "Client secret"
 
+#: src/pages/BotLibraryOverlay.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsOverlay.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/TeamTemplateOverlay.tsx
 #: src/pages/WindowChrome.tsx
 msgid "Close"
 msgstr "Close"
@@ -1128,6 +1171,10 @@ msgstr "Could not add"
 msgid "Could not add MCP server"
 msgstr "Could not add MCP server"
 
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Could not add the trigger"
+msgstr "Could not add the trigger"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not approve this server"
 msgstr "Could not approve this server"
@@ -1207,6 +1254,10 @@ msgstr "Could not create section"
 msgid "Could not create space"
 msgstr "Could not create space"
 
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Could not create team"
+msgstr "Could not create team"
+
 #: src/pages/Onboarding.tsx
 msgid "Could not create your bot"
 msgstr "Could not create your bot"
@@ -1273,6 +1324,7 @@ msgid "Could not download file"
 msgstr "Could not download file"
 
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Could not import this bot"
 msgstr "Could not import this bot"
 
@@ -1338,6 +1390,14 @@ msgstr "Could not load this chat."
 msgid "Could not load this file."
 msgstr "Could not load this file."
 
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Could not load triggers"
+msgstr "Could not load triggers"
+
+#: src/components/TrustPolicySettings.tsx
+msgid "Could not load trust settings"
+msgstr "Could not load trust settings"
+
 #: src/components/SoftwareUpdateSection.tsx
 msgid "Could not load update status"
 msgstr "Could not load update status"
@@ -1372,7 +1432,12 @@ msgstr "Could not reach the server"
 msgid "Could not reach this model server"
 msgstr "Could not reach this model server"
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Could not read the bot library."
+msgstr "Could not read the bot library."
+
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Could not read this preset."
 msgstr "Could not read this preset."
 
@@ -1396,6 +1461,10 @@ msgstr "Could not remove preset"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not remove rule"
 msgstr "Could not remove rule"
+
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Could not remove the trigger"
+msgstr "Could not remove the trigger"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not rename connection"
@@ -1466,6 +1535,10 @@ msgstr "Could not save that voice"
 #: src/pages/shell/message-cards.tsx
 msgid "Could not save this choice"
 msgstr "Could not save this choice"
+
+#: src/components/TrustPolicySettings.tsx
+msgid "Could not save trust settings"
+msgstr "Could not save trust settings"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not search catalog"
@@ -1572,6 +1645,10 @@ msgstr "Create Routine"
 msgid "Create space"
 msgstr "Create space"
 
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Create team"
+msgstr "Create team"
+
 #: src/pages/Auth.tsx
 msgid "Create your Rakazo"
 msgstr "Create your Rakazo"
@@ -1583,6 +1660,7 @@ msgstr "Created"
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/TeamTemplateOverlay.tsx
 msgid "Creating…"
 msgstr "Creating…"
 
@@ -1783,7 +1861,9 @@ msgstr "Don’t have an account?"
 
 #: src/pages/ActivityList.tsx
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/TeamTemplateOverlay.tsx
 msgid "Done"
 msgstr "Done"
 
@@ -1888,6 +1968,10 @@ msgstr "Enter this code at <0>{0}</0>"
 msgid "Erweiterte Server"
 msgstr "Erweiterte Server"
 
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Event"
+msgstr "Event"
+
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/RoutineSchedule.tsx
 msgid "Every"
@@ -1978,6 +2062,10 @@ msgstr "Failed."
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "Failure handling"
+
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Field"
+msgstr "Field"
 
 #: src/components/computer/FilesApp.tsx
 msgid "File is too large to upload."
@@ -2072,6 +2160,10 @@ msgstr "GitHub Personal Access Token erforderlich"
 #: src/pages/Shell.tsx
 msgid "Group"
 msgstr "Group"
+
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Group name (optional)"
+msgstr "Group name (optional)"
 
 #: src/pages/GroupPanel.tsx
 msgid "Group settings"
@@ -2170,6 +2262,7 @@ msgid "Image upload area"
 msgstr "Image upload area"
 
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Import"
 msgstr "Import"
 
@@ -2186,6 +2279,7 @@ msgid "Import OpenAPI JSON"
 msgstr "Import OpenAPI JSON"
 
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Importing…"
 msgstr "Importing…"
 
@@ -2194,18 +2288,22 @@ msgid "Inbox & email"
 msgstr "Inbox & email"
 
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Include files"
 msgstr "Include files"
 
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Include memories"
 msgstr "Include memories"
 
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Include routines (imported inactive)"
 msgstr "Include routines (imported inactive)"
 
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Include skills (added to your space)"
 msgstr "Include skills (added to your space)"
 
@@ -2247,8 +2345,10 @@ msgid "Integration options"
 msgstr "Integration options"
 
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/Shell.tsx
+#: src/pages/TeamTemplateOverlay.tsx
 msgid "Integrations"
 msgstr "Integrations"
 
@@ -2385,6 +2485,10 @@ msgstr "Loading memory settings…"
 msgid "Loading model catalog…"
 msgstr "Loading model catalog…"
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Loading presets…"
+msgstr "Loading presets…"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading preview…"
 msgstr "Loading preview…"
@@ -2392,6 +2496,10 @@ msgstr "Loading preview…"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Loading rules…"
 msgstr "Loading rules…"
+
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Loading templates…"
+msgstr "Loading templates…"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading tools…"
@@ -2406,6 +2514,7 @@ msgstr "Loading voice providers…"
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PeerMessagesOverlay.tsx
+#: src/pages/ReactiveTriggerSection.tsx
 #: src/pages/Shell.tsx
 msgid "Loading…"
 msgstr "Loading…"
@@ -2793,9 +2902,17 @@ msgstr "No messages with {peerBotName} yet."
 msgid "No model catalog is available."
 msgstr "No model catalog is available."
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "No presets match"
+msgstr "No presets match"
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No providers found."
 msgstr "No providers found."
+
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "No reactive triggers yet. The routine runs on every matched event."
+msgstr "No reactive triggers yet. The routine runs on every matched event."
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
@@ -2817,6 +2934,10 @@ msgstr "No skills yet"
 #: src/pages/MessagingSettingsOverlay.tsx
 msgid "No team conversations yet."
 msgstr "No team conversations yet."
+
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "No team templates available."
+msgstr "No team templates available."
 
 #: src/pages/PluginsOverlay.tsx
 msgid "No tools available."
@@ -2944,6 +3065,10 @@ msgstr "Opening chat…"
 msgid "Opening your Space…"
 msgstr "Opening your Space…"
 
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Operator"
+msgstr "Operator"
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -3015,6 +3140,10 @@ msgstr "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if
 msgid "Paste your API key"
 msgstr "Paste your API key"
 
+#: src/components/TrustPolicySettings.tsx
+msgid "Pause unattended runs at night"
+msgstr "Pause unattended runs at night"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Paused"
 msgstr "Paused"
@@ -3031,9 +3160,17 @@ msgstr "Personal Access Token"
 msgid "Personal credential"
 msgstr "Personal credential"
 
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Pick a starter roster. The lead bot receives the first task automatically."
+msgstr "Pick a starter roster. The lead bot receives the first task automatically."
+
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "Pin"
+
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Planned effects"
+msgstr "Planned effects"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Playing…"
@@ -3086,6 +3223,14 @@ msgstr "Pull request"
 msgid "Queued"
 msgstr "Queued"
 
+#: src/components/TrustPolicySettings.tsx
+msgid "Quiet hours end"
+msgstr "Quiet hours end"
+
+#: src/components/TrustPolicySettings.tsx
+msgid "Quiet hours start"
+msgstr "Quiet hours start"
+
 #: src/pages/Shell.tsx
 msgid "Quote"
 msgstr "Quote"
@@ -3105,6 +3250,10 @@ msgstr "React"
 #: src/pages/Shell.tsx
 msgid "Reactions"
 msgstr "Reactions"
+
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Reactive triggers"
+msgstr "Reactive triggers"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
@@ -3247,6 +3396,10 @@ msgstr "Remove schedule"
 #: src/pages/Shell.tsx
 msgid "Remove skill {0}"
 msgstr "Remove skill {0}"
+
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Remove trigger"
+msgstr "Remove trigger"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Remove webhook"
@@ -3474,6 +3627,7 @@ msgstr "Saving…"
 msgid "Say yes or no, or answer in a sentence."
 msgstr "Say yes or no, or answer in a sentence."
 
+#: src/pages/BotLibraryOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -3519,6 +3673,14 @@ msgstr "Searching…"
 #: src/pages/Shell.tsx
 msgid "Select a bot"
 msgstr "Select a bot"
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Select a preset to continue."
+msgstr "Select a preset to continue."
+
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Select a template to continue."
+msgstr "Select a template to continue."
 
 #: src/pages/Shell.tsx
 msgid "Send"
@@ -3729,6 +3891,10 @@ msgstr "Speech model"
 msgid "Speichern"
 msgstr "Speichern"
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Start from a bot the library ships."
+msgstr "Start from a bot the library ships."
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Start recording"
 msgstr "Start recording"
@@ -3819,6 +3985,12 @@ msgstr "Teaching in progress. Stop teaching before sending a new message."
 msgid "Team"
 msgstr "Team"
 
+#. placeholder {0}: selected?.label ?? selectedId
+#. placeholder {1}: created.botIds.length
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Team <0>{0}</0> created with {1, plural, one {# bot} other {# bots}}and a group."
+msgstr "Team <0>{0}</0> created with {1, plural, one {# bot} other {# bots}}and a group."
+
 #: src/pages/Shell.tsx
 msgid "Team Computer"
 msgstr "Team Computer"
@@ -3826,6 +3998,15 @@ msgstr "Team Computer"
 #: src/pages/MessagingSettingsOverlay.tsx
 msgid "Team conversations"
 msgstr "Team conversations"
+
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Team created"
+msgstr "Team created"
+
+#: src/pages/shell/bot-picker.tsx
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Team from template"
+msgstr "Team from template"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Teams message"
@@ -3889,6 +4070,7 @@ msgid "This deletes all {0} versions of this artifact. This can't be undone."
 msgstr "This deletes all {0} versions of this artifact. This can't be undone."
 
 #: src/pages/BotImportOverlay.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "This file is not a Rakazo bot preset (export format 1)."
 msgstr "This file is not a Rakazo bot preset (export format 1)."
 
@@ -3994,6 +4176,10 @@ msgstr "Type your answer"
 #: src/pages/BotContextMenu.tsx
 msgid "Unassigned"
 msgstr "Unassigned"
+
+#: src/components/TrustPolicySettings.tsx
+msgid "Unattended runs"
+msgstr "Unattended runs"
 
 #: src/components/SoftwareUpdateSection.tsx
 msgid "Unavailable"
@@ -4111,6 +4297,14 @@ msgstr "Use this model"
 #: src/components/AskCard.tsx
 msgid "Username"
 msgstr "Username"
+
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Value"
+msgstr "Value"
+
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Value to match"
+msgstr "Value to match"
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
