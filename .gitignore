@@ -55,3 +55,6 @@ playwright-report-www
 
 # Generated LLM context exports: contain inlined source and local paths, never committed
 docs/repomix-*.xml
+
+# GSD planning docs (local only, may contain security findings)
+.planning/
