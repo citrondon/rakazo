@@ -48,6 +48,17 @@ services:
         condition: service_completed_successfully
       supervisor:
         condition: service_healthy
+    # worker/web gate on this service, so it needs the same healthcheck the
+    # published-images file declares; without it Compose refuses to start them.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3100/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 20
 
   worker:
     build:
@@ -119,6 +130,16 @@ services:
     depends_on:
       computer:
         condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:7091/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
 
   computer:
     image: rakazo/computer:local
