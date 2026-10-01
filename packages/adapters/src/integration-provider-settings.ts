@@ -7,6 +7,7 @@ import {
 } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { ComposioConnector } from "./composio-connector.js";
+import { describeCredentialCheckFailure } from "./connector-failures.js";
 import { PipedreamConnector } from "./pipedream-connector.js";
 import type { EncryptedSecretStore } from "./secrets.js";
 
@@ -69,9 +70,10 @@ export class IntegrationProviderSettings {
     try {
       // Exercises authenticated access before replacing working credentials.
       await adapter.listConnectedExternalIds(context);
-    } catch {
-      // Provider errors can contain credentials or account details.
-      throw new Error("Could not verify these credentials");
+    } catch (error) {
+      // The raw provider error can embed credentials or account details, so only the
+      // classifier translates it — and the classifier never forwards the raw text.
+      throw new Error(describeCredentialCheckFailure(error).message, { cause: error });
     }
     const stored = await this.secrets.put(
       JSON.stringify(config),

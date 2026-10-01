@@ -52,6 +52,7 @@ import {
   defaultCatalogModelId,
   deletePushToken,
   deploymentAutoReviewDefault,
+  describeCredentialCheckFailure,
   destroyBot,
   displayBotWorkspacePath,
   enqueueTakeoverContinuation,
@@ -4211,9 +4212,9 @@ export function createRouter(deps: RouterDeps) {
             input,
             connectionContext(context.actor, "integrationSetup.save", context.signal),
           );
-        } catch {
+        } catch (error) {
           throw new ORPCError("BAD_REQUEST", {
-            message: "Could not verify or save these credentials",
+            message: describeCredentialCheckFailure(error).message,
           });
         }
         return { ok: true as const };
