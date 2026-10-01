@@ -311,8 +311,9 @@ prefer a stable LAN RFC1918 address (not Compose service DNS alone). On Docker D
 `host.docker.internal` also works.
 On Docker Desktop, a bot computer shell can often reach services bound to host `127.0.0.1`
 through that same hostname. Do not run sensitive unauthenticated services on loopback while
-bots run, or firewall / block that path. Linux does not get `host.docker.internal` the same
-way by default.
+bots run, or firewall / block that path. The Compose stacks also define `host.docker.internal` on
+Linux (`extra_hosts: host-gateway` on the API and worker), so the hostname resolves there too —
+an endpoint bound only to the host's `127.0.0.1` still stays unreachable from a container.
 Only configure an endpoint you control: prompts, attachments, and tool results sent to that model
 leave Rakazo through this URL. Leave `RAKAZO_LOCAL_MODELS` blank to disable the provider.
 
