@@ -9,6 +9,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { CallToolResult, ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
 import { isLocalMcpHost } from "@rakazo/contracts";
+import { describeMcpFailure } from "./connector-failures.js";
 import { combineSignals } from "./connector-safety.js";
 import {
   createSafeRemoteFetch,
@@ -268,6 +269,22 @@ function stdioParams(options: McpStdioOptions): StdioServerParameters {
   };
 }
 
+function mcpConnectError(error: unknown, context: { host: string }): Error {
+  // Gate sentences are already user-facing and asserted verbatim by the transport tests
+  // ("private address", the stdio allowlist, "{home}"): pass them through untouched.
+  if (
+    error instanceof Error &&
+    /private address|targets a private host|MCP_STDIO_ALLOWED_COMMANDS|no agent home root/.test(
+      error.message,
+    )
+  ) {
+    return error;
+  }
+  const failure = describeMcpFailure(error, context);
+  // Keep the raw reason for logs and for transportFailureDetail.
+  return new Error(failure.message, { cause: error });
+}
+
 /** A narrow seam around the official SDK, suitable for the agent tool layer. */
 export class McpSession {
   client: Client;
@@ -338,7 +355,7 @@ export class McpSession {
         if (!canFallback) {
           await this.remoteFetch?.close().catch(() => undefined);
           this.remoteFetch = undefined;
-          throw error;
+          throw mcpConnectError(error, { host: url.host });
         }
         usedFallback = true;
         // The SDK's documented fallback uses a fresh Client after a failed
@@ -348,7 +365,7 @@ export class McpSession {
           await connect("sse");
         } catch (fallbackError) {
           await this.close();
-          throw fallbackError;
+          throw mcpConnectError(fallbackError, { host: url.host });
         }
       } finally {
         this.connecting = undefined;
@@ -366,6 +383,7 @@ export class McpSession {
       throw new Error("MCP session is already connected or connecting");
     const transport = new StdioClientTransport(stdioParams(options));
     this.transport = transport;
+    const command = options.command.trim();
     const signal = combineSignals(options.signal, AbortSignal.timeout(options.timeoutMs ?? 15_000));
     this.connecting = this.client
       .connect(transport, { signal, timeout: options.timeoutMs ?? 15_000 })
@@ -375,7 +393,9 @@ export class McpSession {
       .finally(() => {
         this.connecting = undefined;
       });
-    await this.connecting;
+    await this.connecting.catch((error) => {
+      throw mcpConnectError(error, { host: command });
+    });
   }
 
   async listTools(options?: { signal?: AbortSignal }): Promise<ListToolsResult> {
