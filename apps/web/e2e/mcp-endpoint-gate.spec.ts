@@ -22,11 +22,12 @@ test("a gated URL fails with a short cause, not a stack trace", async ({ page },
   await completeOnboarding(page);
   await openMcpServers(page);
 
-  // An https endpoint that the gate refuses for a non-resolving host: the sentence names
-  // the rule (HTTPS or DNS) and the flag, never the undici cause chain.
+  // A public host over plain http: the gate answers with the HTTPS rule, or — when the host
+  // does not resolve, as .test never does — with the DNS sentence. Never a cause chain.
   await addServer(page, "Gate Probe", "http://mcp.example.test/mcp");
 
   const alert = page.getByRole("alert");
+  // The refusal is the dialog's single <p role="alert">; nothing else on the screen matches it.
   await expect(alert).toBeVisible();
   await expect(alert).toContainText(
     /must use HTTPS|Could not resolve|MCP_ALLOW_PRIVATE_ENDPOINT=true/,
