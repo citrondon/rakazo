@@ -1,11 +1,13 @@
 import type { Actor } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
+import { IsolationError } from "@rakazo/db";
 import { describe, expect, it, vi } from "vitest";
 import {
   createTrigger,
   deleteTrigger,
   listEvents,
   listTriggers,
+  previewEffects,
   updateTrigger,
 } from "./triggers.js";
 
@@ -146,5 +148,36 @@ describe("listEvents", () => {
     expect(events.length).toBeGreaterThan(0);
     expect(events[0]).toMatchObject({ id: expect.any(String), provider: expect.any(String) });
     expect(events.some((entry) => entry.id === "github:issues")).toBe(true);
+  });
+});
+
+describe("previewEffects handler", () => {
+  it("plans the bot's tool effects after checking routine ownership", async () => {
+    const routineFindFirst = vi.fn(async () => ({ id: "routine-1" }));
+    const deps = {
+      prisma: {
+        routine: { findFirst: routineFindFirst },
+        connection: { findMany: vi.fn(async () => [{ provider: "github" }]) },
+        capabilityInstall: { findMany: vi.fn(async () => []) },
+      } as unknown as PrismaClient,
+    };
+
+    const effects = await previewEffects(deps, actor, { routineId: "routine-1" });
+
+    expect(routineFindFirst.mock.calls[0]![0].where).toEqual({
+      id: "routine-1",
+      spaceId: "ws-1",
+      userId: "user-1",
+    });
+    expect(effects).toEqual([{ action: "update", target: "github", risk: "medium" }]);
+  });
+
+  it("rejects a routine the actor does not own", async () => {
+    const deps = {
+      prisma: { routine: { findFirst: vi.fn(async () => null) } } as unknown as PrismaClient,
+    };
+    await expect(previewEffects(deps, actor, { routineId: "routine-x" })).rejects.toBeInstanceOf(
+      IsolationError,
+    );
   });
 });

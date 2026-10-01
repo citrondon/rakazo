@@ -30,7 +30,7 @@ import {
   routineWakeupJob,
   runContinueJob,
 } from "@rakazo/adapter-kit";
-import type { ComputerCommand, MessageBlock, RunStatus } from "@rakazo/contracts";
+import type { ComputerCommand, MessageBlock, RunStatus, TrustPolicy } from "@rakazo/contracts";
 import {
   ATTACHMENT_MAX_BYTES,
   BOT_DESCRIPTION_MAX_LENGTH,
@@ -57,6 +57,7 @@ import {
   containsSecret,
   createStreamingRedactor,
   currentMonthStart,
+  effectRisk,
   endsSentence,
   expandSkillReferencesInPrompt,
   formatSkillRunPrompt,
@@ -77,12 +78,14 @@ import {
   reachedBudgetWarnLine,
   redactSecrets,
   renderBotDirectory,
+  requiresApproval,
   resolveActionApprovalDetail,
   runStopKind,
   sandboxCommandTimeoutMs,
   type ToolCallStreak,
   toolRequiresApproval,
   toolRequiresExplicitApproval,
+  toolTrustAction,
   truncatedPlainText,
   unattendedTriggerToolRequiresApproval,
   userTurnMessageForRun,
@@ -98,6 +101,7 @@ import {
   appendEventInTransaction,
   createSpaceForMember,
   createThreadMessageInTransaction,
+  createTrustPolicyRepos,
   effectiveMemoryScope,
   findDefaultModelCredential,
   findModelCredential,
@@ -1698,6 +1702,15 @@ export function createRunExecutor(deps: ExecutorDeps) {
             .then((row) => row?.enabled ?? deploymentAutoReviewDefault());
           return autoReviewPreferencePromise;
         };
+        // The space policy gates unattended side effects. Loaded once per run and only when a
+        // triggered wake actually consults it, so an ordinary run adds no query.
+        let trustPolicyPromise: Promise<TrustPolicy> | undefined;
+        const loadTrustPolicy = (): Promise<TrustPolicy> => {
+          trustPolicyPromise ??= createTrustPolicyRepos(deps.prisma).getTrustPolicy({
+            spaceId: run.spaceId,
+          });
+          return trustPolicyPromise;
+        };
         // The intro turn confirms how a bot read its own role before anyone hands it
         // real work — it must not be able to act on that reading (shell, computer,
         // scheduling, spawning another bot, ...) before the user has assigned any task.
@@ -2058,12 +2071,20 @@ export function createRunExecutor(deps: ExecutorDeps) {
           const declaredReadOnly = viaConnector
             ? (resolvedTool ?? connectorTools.get(name))?.readOnly
             : undefined;
-          const requiresUnattendedApproval = unattendedTriggerToolRequiresApproval(
-            run.trigger,
-            name,
-            viaConnector,
-            declaredReadOnly,
-          );
+          // The space's trust policy can only narrow the unattended boundary: a tool asks when it
+          // is side-effecting unattended and its risk reaches the policy's approval line. A
+          // non-triggered run short-circuits, so it adds no policy query.
+          const requiresUnattendedApproval =
+            unattendedTriggerToolRequiresApproval(
+              run.trigger,
+              name,
+              viaConnector,
+              declaredReadOnly,
+            ) &&
+            requiresApproval(
+              effectRisk(toolTrustAction({ name, viaConnector, readOnly: declaredReadOnly })),
+              await loadTrustPolicy(),
+            );
           const requiresApprovalByDefault =
             requiresUnattendedApproval ||
             toolRequiresApproval(name, viaConnector, declaredReadOnly);

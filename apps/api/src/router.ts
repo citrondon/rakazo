@@ -258,6 +258,7 @@ import {
   deleteTrigger,
   listEvents,
   listTriggers,
+  previewEffects,
   updateTrigger,
 } from "./triggers.js";
 import { getTrustPolicy, setTrustPolicy } from "./trust-policy.js";
@@ -3366,6 +3367,9 @@ export function createRouter(deps: RouterDeps) {
       ),
       remove: authed.triggers.remove.handler(async ({ context, input }) =>
         deleteTrigger(deps, context.actor, input),
+      ),
+      previewEffects: authed.triggers.previewEffects.handler(async ({ context, input }) =>
+        previewEffects(deps, context.actor, input),
       ),
     },
     events: {

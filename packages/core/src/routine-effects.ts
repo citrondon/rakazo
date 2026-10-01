@@ -1,5 +1,5 @@
 import type { TrustEffect, TrustEffectAction } from "@rakazo/contracts";
-import { toolRequiresApproval } from "./action-approval.js";
+import { toolRequiresApproval, unattendedTriggerToolRequiresApproval } from "./action-approval.js";
 import { effectRisk } from "./trust-effects.js";
 
 /**
@@ -38,6 +38,31 @@ function actionForApprovalRequiredTool(name: string): TrustEffectAction {
 }
 
 /**
+ * Whether a tool is consequential for an *unattended* triggered run. Combines the general
+ * approval rule with the unattended boundary (an external wake must not run side effects
+ * unattended), so a builtin such as `shell` counts as a write even though an attended run may
+ * use it freely.
+ */
+function requiresApprovalForUnattendedRun(descriptor: RoutineToolDescriptor): boolean {
+  return (
+    toolRequiresApproval(descriptor.name, descriptor.viaConnector, descriptor.readOnly) ||
+    unattendedTriggerToolRequiresApproval(
+      "webhook",
+      descriptor.name,
+      descriptor.viaConnector,
+      descriptor.readOnly,
+    )
+  );
+}
+
+/** The effect one tool maps to: a read when it is harmless unattended, else a write at its tier. */
+export function toolTrustAction(descriptor: RoutineToolDescriptor): TrustEffectAction {
+  return requiresApprovalForUnattendedRun(descriptor)
+    ? actionForApprovalRequiredTool(descriptor.name)
+    : "read";
+}
+
+/**
  * Plan the effects a routine may reach, from the tools its bot can call. A tool that needs
  * approval is planned as a mutating effect at its risk tier; a read-only tool is planned as a
  * read. Duplicate action/target pairs collapse, so the plan stays short and stable.
@@ -46,14 +71,7 @@ export function planRoutineEffects(descriptors: readonly RoutineToolDescriptor[]
   const effects: TrustEffect[] = [];
   const seen = new Set<string>();
   for (const descriptor of descriptors) {
-    const requiresApproval = toolRequiresApproval(
-      descriptor.name,
-      descriptor.viaConnector,
-      descriptor.readOnly,
-    );
-    const action: TrustEffectAction = requiresApproval
-      ? actionForApprovalRequiredTool(descriptor.name)
-      : "read";
+    const action = toolTrustAction(descriptor);
     const key = `${action}:${descriptor.name}`;
     if (seen.has(key)) continue;
     seen.add(key);

@@ -103,6 +103,7 @@ import {
   CreateTriggerInput,
   EventDefinitionSchema,
   TriggerSchema,
+  TrustEffectSchema,
   TrustPolicySchema,
   UpdateTriggerInput,
   UpdateTrustPolicyInput,
@@ -528,6 +529,8 @@ export const appContract = {
     create: oc.input(CreateTriggerInput).output(TriggerSchema),
     update: oc.input(UpdateTriggerInput).output(TriggerSchema),
     remove: oc.input(z.object({ triggerId: Id })).output(z.object({ ok: z.literal(true) })),
+    /** The effects a routine's triggered runs may reach, with risk tiers, for the editor. */
+    previewEffects: oc.input(z.object({ routineId: Id })).output(z.array(TrustEffectSchema)),
   },
   events: {
     /** The discoverable events a trigger can listen for, provider-neutral. */

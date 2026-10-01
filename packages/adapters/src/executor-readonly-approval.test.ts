@@ -55,6 +55,7 @@ function fixture({
     description: "Test assistant",
   },
   shutdownSignal,
+  trustPolicy = null,
 }: {
   name?: string;
   catalog?: boolean;
@@ -66,6 +67,7 @@ function fixture({
   prompt?: string;
   bot?: { name: string; title: string; description: string };
   shutdownSignal?: AbortSignal;
+  trustPolicy?: { approvalThreshold: string; quietHours: unknown } | null;
 } = {}) {
   const tool: ConnectorTool = {
     name,
@@ -174,6 +176,7 @@ function fixture({
     scratchpadItem: { findMany: vi.fn(async () => []) },
     actionApprovalRule: { findMany: vi.fn(async () => rules) },
     actionAutoReviewPreference: { findUnique: vi.fn(async () => ({ enabled: autoReview })) },
+    trustPolicy: { findUnique: vi.fn(async () => trustPolicy) },
     externalEffect,
   };
   const pauseRunForInput = vi.fn(async () => {
@@ -262,6 +265,29 @@ describe("connector read-only metadata and approval enforcement", () => {
       expect(reviewMock).not.toHaveBeenCalled();
     },
   );
+
+  it("lets a raised threshold run a connector write unattended", async () => {
+    const f = fixture({
+      name: "demo_update_item",
+      readOnly: false,
+      trigger: "webhook",
+      trustPolicy: { approvalThreshold: "high", quietHours: null },
+    });
+    await f.run();
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+    expect(f.execute).toHaveBeenCalledOnce();
+  });
+
+  it("still asks for the same connector write at the default threshold", async () => {
+    const f = fixture({
+      name: "demo_update_item",
+      readOnly: false,
+      trigger: "webhook",
+    });
+    await f.run();
+    expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+    expect(isApprovalPausedResult(f.results[0])).toBe(true);
+  });
 
   describe.each([false, true])("catalog = %s", (catalog) => {
     it.each(["tool", "connector"] as const)(

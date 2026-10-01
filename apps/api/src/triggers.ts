@@ -1,7 +1,8 @@
 import { listEventDefinitions } from "@rakazo/adapters";
 import type { Actor, CreateTriggerInput, UpdateTriggerInput } from "@rakazo/contracts";
+import { planRoutineEffects } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
-import { createTriggerRepos } from "@rakazo/db";
+import { createRoutineToolRepos, createTriggerRepos, IsolationError } from "@rakazo/db";
 
 export type TriggerDeps = { prisma: PrismaClient };
 
@@ -46,4 +47,26 @@ export function updateTrigger(deps: TriggerDeps, actor: Actor, input: UpdateTrig
 export async function deleteTrigger(deps: TriggerDeps, actor: Actor, input: { triggerId: string }) {
   await createTriggerRepos(deps.prisma).deleteTrigger(actor, input.triggerId);
   return { ok: true as const };
+}
+
+/**
+ * The effects a routine's triggered runs may reach, derived from its bot's reachable tools. A
+ * read-only preview for the editor: it shows the risk tiers before anyone lets an unattended
+ * run proceed, from the same planner the wake path uses (one source of truth).
+ */
+export async function previewEffects(
+  deps: TriggerDeps,
+  actor: Actor,
+  input: { routineId: string },
+) {
+  const routine = await deps.prisma.routine.findFirst({
+    where: { id: input.routineId, spaceId: actor.spaceId, userId: actor.userId },
+    select: { id: true },
+  });
+  if (!routine) throw new IsolationError();
+  const descriptors = await createRoutineToolRepos(deps.prisma).listBotToolDescriptors({
+    spaceId: actor.spaceId,
+    userId: actor.userId,
+  });
+  return planRoutineEffects(descriptors);
 }

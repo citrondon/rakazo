@@ -53,6 +53,15 @@ describe("planRoutineEffects", () => {
     ]);
   });
 
+  it("treats an unattended-unsafe builtin like shell as a write", () => {
+    expect(planRoutineEffects([descriptor("shell", { viaConnector: false })])).toEqual([
+      { action: "update", target: "shell", risk: "medium" },
+    ]);
+    expect(planRoutineEffects([descriptor("write_file", { viaConnector: false })])).toEqual([
+      { action: "update", target: "write_file", risk: "medium" },
+    ]);
+  });
+
   it("returns no effects for a bot that reaches nothing", () => {
     expect(planRoutineEffects([])).toEqual([]);
   });

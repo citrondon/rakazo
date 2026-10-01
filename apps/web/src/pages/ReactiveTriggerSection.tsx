@@ -4,8 +4,9 @@ import type {
   Trigger,
   TriggerOperator,
   TriggerPredicate,
+  TrustEffect,
 } from "@rakazo/contracts";
-import { Button, Input, NativeSelect, NativeSelectOption } from "@rakazo/ui-web";
+import { Badge, Button, Input, NativeSelect, NativeSelectOption } from "@rakazo/ui-web";
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { rpc } from "../lib/rpc";
@@ -19,6 +20,17 @@ const OPERATORS: TriggerOperator[] = [
   "regex",
   "exists",
 ];
+
+/** Risk tier to a monochrome badge; only the top tier borrows the status color. */
+const RISK_VARIANT: Record<TrustEffect["risk"], "destructive" | "outline" | "secondary"> = {
+  high: "destructive",
+  medium: "outline",
+  low: "secondary",
+};
+
+function effectLabel(effect: TrustEffect): string {
+  return `${effect.target} · ${effect.action}`;
+}
 
 function eventLabel(trigger: Trigger, catalog: EventDefinition[]): string {
   const match =
@@ -48,6 +60,7 @@ export function ReactiveTriggerSection({ routineId }: { routineId: string }) {
   const [loading, setLoading] = useState(true);
   const [triggers, setTriggers] = useState<Trigger[]>([]);
   const [catalog, setCatalog] = useState<EventDefinition[]>([]);
+  const [effects, setEffects] = useState<TrustEffect[]>([]);
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,12 +72,14 @@ export function ReactiveTriggerSection({ routineId }: { routineId: string }) {
   async function refresh() {
     setLoading(true);
     try {
-      const [list, events] = await Promise.all([
+      const [list, events, preview] = await Promise.all([
         rpc.triggers.list({ routineId }),
         rpc.events.list(),
+        rpc.triggers.previewEffects({ routineId }),
       ]);
       setTriggers(list);
       setCatalog(events);
+      setEffects(preview);
       setError(null);
     } catch {
       setError(t`Could not load triggers`);
@@ -158,6 +173,25 @@ export function ReactiveTriggerSection({ routineId }: { routineId: string }) {
         <p className="mt-2 text-[13.5px] text-muted-foreground/80">
           <Trans>No reactive triggers yet. The routine runs on every matched event.</Trans>
         </p>
+      ) : null}
+
+      {!loading && effects.length > 0 ? (
+        <div className="mt-3 space-y-1.5">
+          <p className="text-[13px] text-muted-foreground/80">
+            <Trans>Planned effects</Trans>
+          </p>
+          {effects.map((effect) => (
+            <div
+              key={`${effect.action}:${effect.target}`}
+              className="flex items-center gap-2.5 rounded-xl border border-border px-3 py-2"
+            >
+              <Badge variant={RISK_VARIANT[effect.risk]}>{effect.risk}</Badge>
+              <span className="min-w-0 flex-1 truncate text-[14px] text-foreground" dir="auto">
+                {effectLabel(effect)}
+              </span>
+            </div>
+          ))}
+        </div>
       ) : null}
 
       <div className="mt-2 space-y-2">

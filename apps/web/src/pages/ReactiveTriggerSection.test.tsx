@@ -5,7 +5,12 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const triggers = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn(), remove: vi.fn() }));
+const triggers = vi.hoisted(() => ({
+  list: vi.fn(),
+  create: vi.fn(),
+  remove: vi.fn(),
+  previewEffects: vi.fn(),
+}));
 const events = vi.hoisted(() => ({ list: vi.fn() }));
 vi.mock("../lib/rpc", () => ({ rpc: { triggers, events } }));
 vi.mock("@lingui/react/macro", () => {
@@ -13,6 +18,7 @@ vi.mock("@lingui/react/macro", () => {
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
 vi.mock("@rakazo/ui-web", () => ({
+  Badge: ({ children, ...props }: ComponentProps<"span">) => <span {...props}>{children}</span>,
   Button: ({ variant: _variant, ...props }: ComponentProps<"button"> & { variant?: string }) => (
     <button {...props} />
   ),
@@ -81,11 +87,20 @@ describe("ReactiveTriggerSection", () => {
     events.list.mockResolvedValue(catalog);
     triggers.create.mockResolvedValue({});
     triggers.remove.mockResolvedValue({ ok: true });
+    triggers.previewEffects.mockResolvedValue([
+      { action: "update", target: "github", risk: "medium" },
+      { action: "delete", target: "github_delete_repo", risk: "high" },
+    ]);
     const { container, root } = mount();
     try {
       await act(async () => root.render(<ReactiveTriggerSection routineId="routine-1" />));
       expect(triggers.list).toHaveBeenCalledWith({ routineId: "routine-1" });
       expect(events.list).toHaveBeenCalled();
+      expect(triggers.previewEffects).toHaveBeenCalledWith({ routineId: "routine-1" });
+
+      expect(container.textContent).toContain("Planned effects");
+      expect(container.textContent).toContain("github · update");
+      expect(container.textContent).toContain("high");
 
       const addToggle = container.querySelector('button[aria-label="Add trigger"]');
       if (!addToggle) throw new Error("missing add toggle");
