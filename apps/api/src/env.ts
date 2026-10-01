@@ -3,6 +3,7 @@ import {
   resolveDeploymentModel,
   resolveSandboxProvider,
 } from "@rakazo/adapters";
+import { parseToolCallLimit } from "@rakazo/contracts";
 import {
   resolveAuthSecret,
   resolveEncryptionKey,
@@ -37,6 +38,8 @@ export interface AppEnv {
   cloudAgentSpaceId: string | undefined;
   cursorApiKey: string | undefined;
   agentRuntime: string;
+  /** Deployment-wide per-turn tool-call fuse; 0 means unlimited. Spaces may override it. */
+  maxToolCallsPerTurn: number;
   deploymentModelKey: string | undefined;
   e2bApiKey: string | undefined;
   daytonaApiKey: string | undefined;
@@ -127,6 +130,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     cloudAgentSpaceId: optional(source.CLOUD_AGENT_SPACE_ID),
     cursorApiKey: optional(source.CURSOR_API_KEY),
     agentRuntime: source.AGENT_RUNTIME ?? "pi",
+    // Parsed once here; the runtime and the trust handlers read the value, not the raw env.
+    maxToolCallsPerTurn: parseToolCallLimit(source.MAX_TOOL_CALLS_PER_TURN),
     // Provider, model and key resolve together: see resolveDeploymentModel.
     deploymentModelKey: deploymentModel.key,
     e2bApiKey: source.E2B_API_KEY,

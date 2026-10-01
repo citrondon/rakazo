@@ -493,6 +493,7 @@ export async function createApp(
     },
     env: {
       agentRuntime: env.agentRuntime,
+      maxToolCallsPerTurn: env.maxToolCallsPerTurn,
       defaultProvider: env.defaultProvider,
       defaultModel: env.defaultModel,
       teamChatJudgeProvider: env.teamChatJudgeProvider,

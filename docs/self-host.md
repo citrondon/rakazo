@@ -261,7 +261,7 @@ AGENT_RUNTIME=pi          # Keep scripted only for pnpm test.
 WAKEUP_DRIVER=graphile
 SANDBOX_IDLE_MS=600000    # pause the bot computer after 10 minutes idle
 SANDBOX_COMMAND_TIMEOUT_MS=300000 # stop a shell command after 5 minutes
-MAX_TOOL_CALLS_PER_TURN=  # optional Pi turn tool-call fuse; unset/0 = unlimited
+MAX_TOOL_CALLS_PER_TURN=  # deployment-wide Pi turn tool-call fuse; unset/0 = unlimited. Each space can override it in Settings → General → Advanced ("Max tool calls per turn"); an empty field stores unlimited.
 E2B_API_KEY=              # when SANDBOX_PROVIDER=e2b
 DAYTONA_API_KEY=          # when SANDBOX_PROVIDER=daytona
 CREATEOS_SANDBOX_API_KEY= # when SANDBOX_PROVIDER=createos

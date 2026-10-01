@@ -556,6 +556,8 @@ export interface RouterDeps {
   messaging?: { enabled: boolean; providers: string[]; openSignup: boolean };
   env: {
     agentRuntime: string;
+    /** Deployment-wide per-turn tool-call fuse; 0 means unlimited. Spaces may override it. */
+    maxToolCallsPerTurn: number;
     teamChatJudgeProvider?: string;
     teamChatJudgeModel?: string;
     defaultProvider: string;
@@ -3385,9 +3387,18 @@ export function createRouter(deps: RouterDeps) {
       list: authed.events.list.handler(async () => listEvents()),
     },
     trust: {
-      get: authed.trust.get.handler(async ({ context }) => getTrustPolicy(deps, context.actor)),
+      get: authed.trust.get.handler(async ({ context }) =>
+        getTrustPolicy(
+          { prisma: deps.prisma, maxToolCallsPerTurn: deps.env.maxToolCallsPerTurn },
+          context.actor,
+        ),
+      ),
       set: authed.trust.set.handler(async ({ context, input }) =>
-        setTrustPolicy(deps, context.actor, input),
+        setTrustPolicy(
+          { prisma: deps.prisma, maxToolCallsPerTurn: deps.env.maxToolCallsPerTurn },
+          context.actor,
+          input,
+        ),
       ),
     },
     scratchpad: {
