@@ -29,7 +29,7 @@ Models** (oder im Onboarding) eine Verbindung anlegen:
 
 ## Eigene Presets
 
-Fünf Presets sind hier entstanden; die anderen 56 sind wortgetreu übernommen (siehe unten).
+Acht Presets sind hier entstanden; die anderen 56 sind wortgetreu übernommen (siehe unten).
 
 | Datei | Bot | Anforderung ans Modell | Zweck |
 | --- | --- | --- | --- |
@@ -38,10 +38,13 @@ Fünf Presets sind hier entstanden; die anderen 56 sind wortgetreu übernommen (
 | `trend-scout.v1.json` | **TrendScout** | schnelles Modell (viele Läufe/Tag) | Realtime Tech & AI Monitor: Autonomer Scanner für HackerNews, GitHub Trending und HuggingFace-Paper mit täglichem automatisierbarem Digest (Cron 07:30). |
 | `executive-chief.v1.json` | **ExecutiveChief** | starkes Modell, geringe Latenz für den Chat | Chief of Staff & Productivity Lead: Aufgaben-Priorisierung via Eisenhower-Matrix, Daily Standup Briefing (Cron 08:00) und Multi-Bot-Koordination. |
 | `data-analyst.v1.json` | **DataAnalyst** | starkes Modell mit Code-Ausführung | Data Science, SQL & Visualization Specialist: Strukturierte CSV/JSON/DuckDB-Analysen, Matplotlib/Seaborn Visualisierungen und statistische Auswertungen. |
+| `product-analytics.v1.json` | **ProductAnalytics** | starkes Modell mit Code-Ausführung | Produktanalyst: Feature-Adoption-Dashboards, Experiment-Tracking, Wettbewerbs-Signale und Weekly-Health-Digest (Cron 02:00, Digest Mo 08:00, Eskalation Mo–Fr stündlich). |
+| `security-auditor.v1.json` | **SecurityAuditor** | starkes Coding-Modell | Sicherheits-Scanner: SAST (Semgrep), Container-/K8s- und Dependency-Audits, Secret-Detection und Fix-Commits je Fund (Cron 02:00, Health-Check Mo–Fr 08:00). |
+| `support-desk.v1.json` | **SupportDesk** | starkes Modell mit Code-Ausführung | Support-Betrieb: Ticket-Triage, Bug-Reproduktion mit Playwright/Docker und Eskalations-Review hinter Human-Approval (Cron Mo–Fr 09:00, 02:00). |
 
 ## Übernommene GrokBot-Profile
 
-**56** der 61 Presets stammen aus der CC0-Sammlung
+**56** der 64 Presets stammen aus der CC0-Sammlung
 [awesome-grokbot](https://github.com/mergisi/awesome-grokbot), vollständig: development (8),
 productivity (8), marketing (10), ops (17), sales (8), personal (5). Der Prompt-Text ist
 **wortgetreu** übernommen, weil die Sammlung ausdrücklich darum bittet, ein Profil unverändert zu
@@ -90,9 +93,9 @@ Bibliothek.
 
 | Datei | Team | Lead zuerst |
 | --- | --- | --- |
-| `eng-team.json` | Eng team | Bug Reproduction, Issue Drafter, PR Reviewer |
+| `eng-team.json` | Eng team | Bug Reproduction, Issue Drafter, PR Reviewer, SecurityAuditor |
 | `sales-team.json` | Sales team | Outbound Voice, Call Followup |
-| `success-team.json` | Success team | Account Health, Support Replies |
+| `success-team.json` | Success team | Account Health, Support Replies, SupportDesk |
 | `marketing-team.json` | Marketing team | Social Queue, Content Remix |
 | `ops-team.json` | Ops team | Chief of Staff, Daily Brief |
 | `personal-team.json` | Personal team | Trip Concierge, Household Ops |

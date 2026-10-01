@@ -1,11 +1,15 @@
 {
   "id": "eng",
   "label": "Eng team",
-  "summary": "Fehler reproduzieren, Issue schreiben, Diff prüfen",
+  "summary": "Fehler reproduzieren, Issue schreiben, Diff prüfen, Schwachstellen fixen",
   "members": [
     { "preset": "bug-reproduction", "role": "Lead: baut aus dem Bug-Report ein Repro-Paket" },
     { "preset": "issue-drafter", "role": "formuliert daraus das Issue" },
-    { "preset": "pr-reviewer", "role": "prüft den zugehörigen Diff auf Risiko und Tests" }
+    { "preset": "pr-reviewer", "role": "prüft den zugehörigen Diff auf Risiko und Tests" },
+    {
+      "preset": "security-auditor",
+      "role": "scannt das Repo auf Schwachstellen und legt Fix-Commits an"
+    }
   ],
   "integrations": ["GitHub", "Slack"],
   "firstTask": "Nimm den letzten gemeldeten Fehler: Bug Reproduction baut das Repro-Paket mit Schritten, Logauszug und Umgebung, Issue Drafter macht daraus ein Issue mit Akzeptanzkriterien, PR Reviewer prüft den zugehörigen Diff auf Risiko und fehlende Tests. Antworte mit dem Repro-Paket, dem Issue-Entwurf und den Fragen, die offen bleiben."
