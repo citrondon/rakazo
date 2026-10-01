@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   findIdentity,
   findTeamTemplate,
+  listBotPresets,
   listIdentities,
   listTeamTemplates,
   prepareTeamStart,
+  readBotPreset,
   resolveStartTeam,
   teamPresetManifestPath,
 } from "./bot-library.js";
@@ -136,5 +138,43 @@ describe("starting a team", () => {
         firstTask: "Start.",
       }),
     ).toThrow(/does-not-exist/);
+  });
+});
+
+describe("shipped bot presets", () => {
+  const presets = listBotPresets();
+
+  it("lists a preset for every file the library holds", () => {
+    expect(presets.length).toBeGreaterThan(0);
+    expect(new Set(presets.map((preset) => preset.slug)).size).toBe(presets.length);
+  });
+
+  // A picker hands the slug back to the import path, so a slug that does not
+  // round-trip would offer a preset nobody can actually open.
+  it("gives every preset a slug the library resolves", () => {
+    for (const preset of presets) {
+      expect(teamPresetManifestPath(preset.slug), preset.slug).toBeDefined();
+    }
+  });
+
+  it("carries what a picker shows for every preset", () => {
+    for (const preset of presets) {
+      expect(preset.name.length, preset.slug).toBeGreaterThan(0);
+      expect(preset.description.length, preset.slug).toBeGreaterThan(0);
+    }
+  });
+
+  // Integrations live on the manifest, not on the bot. A preset that writes them
+  // inside `bot` loses them to the contract and shows an empty list on import.
+  it("carries the integrations a preset declares through to the summary", () => {
+    expect(presets.some((preset) => preset.integrations.length > 0)).toBe(true);
+  });
+
+  // A picker hands the slug back to this lookup, so it has to refuse anything the
+  // library does not ship instead of resolving a path of its own.
+  it("reads one preset by slug and refuses a slug the library does not ship", () => {
+    expect(readBotPreset("openresearch")?.bot.name).toBe("OpenResearch");
+    expect(readBotPreset("does-not-exist")).toBeUndefined();
+    expect(readBotPreset("../package")).toBeUndefined();
   });
 });

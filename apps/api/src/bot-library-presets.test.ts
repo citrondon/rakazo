@@ -63,6 +63,21 @@ describe("shipped bot presets", () => {
         }
       });
 
+      // Zod strips the keys the contract does not know, so a field written in the
+      // wrong place disappears without a warning. The raw file is the only place
+      // that still shows it, and the import preview is where the user notices.
+      it("keeps the bot object to the fields the export format defines", () => {
+        const raw = JSON.parse(readFileSync(path.join(libraryDir, file), "utf8")) as {
+          bot: Record<string, unknown>;
+        };
+        expect(Object.keys(raw.bot).sort()).toEqual([
+          "description",
+          "instructions",
+          "name",
+          "title",
+        ]);
+      });
+
       // Routines expand @Skill mentions when they fire; a name nothing ships would be dropped.
       it("mentions only skills the product ships", () => {
         const builtinNames = BUILTIN_AGENT_SKILLS.map((skill) => skill.name);

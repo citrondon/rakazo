@@ -193,9 +193,11 @@ import {
 import type { PreparedBotImport } from "./bot-import.js";
 import { prepareBotImport } from "./bot-import.js";
 import {
+  listBotPresets,
   listIdentities,
   listTeamTemplates,
   prepareTeamStart,
+  readBotPreset,
   resolveStartTeam,
 } from "./bot-library.js";
 import { botProfileLabelsChanged, commitBotUpdate } from "./bot-update.js";
@@ -1290,6 +1292,13 @@ export function createRouter(deps: RouterDeps) {
       }),
     },
     bots: {
+      /** The shipped presets, so a client can offer what the library actually has. */
+      presets: authed.bots.presets.handler(async () => listBotPresets()),
+      preset: authed.bots.preset.handler(async ({ input }) => {
+        const manifest = readBotPreset(input.slug);
+        if (!manifest) throw new ORPCError("NOT_FOUND", { message: "Unknown preset." });
+        return manifest;
+      }),
       list: authed.bots.list.handler(async ({ context }) => repos.listBots(context.actor)),
       listArchived: authed.bots.listArchived.handler(async ({ context }) =>
         repos.listBots(context.actor, { archived: true }),

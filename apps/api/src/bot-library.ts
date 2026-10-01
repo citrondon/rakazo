@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { ExportManifest, Identity, TeamTemplate } from "@rakazo/contracts";
+import type { BotPresetSummary, ExportManifest, Identity, TeamTemplate } from "@rakazo/contracts";
 import { ExportManifestSchema, IdentitySchema, TeamTemplateSchema } from "@rakazo/contracts";
 import type { PreparedBotImport } from "./bot-import.js";
 import { prepareBotImport } from "./bot-import.js";
@@ -54,6 +54,42 @@ export function findIdentity(id: string): Identity | undefined {
 export function teamPresetManifestPath(preset: string): string | undefined {
   const file = path.join(BOT_LIBRARY_DIR, `${preset}.v1.json`);
   return existsSync(file) ? file : undefined;
+}
+
+/**
+ * Every preset the library ships. Read in name order so the list is stable between
+ * runs, and parsed in full: a preset that does not validate is a bug in the
+ * repository, and it should fail here rather than silently vanish from a browser.
+ */
+export function listBotPresets(): BotPresetSummary[] {
+  return readdirSync(BOT_LIBRARY_DIR)
+    .filter((name) => name.endsWith(".v1.json"))
+    .sort()
+    .map((name) => {
+      const manifest = ExportManifestSchema.parse(
+        JSON.parse(readFileSync(path.join(BOT_LIBRARY_DIR, name), "utf8")),
+      );
+      return {
+        slug: name.slice(0, -".v1.json".length),
+        name: manifest.bot.name,
+        title: manifest.bot.title,
+        description: manifest.bot.description,
+        integrations: manifest.integrations,
+        routineCount: manifest.routines.length,
+        memoryCount: manifest.memory.length,
+        fileCount: manifest.files.length,
+      };
+    });
+}
+
+/**
+ * One shipped preset, by slug. Resolved through the same lookup a team member goes
+ * through, so a slug that cannot name a library file cannot reach this either.
+ */
+export function readBotPreset(slug: string): ExportManifest | undefined {
+  const file = teamPresetManifestPath(slug);
+  if (!file) return undefined;
+  return ExportManifestSchema.parse(JSON.parse(readFileSync(file, "utf8")));
 }
 
 /**
