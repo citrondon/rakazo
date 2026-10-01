@@ -395,15 +395,19 @@ describe("shared Linux desktop lifecycle", () => {
         waitForReady(joinedReady);
         const result = spawnSync("bash", ["-eu", "-c", command], {
           encoding: "utf8",
-          // Three profiles can each spend 2 x 10 s in the stop loops.
-          timeout: 45_000,
+          // Three profiles can each spend 2 x 10 s in the stop loops, so this
+          // budget has to clear that 60 s worst case while staying under the
+          // 90 s the test itself allows. At 45 s a loaded machine reached the
+          // timeout first: Node killed the child and spawnSync reported a bare
+          // status null, hiding the script's own output.
+          timeout: 75_000,
           env: {
             ...process.env,
             PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
             QUIESCE_LOG: log,
           },
         });
-        expect(result.status, result.stderr).toBe(0);
+        expect(result.status, `signal=${result.signal ?? "none"} ${result.stderr}`).toBe(0);
         const closed = readFileSync(log, "utf8").trim().split("\n");
         expect(closed).toEqual(
           expect.arrayContaining([
