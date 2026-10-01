@@ -68,6 +68,11 @@ Mirror both app and computer images and pair their tags to the same published ve
 hosts need multi-architecture tags; see [published images and tags](./self-host.md#published-images-and-tags).
 Image overrides are defined in [docker-compose.images.yml](../infra/compose/docker-compose.images.yml).
 
+The app image carries its package manager at `/opt/corepack` (`COREPACK_HOME`), so `api`, `worker`,
+and `web` never download `pnpm` when a container starts: starting the stack needs no registry or DNS
+access, only the images themselves. `COREPACK_ENABLE_NETWORK=0` is part of the runtime image, so a
+cache miss fails right away with a corepack error instead of hanging on a DNS answer.
+
 For Docker Hub images, you can instead merge `registry-mirrors` into the Docker daemon's existing
 JSON configuration, then restart Docker:
 

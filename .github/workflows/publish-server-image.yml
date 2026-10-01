@@ -81,13 +81,21 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: false
-          tags: ${{ steps.meta.outputs.tags }}
+          load: ${{ matrix.name == 'app' }}
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            rakazo-app-check:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: ${{ matrix.name == 'app' && format('GIT_SHA={0}', github.sha) || '' }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=pr-${{ github.event.pull_request.number }}-${{ matrix.name }}
           provenance: false
           sbom: false
+      - name: App image resolves pnpm offline as the runtime user
+        if: matrix.name == 'app'
+        run: |
+          set -euo pipefail
+          docker run --rm --network none --user node "rakazo-app-check:${{ github.sha }}" pnpm --version
 
   build:
     name: Build ${{ matrix.name }} ${{ matrix.arch }}
