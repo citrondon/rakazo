@@ -25,7 +25,10 @@ export type ToolCallLimitSavePlan =
  * what `toolCallLimitDraft` renders (e.g. `""` on a space inheriting `null`) is `unchanged`, so an
  * untouched blur can never silently write 0 and disable the deployment fuse.
  */
-export function planToolCallLimitSave(policy: AgentLimitPolicy, draft: string): ToolCallLimitSavePlan {
+export function planToolCallLimitSave(
+  policy: AgentLimitPolicy,
+  draft: string,
+): ToolCallLimitSavePlan {
   if (draft === toolCallLimitDraft(policy)) return { kind: "unchanged" };
   const parsed = toolCallLimitFromDraft(draft);
   if (parsed === null) return { kind: "invalid" };
