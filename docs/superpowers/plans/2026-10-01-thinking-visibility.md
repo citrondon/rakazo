@@ -36,25 +36,11 @@ In scope: web + Electron (hosts the web UI). Out of scope: Expo mobile rendering
 
 ---
 
-## Task 0: Product decision (blocking)
+## Task 0: Product decision (resolved)
 
-**Files:**
-- Modify: `packages/adapters/src/executor.ts:5298` (the prompt string)
+**Decision (maintainer-approved):** The thinking view is purely client-side — the bot is not instructed any differently. `LONG_WORK_PROGRESS_GUIDANCE` in `packages/adapters/src/executor.ts` ("Thinking stays private.") is left **unchanged**. Nothing to implement here; Task 7 records the rationale in `docs/thinking-visibility.md`.
 
-- [ ] **Step 1: Get the maintainer's explicit approval** that a bot's thinking may be *displayed to the user who asked*, opt-in. Do not proceed without it. If declined, this plan is killed and Task 7 records the decision under "Not doing".
-
-- [ ] **Step 2: Update the prompt line** if the stance changes. Line 5298 currently contains `"Do not narrate every tool call. Thinking stays private. message_user is capped at 500 characters ..."`. Replace `Thinking stays private.` with wording true whether or not the view is on:
-
-```
-The user may turn on a view of your reasoning; do not address it, repeat it in replies, or rely on it to carry the answer.
-```
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add packages/adapters/src/executor.ts
-git commit -m "docs(adapters): stop telling bots their thinking is always private"
-```
+No commit for this task.
 
 ---
 
