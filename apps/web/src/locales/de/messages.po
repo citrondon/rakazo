@@ -3198,6 +3198,10 @@ msgstr ""
 msgid "Pin"
 msgstr "Anheften"
 
+#: src/pages/McpServersOverlay.tsx
+msgid "Plain http:// needs an https:// URL, or MCP_ALLOW_PRIVATE_ENDPOINT=true on the API and worker."
+msgstr ""
+
 #: src/pages/ReactiveTriggerSection.tsx
 msgid "Planned effects"
 msgstr ""
@@ -3222,6 +3226,10 @@ msgstr ""
 #: src/pages/shell/bot-panel.tsx
 msgid "Private"
 msgstr "Privat"
+
+#: src/pages/McpServersOverlay.tsx
+msgid "Private endpoints need MCP_ALLOW_PRIVATE_ENDPOINT=true on the API and worker."
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "Private workspace with its own bots and groups."
