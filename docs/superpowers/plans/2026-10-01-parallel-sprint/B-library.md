@@ -22,10 +22,10 @@ anything under `apps/` except `apps/www/**`, and nothing under `packages/`. Need
 Write it in your handoff; the integrator applies it.
 
 ## Tasks
-- [ ] `docs/grokbot-features-guide.md:46` — two verified errors. "Die Auswahl im UI fehlt noch" is
+- [ ] `docs/grokbot-features-guide.md:46` — one verified error. "Die Auswahl im UI fehlt noch" is
       stale: `apps/web/src/pages/BotLibraryOverlay.tsx` shipped with `apps/web/e2e/bot-library.spec.ts`.
-      "zehn Teams" is wrong: `bot-library/teams/` holds 9. "64 Presets" and "acht Identitäten" are
-      correct — leave those alone.
+      The counts are correct — `bot-library/teams/` holds ten (the earlier "nine" was stale), and
+      "64 Presets" and "acht Identitäten" match the tree — so leave those alone.
 - [ ] Audit the shipped library (bots, `teams/`, `identities/`) against GrokBot's real capabilities
       and fill only genuine gaps. Do not invent capabilities.
 - [ ] Keep `bot-library/README.md` and `docs/grokbot-features-guide.md` accurate to what the code

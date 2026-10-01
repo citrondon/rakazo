@@ -43,7 +43,9 @@ das Gruppen-Panel der Web-UI oder per RPC `groups.create` angelegt.
   (Realtime-Recherche), `DataAnalyst` (Kennzahlen), `OpenResearch` (Literatur).
 - **Roster aus Vorlagen:** `bot-library/teams/*.json` beschreibt zehn Teams mit Lead und erster
   Aufgabe, `bot-library/identities/*.json` acht Identitäten („Wer bist du?" → Startteam); die
-  Bibliothek umfasst 64 Presets. Die Auswahl im UI fehlt noch.
+  Bibliothek umfasst 64 Presets. Die Auswahl liegt in der Web-UI: das Anlegen-Menü öffnet
+  `apps/web/src/pages/BotLibraryOverlay.tsx`, das die Presets durchsucht und ein gewähltes
+  importiert (`apps/web/e2e/bot-library.spec.ts`).
 
 Raster anlegen und das Routing prüfen:
 

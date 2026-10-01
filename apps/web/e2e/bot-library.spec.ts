@@ -22,7 +22,8 @@ test("starts a bot from the shipped library", async ({ page }, testInfo) => {
 
   // Choosing a preset loads its preview: the copy it brings and the import flags.
   await expect(dialog.getByText("Wissenschafts- & Paper-Rechercheur")).toBeVisible();
-  await expect(dialog.getByText(/memories?/)).toBeVisible();
+  // Anchored so it matches the preview's memory count, never the "Include memories" toggle.
+  await expect(dialog.getByText(/^(\d+|No) memories?$/)).toBeVisible();
 
   await dialog.getByRole("button", { name: "Import", exact: true }).click();
   await expect(dialog.getByText(/was created/)).toBeVisible({ timeout: 15_000 });

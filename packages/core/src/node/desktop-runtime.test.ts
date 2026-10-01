@@ -395,7 +395,8 @@ describe("shared Linux desktop lifecycle", () => {
         waitForReady(joinedReady);
         const result = spawnSync("bash", ["-eu", "-c", command], {
           encoding: "utf8",
-          timeout: 20_000,
+          // Three profiles can each spend 2 x 10 s in the stop loops.
+          timeout: 45_000,
           env: {
             ...process.env,
             PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
@@ -429,6 +430,7 @@ describe("shared Linux desktop lifecycle", () => {
         }
       }
     },
+    90_000,
   );
 
   it.skipIf(process.platform !== "linux")(
