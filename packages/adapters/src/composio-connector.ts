@@ -853,9 +853,25 @@ export function sanitizeComposioError(error: unknown): string {
   return redactConnectorText(message);
 }
 
+/** A tool result larger than this is trimmed before it reaches the model request. A giant
+ * payload (a whole Drive listing, a huge JSON) bloats the next turn and can make an upstream
+ * provider drop the stream with `finish_reason: error`. */
+const MAX_TOOL_PAYLOAD_BYTES = 200_000;
+const TOOL_PAYLOAD_PREVIEW_CHARS = 20_000;
+
 function sanitizePayload(data: unknown): unknown {
   try {
-    return JSON.parse(redactConnectorText(JSON.stringify(data)));
+    const redacted = redactConnectorText(JSON.stringify(data));
+    if (Buffer.byteLength(redacted, "utf8") <= MAX_TOOL_PAYLOAD_BYTES) {
+      return JSON.parse(redacted);
+    }
+    return {
+      truncated: true,
+      note: `The tool output was larger than ${Math.round(
+        MAX_TOOL_PAYLOAD_BYTES / 1000,
+      )} KB and was cut. Narrow the query if you need the rest.`,
+      preview: redacted.slice(0, TOOL_PAYLOAD_PREVIEW_CHARS),
+    };
   } catch {
     return { ok: true };
   }
