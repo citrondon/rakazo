@@ -32,6 +32,10 @@ export default defineConfig({
     // react-native can be mocked in node tests.
     server: { deps: { inline: [/react-native-markdown-display/] } },
     environment: "node",
+    // Some tests drive generated shell scripts with wall-clock shutdown loops
+    // (browser profile quiesce). One worker per core starves them, so cap the
+    // concurrency instead of inflating every timeout.
+    maxWorkers: 8,
     setupFiles: ["./packages/testkit/src/pin-test-env.ts"],
     include: [
       ".agents/skills/pr-watch/*.test.ts",
