@@ -565,7 +565,6 @@ function oauthPopupWindowOptions() {
     autoHideMenuBar: true,
     backgroundColor: "#0B0C0E",
     webPreferences: {
-      preload: "",
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,

@@ -17,8 +17,15 @@
     </header>
 
     <main class="shell">
-      <h1 class="heading">Welcome to Rakazo</h1>
-      <p class="subheading">Choose which server this app should use.</p>
+      <div class="welcome-mark" aria-hidden="true">
+        <span class="mark-orbit"></span>
+        <span class="mark-core">R</span>
+      </div>
+      <div class="welcome-copy">
+        <p class="eyebrow">Your workspace, your way</p>
+        <h1 class="heading">Welcome to Rakazo</h1>
+        <p class="subheading">Choose which server this app should use.</p>
+      </div>
 
       <form id="setup" novalidate>
         <fieldset class="choices">
@@ -26,12 +33,25 @@
 
           <label class="choice" for="mode-new">
             <input id="mode-new" type="radio" name="mode" value="new" checked />
-            <span class="choice-title">This computer</span>
+            <span class="choice-copy">
+              <span class="choice-title">This computer</span>
+              <span class="choice-description">Run a private Rakazo workspace on this device.</span>
+            </span>
+            <svg class="choice-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="3.5" y="4" width="17" height="12" rx="2" />
+              <path d="M8 20h8m-4-4v4" />
+            </svg>
           </label>
 
           <label class="choice" for="mode-existing">
             <input id="mode-existing" type="radio" name="mode" value="existing" />
-            <span class="choice-title">Existing instance</span>
+            <span class="choice-copy">
+              <span class="choice-title">Existing instance</span>
+              <span class="choice-description">Connect to a server you already use.</span>
+            </span>
+            <svg class="choice-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M4 20h16M6 20V8l6-4 6 4v12M9 11h.01M15 11h.01M9 15h.01M15 15h.01" />
+            </svg>
           </label>
         </fieldset>
 
