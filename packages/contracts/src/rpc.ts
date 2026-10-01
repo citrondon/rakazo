@@ -105,7 +105,7 @@ import {
   EventDefinitionSchema,
   TriggerSchema,
   TrustEffectSchema,
-  TrustPolicySchema,
+  TrustPolicyViewSchema,
   UpdateTriggerInput,
   UpdateTrustPolicyInput,
 } from "./triggers.js";
@@ -543,8 +543,8 @@ export const appContract = {
   },
   trust: {
     /** The space's trust policy, or the safe default when none is stored yet. */
-    get: oc.output(TrustPolicySchema),
-    set: oc.input(UpdateTrustPolicyInput).output(TrustPolicySchema),
+    get: oc.output(TrustPolicyViewSchema),
+    set: oc.input(UpdateTrustPolicyInput).output(TrustPolicyViewSchema),
   },
   scratchpad: {
     list: oc

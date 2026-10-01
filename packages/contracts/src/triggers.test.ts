@@ -4,6 +4,7 @@ import {
   QuietHoursSchema,
   TrustEffectSchema,
   TrustPolicySchema,
+  TrustPolicyViewSchema,
   UpdateTriggerInput,
 } from "./triggers.js";
 
@@ -96,16 +97,42 @@ describe("UpdateTriggerInput", () => {
 });
 
 describe("TrustPolicySchema", () => {
-  it("defaults to a medium approval threshold and no quiet hours", () => {
+  it("defaults to a medium approval threshold, no quiet hours, and no space limit", () => {
     const parsed = TrustPolicySchema.parse({});
     expect(parsed.approvalThreshold).toBe("medium");
     expect(parsed.quietHours).toBeNull();
+    expect(parsed.maxToolCallsPerTurn).toBeNull();
+  });
+
+  it("keeps a stored 0 as unlimited and an explicit null as inherit", () => {
+    expect(TrustPolicySchema.parse({ maxToolCallsPerTurn: 0 }).maxToolCallsPerTurn).toBe(0);
+    expect(TrustPolicySchema.parse({ maxToolCallsPerTurn: null }).maxToolCallsPerTurn).toBeNull();
+    expect(TrustPolicySchema.parse({ maxToolCallsPerTurn: 200 }).maxToolCallsPerTurn).toBe(200);
+  });
+
+  it("rejects a limit above the ceiling", () => {
+    expect(TrustPolicySchema.safeParse({ maxToolCallsPerTurn: 100_001 }).success).toBe(false);
   });
 
   it("accepts a quiet window and rejects a malformed clock", () => {
     expect(QuietHoursSchema.safeParse({ start: "22:00", end: "07:00" }).success).toBe(true);
     expect(QuietHoursSchema.safeParse({ start: "25:00", end: "07:00" }).success).toBe(false);
     expect(QuietHoursSchema.parse({ start: "08:30", end: "09:00" }).timezone).toBe("UTC");
+  });
+});
+
+describe("TrustPolicyViewSchema", () => {
+  it("carries the deployment default next to the stored value", () => {
+    expect(TrustPolicyViewSchema.parse({ maxToolCallsPerTurnDefault: 10 })).toEqual({
+      approvalThreshold: "medium",
+      quietHours: null,
+      maxToolCallsPerTurn: null,
+      maxToolCallsPerTurnDefault: 10,
+    });
+  });
+
+  it("requires the deployment default", () => {
+    expect(TrustPolicyViewSchema.safeParse({}).success).toBe(false);
   });
 });
 

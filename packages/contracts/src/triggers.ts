@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { MaxToolCallsPerTurnSchema } from "./agent-limits.js";
 import { Id } from "./ids.js";
 
 /**
@@ -194,15 +195,26 @@ export const TrustPolicySchema = z.object({
   approvalThreshold: TrustRiskSchema.default("medium"),
   /** When set, routines whose effects reach the threshold pause during this window. */
   quietHours: QuietHoursSchema.nullable().default(null),
+  /** Per-turn tool-call fuse for this space. null inherits MAX_TOOL_CALLS_PER_TURN, 0 means unlimited. */
+  maxToolCallsPerTurn: MaxToolCallsPerTurnSchema.default(null),
 });
 export type TrustPolicy = z.infer<typeof TrustPolicySchema>;
 
 /**
- * Parsed shape a caller passes to store a space's trust policy. Both fields carry defaults, so an
+ * Parsed shape a caller passes to store a space's trust policy. Every field carries a default, so an
  * empty object yields the safe policy rather than an implicit allow.
  */
 export const UpdateTrustPolicyInput = TrustPolicySchema;
 export type UpdateTrustPolicyInput = z.infer<typeof UpdateTrustPolicyInput>;
+
+/**
+ * `trust.get` / `trust.set` also report the deployment default, so settings can show what applies
+ * while the space stores nothing of its own. 0 means the deployment is unlimited.
+ */
+export const TrustPolicyViewSchema = TrustPolicySchema.extend({
+  maxToolCallsPerTurnDefault: z.number().int().min(0),
+});
+export type TrustPolicyView = z.infer<typeof TrustPolicyViewSchema>;
 
 /** A normalized inbound event any provider adapter can produce for the trigger engine. */
 export const TriggerEventSchema = z.object({
