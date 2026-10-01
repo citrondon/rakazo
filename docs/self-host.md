@@ -29,7 +29,7 @@ The signed-in product is a long-running API, a Graphile Worker, Postgres, and a 
 
 ## Local (source checkout)
 
-Same as the README quick start: `.env` from `.env.example`, Postgres via Compose, `pnpm sandbox:build`, `pnpm dev`, then [http://127.0.0.1:5173](http://127.0.0.1:5173) (or `http://localhost:5173` — both loopback hosts are trusted). Electron: `pnpm --filter @rakazo/desktop dev` while that stack is up, choosing **Existing instance** with that address. The desktop app's **This computer** option instead installs and runs the published images itself with Docker Compose (see [Published images](#published-images-no-checkout)), using port 45173 by default so it can run alongside `pnpm dev`. If that port is occupied, the app selects and remembers another loopback port. The managed API gets a Docker-assigned loopback port; all desktop traffic uses the web origin.
+Same as the README quick start: `.env` from `.env.example`, Postgres via Compose, `pnpm sandbox:build`, `pnpm dev`, then [http://127.0.0.1:5173](http://127.0.0.1:5173) (or `http://localhost:5173` — both loopback hosts are trusted). Electron: `pnpm --filter @rakazo/desktop dev` while that stack is up, choosing **Existing instance** with that address. The desktop app's **This computer** option instead installs and runs the published images itself with Docker Compose (see [Published images](#published-images-no-checkout)), using port 45173 by default so it can run alongside `pnpm dev`. If that port is occupied, the app selects and remembers another loopback port. The managed API gets a Docker-assigned loopback port; all desktop traffic uses the web origin. If `pnpm dev` and the Compose stack collide on 5173 or 3100, set `RAKAZO_WEB_PORT` / `RAKAZO_API_PORT` in `.env` (see [Port conflicts](#port-conflicts-3100--5173)).
 
 For source development in WSL, keep the checkout and `data` directory in the Linux filesystem (for example, `~/rakazo`), and run `pnpm dev` as your normal user. The host-run supervisor matches bot container UID/GID to that user. If Docker Desktop container IPs are unreachable, set `SANDBOX_CONTROL_VIA_LOOPBACK=true` in `.env`; this publishes the token-protected control service on a random loopback port. Leave this unset for the Compose-hosted supervisor.
 
@@ -85,6 +85,32 @@ Open **Agent computer** on a bot, or send a message that uses the desktop, to se
 the local Docker computer. For in-stack Caddy plus remote E2B computers, use the
 [production Compose](#public-single-vm-deployment) path and `infra/compose/Caddyfile.prod`
 instead of this host proxy.
+
+### Port conflicts (3100 / 5173)
+
+`api` binds `127.0.0.1:3100` and `web` binds `127.0.0.1:5173` by default — the same ports a host
+`pnpm dev` uses. When one is taken, Docker reports `bind: address already in use` /
+`port is already allocated`, or with `up --wait` a service that never becomes healthy.
+
+Name the current owner, then move the port:
+
+```bash
+lsof -nP -iTCP:3100 -sTCP:LISTEN   # or: ss -lntp '( sport = :3100 )'
+```
+
+```env
+# .env — set before `docker compose up`. 0 lets Docker assign a free loopback port (API only).
+RAKAZO_API_PORT=0
+RAKAZO_WEB_PORT=5174
+```
+
+Both variables work in the source-checkout Compose file and in `docker-compose.images.yml`; leave
+them unset to keep 3100 and 5173. The desktop app's **This computer** stack handles this itself: it
+probes its web origin before starting the containers, moves to another loopback port with an
+`already in use` notice, and launches the API with `RAKAZO_API_PORT=0`.
+
+If you move `RAKAZO_WEB_PORT`, keep `BETTER_AUTH_URL`, `WEB_ORIGIN`, and `API_URL` on the new
+origin, and update the host proxy in front of it.
 
 ### Restricted networks / mirror downloads
 
