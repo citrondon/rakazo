@@ -31,6 +31,9 @@ function logicalHref(input: string | URL | Request, init?: RequestInit): string 
 describe("MCP transport seam", () => {
   it("rejects unsafe URLs and oversized URLs before network access", () => {
     expect(() => validateUrl("http://remote.example/mcp")).toThrow("HTTPS");
+    expect(() => validateUrl("http://remote.example/mcp")).toThrow(
+      "MCP_ALLOW_PRIVATE_ENDPOINT=true",
+    );
     expect(() => validateUrl("https://user:pass@example.com/mcp")).toThrow("credentials");
     expect(() => validateUrl(`https://example.com/${"x".repeat(2_100)}`)).toThrow("exceeds");
     expect(() => validateUrl("http://127.0.0.1:1234/mcp")).toThrow("HTTPS");

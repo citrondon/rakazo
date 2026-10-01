@@ -9,7 +9,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { CallToolResult, ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
 import { isLocalMcpHost } from "@rakazo/contracts";
-import { describeMcpFailure } from "./connector-failures.js";
+import { describeMcpFailure, MCP_HTTPS_HINT } from "./connector-failures.js";
 import { combineSignals } from "./connector-safety.js";
 import {
   createSafeRemoteFetch,
@@ -94,7 +94,7 @@ function validateUrl(raw: string | URL, policy: McpUrlPolicy = {}): URL {
     !(url.protocol === "http:" && policy.allowHttpLocalhost === true && local) &&
     !(url.protocol === "http:" && policy.allowPrivateEndpoint === true)
   ) {
-    throw new Error("MCP remote URL must use HTTPS");
+    throw new Error(`MCP remote URL must use HTTPS. ${MCP_HTTPS_HINT}`);
   }
   if (policy.allowedHosts && !policy.allowedHosts.includes(url.hostname)) {
     throw new Error(`MCP host is not in the allowlist: ${url.hostname}`);
