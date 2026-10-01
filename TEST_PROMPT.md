@@ -88,10 +88,25 @@ Voraussetzungen: Handy und Entwicklerrechner im selben WLAN (oder USB mit `adb`)
 dieselbe API wie das Web.
 
 ```bash
-# Auf dem Handy ist 127.0.0.1 der Rechner selbst — die LAN-IP des Rechners eintragen:
-hostname -I | awk '{print $1}'        # z. B. 192.168.0.42
+# Weg A — USB/adb (empfohlen, funktioniert ohne WLAN):
+# Die API ist bewusst nur auf 127.0.0.1:3100 gebunden. Eine LAN-IP erreicht das Handy
+# deshalb NICHT. adb reverse legt den Port durch den USB-Tunnel:
+adb devices -l
+adb reverse tcp:3100 tcp:3100
+adb shell 'toybox nc -w 3 127.0.0.1 3100 </dev/null && echo OPEN || echo CLOSED'   # muss OPEN sein
+EXPO_PUBLIC_API_URL=http://127.0.0.1:3100 pnpm --filter @rakazo/mobile android   # baut + installiert
+# Nach jedem adb-Neustart: adb reverse tcp:3100 tcp:3100 erneut ausführen.
+
+# Weg B — WLAN (nur wenn das Handy die API direkt erreichen soll). Achtung: der Port ist
+# auf Loopback gebunden, Weg B erfordert also eine Publish-Regel:
+ip route get 1.1.1.1 | awk '{print $7; exit}'   # z. B. 192.168.0.42 — NICHT hostname -I,
+                                                # das liefert zuerst die docker0-Bridge 172.17.0.1
+adb shell 'toybox nc -w 3 <LAN-IP> 3100 </dev/null && echo OPEN || echo CLOSED'
 EXPO_PUBLIC_API_URL=http://<LAN-IP>:3100 pnpm --filter @rakazo/mobile start
 ```
+
+Beleg für die Schleife (Stand 2026-10-01, Commit 2a7b7906, Pixel 10 Pro / Android 17):
+`nc 10.241.46.111 3100` → `CLOSED`, nach `adb reverse` → `OPEN`.
 
 1. Auf dem Handy **Expo Go** öffnen und den QR-Code scannen. (Für SDK-57-Module oder wenn Expo Go
    die App nicht lädt: `pnpm --filter @rakazo/mobile android` an einem USB-Handy mit `adb`.)
