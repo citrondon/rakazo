@@ -27,6 +27,8 @@ export type WebhookRunTrust = {
   paused: boolean;
   /** The effects the routine may reach, shown on the held card with their risk tiers. */
   effects: TrustEffect[];
+  /** When the quiet window ends and the run should auto-resume. */
+  resumeAt?: Date | null;
 };
 
 /**
@@ -86,6 +88,8 @@ export type WebhookEvents = {
     runId: string;
     blocks: MessageBlock[];
     offeredActions: Array<{ id: string; label: string }>;
+    /** When the quiet window ends and the run should auto-resume. */
+    resumeAt?: Date | null;
   }): Promise<boolean>;
 };
 
@@ -289,6 +293,7 @@ export async function deliverWebhookEvent(
       runId: sent.runId,
       blocks: [quietHoursAskBlock(plan.effects)],
       offeredActions: QUIET_HOURS_ACTIONS.map((action) => ({ ...action })),
+      resumeAt: plan.resumeAt,
     });
     return { ok: true as const, messageId: sent.messageId, runId: sent.runId, seq: sent.seq };
   }

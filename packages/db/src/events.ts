@@ -14,6 +14,7 @@ import {
   isConversationalRun,
   isSecretAskBlock,
   messagingChannelId,
+  nextFence,
   resolveAskChoice,
   sanitizeJsonValue,
 } from "@rakazo/core";
@@ -24,6 +25,7 @@ import { expireComputerExecutionLeases } from "./computers.js";
 import {
   assertRunCanWriteHistory,
   assertRunIsCancelled,
+  createThreadMessage,
   createThreadMessageInTransaction,
   RunHistoryWriteError,
 } from "./messages.js";
@@ -157,6 +159,8 @@ export interface HoldRunForChoiceInput {
   blocks: MessageBlock[];
   /** Unredacted choice actions for resume, kept off the message blocks. */
   offeredActions: Array<{ id: string; label: string }>;
+  /** When the quiet window ends and the run should auto-resume. */
+  resumeAt?: Date;
 }
 
 const CHOICE_ASK_CHECKPOINT_KIND = "choice_ask_v1";
@@ -878,6 +882,14 @@ export async function holdRunForChoice(
   const committed = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // Thread row first, then run rows — the same order as clearThread and finalizeRun.
     await tx.$queryRaw`SELECT id FROM threads WHERE id = ${input.threadId} FOR UPDATE`;
+    const data: Prisma.RunUpdateInput = {
+      status: "waiting_input",
+      trustPhase: "paused",
+      checkpoint: choiceAskCheckpoint(input.offeredActions),
+    };
+    if (input.resumeAt) {
+      data.resumeAt = input.resumeAt;
+    }
     const held = await tx.run.updateMany({
       where: {
         id: input.runId,
@@ -886,11 +898,7 @@ export async function holdRunForChoice(
         botId: input.botId,
         status: "queued",
       },
-      data: {
-        status: "waiting_input",
-        trustPhase: "paused",
-        checkpoint: choiceAskCheckpoint(input.offeredActions),
-      },
+      data,
     });
     if (held.count !== 1) return null;
 
@@ -922,6 +930,63 @@ export async function holdRunForChoice(
 
   if (!committed) return false;
   await notifyRealtime(realtime, committed.threadId, committed.seq);
+  return true;
+}
+
+/**
+ * Auto-resume a run that's been paused for quiet hours, restoring its lease.
+ * Used by background reconciliation when the quiet window closes.
+ */
+export async function autoResumeQuietHoursRun(
+  prisma: PrismaClient,
+  runId: string,
+  workerId: string,
+  reason: string,
+  resumeAt: Date,
+): Promise<boolean> {
+  const now = new Date();
+  if (now < resumeAt) return false;
+  
+  const run = await prisma.run.findUnique({ where: { id: runId } });
+  if (!run || !run.trustPhase || run.trustPhase !== "paused") return false;
+  if (run.status !== "waiting_input" && run.status !== "paused") return false;
+  
+  const fence = nextFence(run.leaseFence);
+  const leased = await prisma.run.updateMany({
+    where: {
+      id: runId,
+      trustPhase: "paused",
+      status: "waiting_input",
+      resumeAt: { lte: now },
+    },
+    data: {
+      status: "queued",
+      trustPhase: null,
+      resumeAt: null,
+      leaseOwner: workerId,
+      leaseFence: fence,
+      leaseExpiresAt: new Date(Date.now() + 5 * 60_000),
+      checkpoint: null,
+      updatedAt: now,
+    },
+  });
+  
+  if (leased.count !== 1) return false;
+  
+  // Create a checkpoint message for the UI so users see the run resumed
+  await createThreadMessage(prisma, {
+    threadId: run.threadId,
+    role: "system",
+    blocks: [
+      {
+        kind: "text",
+        text: `Run auto-resumed from quiet hours pause. Reason: ${reason}`,}
+      ],
+      botId: run.botId,
+      runId: runId,
+    }
+  );
+  
   return true;
 }
 
