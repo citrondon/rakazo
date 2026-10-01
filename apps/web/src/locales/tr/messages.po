@@ -414,6 +414,7 @@ msgid "Aktivieren…"
 msgstr ""
 
 #: src/pages/Artifacts.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "All bots"
 msgstr ""
 
@@ -716,10 +717,15 @@ msgid "Bot <0>{0}</0> was created."
 msgstr ""
 
 #: src/pages/BotLibraryOverlay.tsx
+msgid "Bot categories"
+msgstr ""
+
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Bot imported"
 msgstr ""
 
 #: src/pages/BotLibraryOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Bot library"
 msgstr ""
 
@@ -1943,6 +1949,10 @@ msgstr "E-posta"
 msgid "Engage when... Ignore..."
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Engineering"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Enter a whole number from 1 to {MAX_MODEL_CONTEXT_WINDOW} for the context limit."
@@ -1957,6 +1967,10 @@ msgstr "Maksimum çıktı token sayısı için 1 ile {MAX_MODEL_MAX_TOKENS} aras
 #: src/pages/Onboarding.tsx
 msgid "Enter a whole number from 1 to 1000 for the image limit."
 msgstr "Görüntü sınırı için 1 ile 1000 arasında bir tam sayı girin."
+
+#: src/components/TrustPolicySettings.tsx
+msgid "Enter a whole number of tool calls"
+msgstr ""
 
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/ModelSettingsOverlay.tsx
@@ -2579,6 +2593,10 @@ msgstr "Okunmadı olarak işaretle"
 msgid "Max"
 msgstr "Maksimum"
 
+#: src/components/TrustPolicySettings.tsx
+msgid "Max tool calls per turn"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Maximize"
 msgstr ""
@@ -2858,6 +2876,10 @@ msgstr "Henüz bot etkinliği yok."
 msgid "No bots"
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "No bots in this category match your search."
+msgstr ""
+
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr ""
@@ -2901,10 +2923,6 @@ msgstr "{peerBotName} ile henüz mesaj yok."
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No model catalog is available."
 msgstr "Kullanılabilir model kataloğu yok."
-
-#: src/pages/BotLibraryOverlay.tsx
-msgid "No presets match"
-msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No providers found."
@@ -3152,6 +3170,10 @@ msgstr ""
 msgid "pending"
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Personal"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Personal Access Token"
 msgstr ""
@@ -3195,6 +3217,10 @@ msgstr "Özel"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Private workspace with its own bots and groups."
+msgstr ""
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Productivity"
 msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
@@ -3456,6 +3482,10 @@ msgstr "{replyName} yanıtlanıyor"
 msgid "Replying to {replyName}: “{replyQuote}”"
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Research"
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "Research & writing"
 msgstr ""
@@ -3576,6 +3606,10 @@ msgstr "Çalışıyor…"
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Sales & support"
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
@@ -3627,7 +3661,6 @@ msgstr "Kaydediliyor…"
 msgid "Say yes or no, or answer in a sentence."
 msgstr "Evet ya da hayır de veya bir cümleyle yanıtla."
 
-#: src/pages/BotLibraryOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -3643,6 +3676,10 @@ msgstr "Uygulama ara"
 
 #: src/pages/Artifacts.tsx
 msgid "Search artifacts…"
+msgstr ""
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Search bots"
 msgstr ""
 
 #: src/pages/shell/command-palette.tsx
@@ -4189,6 +4226,7 @@ msgstr ""
 msgid "Uninstall"
 msgstr ""
 
+#: src/components/TrustPolicySettings.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Unlimited"
 msgstr ""
@@ -4399,6 +4437,10 @@ msgstr "Botlar nerede çalışsın?"
 #: src/pages/Auth.tsx
 msgid "Working…"
 msgstr "Çalışıyor…"
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Writing & marketing"
+msgstr ""
 
 #: src/components/computer/TerminalApp.tsx
 msgid "Wrote {path}"

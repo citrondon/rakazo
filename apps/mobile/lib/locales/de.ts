@@ -659,4 +659,8 @@ export const DE_MESSAGES: Record<string, string> = {
   "This month": "Diesen Monat",
   "{used} / {budget}": "{used} / {budget}",
   "{tokens} from routines": "{tokens} aus Routinen",
+  "Max tool calls per turn": "Max. Tool-Aufrufe pro Turn",
+  Unlimited: "Unbegrenzt",
+  "Enter a whole number of tool calls": "Ganze Zahl an Tool-Aufrufen eingeben",
+  "Could not save the limit": "Limit konnte nicht gespeichert werden",
 };

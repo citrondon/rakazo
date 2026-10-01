@@ -414,6 +414,7 @@ msgid "Aktivieren…"
 msgstr ""
 
 #: src/pages/Artifacts.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "All bots"
 msgstr ""
 
@@ -716,10 +717,15 @@ msgid "Bot <0>{0}</0> was created."
 msgstr ""
 
 #: src/pages/BotLibraryOverlay.tsx
+msgid "Bot categories"
+msgstr ""
+
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Bot imported"
 msgstr ""
 
 #: src/pages/BotLibraryOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Bot library"
 msgstr ""
 
@@ -1943,6 +1949,10 @@ msgstr "邮箱"
 msgid "Engage when... Ignore..."
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Engineering"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Enter a whole number from 1 to {MAX_MODEL_CONTEXT_WINDOW} for the context limit."
@@ -1957,6 +1967,10 @@ msgstr "请输入 1 到 {MAX_MODEL_MAX_TOKENS} 之间的整数作为最大输出
 #: src/pages/Onboarding.tsx
 msgid "Enter a whole number from 1 to 1000 for the image limit."
 msgstr "请输入 1 到 1000 之间的整数作为图像限制。"
+
+#: src/components/TrustPolicySettings.tsx
+msgid "Enter a whole number of tool calls"
+msgstr ""
 
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/ModelSettingsOverlay.tsx
@@ -2579,6 +2593,10 @@ msgstr "标为未读"
 msgid "Max"
 msgstr "最大"
 
+#: src/components/TrustPolicySettings.tsx
+msgid "Max tool calls per turn"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Maximize"
 msgstr ""
@@ -2858,6 +2876,10 @@ msgstr "还没有机器人活动。"
 msgid "No bots"
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "No bots in this category match your search."
+msgstr ""
+
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr ""
@@ -2901,10 +2923,6 @@ msgstr "还没有与 {peerBotName} 的消息。"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No model catalog is available."
 msgstr "没有可用的模型目录。"
-
-#: src/pages/BotLibraryOverlay.tsx
-msgid "No presets match"
-msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No providers found."
@@ -3152,6 +3170,10 @@ msgstr "已暂停"
 msgid "pending"
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Personal"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Personal Access Token"
 msgstr ""
@@ -3195,6 +3217,10 @@ msgstr "私有"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Private workspace with its own bots and groups."
+msgstr ""
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Productivity"
 msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
@@ -3456,6 +3482,10 @@ msgstr "正在回复 {replyName}"
 msgid "Replying to {replyName}: “{replyQuote}”"
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Research"
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "Research & writing"
 msgstr "调研和写作"
@@ -3576,6 +3606,10 @@ msgstr "正在运行…"
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Sales & support"
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
@@ -3627,7 +3661,6 @@ msgstr "正在保存…"
 msgid "Say yes or no, or answer in a sentence."
 msgstr "回答是或否，或一句话说明。"
 
-#: src/pages/BotLibraryOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -3643,6 +3676,10 @@ msgstr "搜索应用"
 
 #: src/pages/Artifacts.tsx
 msgid "Search artifacts…"
+msgstr ""
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Search bots"
 msgstr ""
 
 #: src/pages/shell/command-palette.tsx
@@ -4189,6 +4226,7 @@ msgstr "不可用"
 msgid "Uninstall"
 msgstr ""
 
+#: src/components/TrustPolicySettings.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Unlimited"
 msgstr ""
@@ -4399,6 +4437,10 @@ msgstr "Bot 应在哪里运行？"
 #: src/pages/Auth.tsx
 msgid "Working…"
 msgstr "处理中…"
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Writing & marketing"
+msgstr ""
 
 #: src/components/computer/TerminalApp.tsx
 msgid "Wrote {path}"

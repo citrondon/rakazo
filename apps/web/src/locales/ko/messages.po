@@ -414,6 +414,7 @@ msgid "Aktivieren…"
 msgstr ""
 
 #: src/pages/Artifacts.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "All bots"
 msgstr ""
 
@@ -716,10 +717,15 @@ msgid "Bot <0>{0}</0> was created."
 msgstr ""
 
 #: src/pages/BotLibraryOverlay.tsx
+msgid "Bot categories"
+msgstr ""
+
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Bot imported"
 msgstr ""
 
 #: src/pages/BotLibraryOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Bot library"
 msgstr ""
 
@@ -1943,6 +1949,10 @@ msgstr "이메일"
 msgid "Engage when... Ignore..."
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Engineering"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Enter a whole number from 1 to {MAX_MODEL_CONTEXT_WINDOW} for the context limit."
@@ -1957,6 +1967,10 @@ msgstr "최대 출력 토큰 수는 1에서 {MAX_MODEL_MAX_TOKENS} 사이의 정
 #: src/pages/Onboarding.tsx
 msgid "Enter a whole number from 1 to 1000 for the image limit."
 msgstr "이미지 한도는 1에서 1000 사이의 정수로 입력하세요."
+
+#: src/components/TrustPolicySettings.tsx
+msgid "Enter a whole number of tool calls"
+msgstr ""
 
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/ModelSettingsOverlay.tsx
@@ -2579,6 +2593,10 @@ msgstr "읽지 않음으로 표시"
 msgid "Max"
 msgstr "최대"
 
+#: src/components/TrustPolicySettings.tsx
+msgid "Max tool calls per turn"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Maximize"
 msgstr ""
@@ -2858,6 +2876,10 @@ msgstr "아직 봇 활동이 없습니다."
 msgid "No bots"
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "No bots in this category match your search."
+msgstr ""
+
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr ""
@@ -2901,10 +2923,6 @@ msgstr "{peerBotName}와의 메시지가 아직 없습니다."
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No model catalog is available."
 msgstr "사용 가능한 모델 목록이 없습니다."
-
-#: src/pages/BotLibraryOverlay.tsx
-msgid "No presets match"
-msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No providers found."
@@ -3152,6 +3170,10 @@ msgstr "일시 중지됨"
 msgid "pending"
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Personal"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Personal Access Token"
 msgstr ""
@@ -3195,6 +3217,10 @@ msgstr "Bot 전용"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Private workspace with its own bots and groups."
+msgstr ""
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Productivity"
 msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
@@ -3456,6 +3482,10 @@ msgstr "{replyName}에게 답장"
 msgid "Replying to {replyName}: “{replyQuote}”"
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Research"
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "Research & writing"
 msgstr ""
@@ -3576,6 +3606,10 @@ msgstr "실행 중…"
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Sales & support"
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
@@ -3627,7 +3661,6 @@ msgstr "저장 중…"
 msgid "Say yes or no, or answer in a sentence."
 msgstr "예 또는 아니요로 답하거나 문장으로 답해 주세요."
 
-#: src/pages/BotLibraryOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -3643,6 +3676,10 @@ msgstr "앱 검색"
 
 #: src/pages/Artifacts.tsx
 msgid "Search artifacts…"
+msgstr ""
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Search bots"
 msgstr ""
 
 #: src/pages/shell/command-palette.tsx
@@ -4189,6 +4226,7 @@ msgstr "사용할 수 없음"
 msgid "Uninstall"
 msgstr ""
 
+#: src/components/TrustPolicySettings.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Unlimited"
 msgstr ""
@@ -4399,6 +4437,10 @@ msgstr "Bot을 어디에서 실행할까요?"
 #: src/pages/Auth.tsx
 msgid "Working…"
 msgstr "처리 중…"
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Writing & marketing"
+msgstr ""
 
 #: src/components/computer/TerminalApp.tsx
 msgid "Wrote {path}"

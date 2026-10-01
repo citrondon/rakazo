@@ -1,5 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { TrustPolicy, TrustRisk } from "@rakazo/contracts";
+import type { TrustPolicyView, TrustRisk } from "@rakazo/contracts";
+import { resolveToolCallLimit, toolCallLimitFromDraft } from "@rakazo/contracts";
 import { Input, Label, NativeSelect, NativeSelectOption, Switch } from "@rakazo/ui-web";
 import { useEffect, useId, useState } from "react";
 import { rpc } from "../lib/rpc";
@@ -22,7 +23,9 @@ function browserTimezone(): string {
 export function TrustPolicySettings() {
   const { t } = useLingui();
   const quietId = useId();
-  const [policy, setPolicy] = useState<TrustPolicy | null>(null);
+  const limitId = useId();
+  const [policy, setPolicy] = useState<TrustPolicyView | null>(null);
+  const [limitDraft, setLimitDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +50,7 @@ export function TrustPolicySettings() {
     };
   }, []);
 
-  async function save(next: TrustPolicy) {
+  async function save(next: TrustPolicyView) {
     if (saving) return;
     setSaving(true);
     setError(null);
@@ -61,6 +64,31 @@ export function TrustPolicySettings() {
   }
 
   const quiet = policy?.quietHours ?? null;
+
+  const limit = policy?.maxToolCallsPerTurn ?? null;
+  const effectiveLimit = resolveToolCallLimit(limit, policy?.maxToolCallsPerTurnDefault ?? 0);
+  const limitPlaceholder = effectiveLimit === 0 ? t`Unlimited` : String(effectiveLimit);
+  /** The draft load put into the field; `saveLimit` uses it as the dirty-check baseline. */
+  const renderedLimitDraft = limit ? String(limit) : "";
+
+  useEffect(() => {
+    setLimitDraft(renderedLimitDraft);
+  }, [renderedLimitDraft]);
+
+  async function saveLimit() {
+    if (!policy || saving) return;
+    // Dirty-check: an untouched field writes nothing. Without it, an inherited `null` plus an
+    // empty draft parses to 0 and silently disables the deployment fuse.
+    if (limitDraft === renderedLimitDraft) return;
+    const parsed = toolCallLimitFromDraft(limitDraft);
+    if (parsed === null) {
+      setLimitDraft(renderedLimitDraft);
+      setError(t`Enter a whole number of tool calls`);
+      return;
+    }
+    if (parsed === policy.maxToolCallsPerTurn) return;
+    await save({ ...policy, maxToolCallsPerTurn: parsed });
+  }
 
   return (
     <div data-testid="trust-policy-settings" className="mt-5 border-t border-border pt-5">
@@ -139,6 +167,23 @@ export function TrustPolicySettings() {
             </div>
           ) : null}
         </div>
+      </div>
+      <div className="mt-4 flex items-center gap-3">
+        <Label htmlFor={limitId} className="text-[14px] font-normal text-foreground/75">
+          <Trans>Max tool calls per turn</Trans>
+        </Label>
+        <Input
+          id={limitId}
+          data-testid="max-tool-calls-per-turn"
+          aria-label={t`Max tool calls per turn`}
+          className="w-[7rem]"
+          inputMode="numeric"
+          value={limitDraft}
+          placeholder={limitPlaceholder}
+          disabled={loading || saving || !policy}
+          onChange={(event) => setLimitDraft(event.target.value)}
+          onBlur={() => void saveLimit()}
+        />
       </div>
       {error ? <p className="mt-3 text-[13px] text-destructive">{error}</p> : null}
     </div>

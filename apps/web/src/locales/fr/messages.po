@@ -414,6 +414,7 @@ msgid "Aktivieren…"
 msgstr ""
 
 #: src/pages/Artifacts.tsx
+#: src/pages/BotLibraryOverlay.tsx
 msgid "All bots"
 msgstr "Tous les bots"
 
@@ -716,10 +717,15 @@ msgid "Bot <0>{0}</0> was created."
 msgstr ""
 
 #: src/pages/BotLibraryOverlay.tsx
+msgid "Bot categories"
+msgstr ""
+
+#: src/pages/BotLibraryOverlay.tsx
 msgid "Bot imported"
 msgstr ""
 
 #: src/pages/BotLibraryOverlay.tsx
+#: src/pages/Shell.tsx
 msgid "Bot library"
 msgstr ""
 
@@ -1943,6 +1949,10 @@ msgstr "E-mail"
 msgid "Engage when... Ignore..."
 msgstr "Répondre quand... Ignorer..."
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Engineering"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Enter a whole number from 1 to {MAX_MODEL_CONTEXT_WINDOW} for the context limit."
@@ -1957,6 +1967,10 @@ msgstr "Saisissez un nombre entier de 1 à {MAX_MODEL_MAX_TOKENS} pour le maximu
 #: src/pages/Onboarding.tsx
 msgid "Enter a whole number from 1 to 1000 for the image limit."
 msgstr "Saisissez un nombre entier de 1 à 1000 pour la limite d'images."
+
+#: src/components/TrustPolicySettings.tsx
+msgid "Enter a whole number of tool calls"
+msgstr ""
 
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/ModelSettingsOverlay.tsx
@@ -2579,6 +2593,10 @@ msgstr "Marquer comme non lu"
 msgid "Max"
 msgstr "Max"
 
+#: src/components/TrustPolicySettings.tsx
+msgid "Max tool calls per turn"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Maximize"
 msgstr "Agrandir"
@@ -2858,6 +2876,10 @@ msgstr "Aucune activité du bot pour le moment."
 msgid "No bots"
 msgstr "Aucun bot"
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "No bots in this category match your search."
+msgstr ""
+
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr "Aucun bot ne correspond"
@@ -2901,10 +2923,6 @@ msgstr "Aucun message avec {peerBotName} pour le moment."
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No model catalog is available."
 msgstr "Aucun catalogue de modèles disponible."
-
-#: src/pages/BotLibraryOverlay.tsx
-msgid "No presets match"
-msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No providers found."
@@ -3152,6 +3170,10 @@ msgstr "En pause"
 msgid "pending"
 msgstr ""
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Personal"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Personal Access Token"
 msgstr ""
@@ -3196,6 +3218,10 @@ msgstr "Privé"
 #: src/pages/shell/dialogs.tsx
 msgid "Private workspace with its own bots and groups."
 msgstr "Espace de travail privé avec ses propres bots et groupes."
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Productivity"
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Project ID"
@@ -3456,6 +3482,10 @@ msgstr "Réponse à {replyName}"
 msgid "Replying to {replyName}: “{replyQuote}”"
 msgstr "Réponse à {replyName} : « {replyQuote} »"
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Research"
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "Research & writing"
 msgstr "Recherche et rédaction"
@@ -3576,6 +3606,10 @@ msgstr "Exécution en cours…"
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr "S'exécute lorsque ce bot reçoit un message vérifié de ce fournisseur."
 
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Sales & support"
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/ExternalConversationSettings.tsx
@@ -3627,7 +3661,6 @@ msgstr "Enregistrement en cours…"
 msgid "Say yes or no, or answer in a sentence."
 msgstr "Dites oui ou non, ou répondez en une phrase."
 
-#: src/pages/BotLibraryOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -3644,6 +3677,10 @@ msgstr "Rechercher des applications"
 #: src/pages/Artifacts.tsx
 msgid "Search artifacts…"
 msgstr "Rechercher des artefacts…"
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Search bots"
+msgstr ""
 
 #: src/pages/shell/command-palette.tsx
 msgid "Search bots and switch conversations"
@@ -4189,6 +4226,7 @@ msgstr "Indisponible"
 msgid "Uninstall"
 msgstr "Désinstaller"
 
+#: src/components/TrustPolicySettings.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Unlimited"
 msgstr ""
@@ -4399,6 +4437,10 @@ msgstr "Où les bots doivent-ils s'exécuter ?"
 #: src/pages/Auth.tsx
 msgid "Working…"
 msgstr "En cours…"
+
+#: src/pages/BotLibraryOverlay.tsx
+msgid "Writing & marketing"
+msgstr ""
 
 #: src/components/computer/TerminalApp.tsx
 msgid "Wrote {path}"

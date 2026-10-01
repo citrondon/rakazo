@@ -659,4 +659,8 @@ export const RU_MESSAGES: Record<string, string> = {
   "This month": "В этом месяце",
   "{used} / {budget}": "{used} / {budget}",
   "{tokens} from routines": "{tokens} от задач",
+  "Max tool calls per turn": "Максимум вызовов инструментов за ход",
+  Unlimited: "Без ограничений",
+  "Enter a whole number of tool calls": "Введите целое число вызовов инструментов",
+  "Could not save the limit": "Не удалось сохранить лимит",
 };

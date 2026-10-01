@@ -641,4 +641,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   "This month": "本月",
   "{used} / {budget}": "{used} / {budget}",
   "{tokens} from routines": "{tokens} 来自例行任务",
+  "Max tool calls per turn": "每轮最大工具调用数",
+  Unlimited: "无限制",
+  "Enter a whole number of tool calls": "请输入整数次工具调用",
+  "Could not save the limit": "无法保存限制",
 };

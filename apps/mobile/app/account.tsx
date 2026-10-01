@@ -1,4 +1,4 @@
-import type { AvatarStyle, UsageMonth } from "@rakazo/contracts";
+import type { AvatarStyle, TrustPolicyView, UsageMonth } from "@rakazo/contracts";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
@@ -17,6 +17,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAvatarStyle } from "../components/avatar-style";
 import { BotAvatar } from "../components/bot-avatar";
+import {
+  planToolCallLimitSave,
+  toolCallLimitDraft,
+  toolCallLimitPlaceholder,
+} from "../lib/agent-limits";
 import type { MobileBot, MobileMe } from "../lib/api";
 import {
   currentApiBase,
@@ -90,6 +95,45 @@ export default function Account() {
     () => false,
   );
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [trust, setTrust] = useState<TrustPolicyView | null>(null);
+  const [limitDraft, setLimitDraft] = useState("");
+  const [limitPending, setLimitPending] = useState(false);
+
+  useEffect(() => {
+    void rpc<TrustPolicyView>("trust/get")
+      .then((next) => {
+        setTrust(next);
+        setLimitDraft(toolCallLimitDraft(next));
+      })
+      .catch(() => setTrust(null));
+  }, []);
+
+  async function saveToolCallLimit() {
+    if (!trust || limitPending) return;
+    const plan = planToolCallLimitSave(trust, limitDraft);
+    if (plan.kind === "invalid") {
+      setLimitDraft(toolCallLimitDraft(trust));
+      Alert.alert(t("Max tool calls per turn"), t("Enter a whole number of tool calls"));
+      return;
+    }
+    if (plan.kind === "unchanged") return;
+    setLimitPending(true);
+    try {
+      const next = await rpc<TrustPolicyView>("trust/set", {
+        ...trust,
+        maxToolCallsPerTurn: plan.maxToolCallsPerTurn,
+      });
+      setTrust(next);
+      setLimitDraft(toolCallLimitDraft(next));
+    } catch (cause) {
+      Alert.alert(
+        t("Max tool calls per turn"),
+        cause instanceof Error ? cause.message : t("Could not save the limit"),
+      );
+    } finally {
+      setLimitPending(false);
+    }
+  }
   const styles = useThemedStyles(createAccountStyles);
   const versionInfo = getAppVersionInfo();
   const updateLabel = formatUpdateLabel(versionInfo.update, t);
@@ -510,6 +554,24 @@ export default function Account() {
                 }
               />
             </View>
+            <View style={styles.limitRow}>
+              <Text style={styles.switchLabel}>{t("Max tool calls per turn")}</Text>
+              <TextInput
+                accessibilityLabel={t("Max tool calls per turn")}
+                editable={Boolean(trust) && !limitPending}
+                keyboardType="number-pad"
+                onChangeText={setLimitDraft}
+                onEndEditing={() => void saveToolCallLimit()}
+                placeholder={
+                  trust && toolCallLimitPlaceholder(trust) > 0
+                    ? String(toolCallLimitPlaceholder(trust))
+                    : t("Unlimited")
+                }
+                placeholderTextColor={native.tertiaryLabel}
+                style={styles.limitInput}
+                value={limitDraft}
+              />
+            </View>
           </View>
         ) : null}
 
@@ -811,6 +873,21 @@ function createAccountStyles() {
       flex: 1,
       color: native.label,
       fontSize: 15,
+    },
+    limitRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    limitInput: {
+      flex: 1,
+      minHeight: 40,
+      borderRadius: 10,
+      backgroundColor: native.page,
+      color: native.label,
+      fontSize: 16,
+      paddingHorizontal: 12,
+      textAlign: "right",
     },
     settingsTrailing: {
       flexDirection: "row",
