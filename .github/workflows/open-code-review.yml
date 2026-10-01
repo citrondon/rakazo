@@ -1,0 +1,47 @@
+# Opt-in AI code review with Open Code Review (Apache-2.0).
+#
+# Off by default. The job is skipped unless the repository variable
+# `OCR_ENABLED` is exactly `true`, so this workflow is inert until someone
+# turns it on. It needs three repository secrets (names only, never values):
+# OCR_LLM_URL, OCR_LLM_TOKEN, OCR_LLM_MODEL.
+#
+# Enable: Settings -> Secrets and variables -> Actions
+#   Variables: OCR_ENABLED=true        (optional: OCR_USE_ANTHROPIC=true for the
+#                                      Anthropic protocol; anything else, or unset,
+#                                      uses the OpenAI-compatible protocol)
+#   Secrets:   OCR_LLM_URL, OCR_LLM_TOKEN, OCR_LLM_MODEL
+# Disable: set OCR_ENABLED to false; the job then skips again.
+#
+# The review runs against the PR merge-base, so full history is fetched.
+name: open-code-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ocr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # Inert until enabled, and never on draft PRs.
+    if: vars.OCR_ENABLED == 'true' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: alibaba/open-code-review@v1.12.11
+        with:
+          llm_url: ${{ secrets.OCR_LLM_URL }}
+          llm_auth_token: ${{ secrets.OCR_LLM_TOKEN }}
+          llm_model: ${{ secrets.OCR_LLM_MODEL }}
+          llm_use_anthropic: ${{ vars.OCR_USE_ANTHROPIC || 'false' }}
+          github_token: ${{ github.token }}
+          language: English
