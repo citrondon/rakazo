@@ -38,6 +38,7 @@ describe("deliverWebhookEvent trust plan", () => {
     const { deps, sendUserMessage, enqueue, holdRunForChoice } = depsFor(async () => ({
       phase: "planned",
       paused: false,
+      effects: [],
     }));
 
     await deliverWebhookEvent(deps, target, { prompt: "hi", routines: [], source: "webhook" });
@@ -47,10 +48,11 @@ describe("deliverWebhookEvent trust plan", () => {
     expect(holdRunForChoice).not.toHaveBeenCalled();
   });
 
-  it("holds a paused run on a choice ask and never schedules it", async () => {
+  it("holds a paused run on a choice ask that shows the dry-run plan", async () => {
     const { deps, holdRunForChoice, enqueue } = depsFor(async () => ({
       phase: "paused",
       paused: true,
+      effects: [{ action: "update", target: "github", risk: "medium" }],
     }));
 
     await deliverWebhookEvent(deps, target, { prompt: "hi", routines: [], source: "webhook" });
@@ -61,7 +63,7 @@ describe("deliverWebhookEvent trust plan", () => {
       threadId: string;
       botId: string;
       runId: string;
-      blocks: Array<{ kind: string }>;
+      blocks: Array<{ kind: string; detail?: string }>;
       offeredActions: Array<{ id: string; label: string }>;
     };
     expect(held).toMatchObject({
@@ -72,6 +74,7 @@ describe("deliverWebhookEvent trust plan", () => {
       offeredActions: [{ id: "run", label: "Run now" }],
     });
     expect(held.blocks[0]!.kind).toBe("ask");
+    expect(held.blocks[0]!.detail).toContain("medium: github · update");
     expect(enqueue).not.toHaveBeenCalled();
   });
 });

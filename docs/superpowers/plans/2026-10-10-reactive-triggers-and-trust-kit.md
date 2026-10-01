@@ -6,8 +6,10 @@
 **Goal:** Turn Rakazo's routines from schedules-plus-flags into a trust-based, event-driven
 automation tool: narrow reactive triggers, a dry-run → approval → execute path, and quiet hours.
 
-**Spec:** this plan. **Status:** Phase 1 (pure domain + contracts + catalog) is done; Phases 2–5
-(persistence, RPC, engine wiring, UI) remain.
+**Spec:** this plan. **Status:** done. Phases 1–5 shipped: pure domain and contracts, persistence,
+RPC and engine wiring, the executor trust gate, the web/mobile UI, a PostgreSQL journey test, and a
+normalized-event inbound path for the broker providers. Remaining candidates are listed under
+"Follow-ups".
 
 ## Why this shape
 
@@ -93,13 +95,16 @@ A prior session had already added `Trigger`, `ApprovalLog`, and `RoutineExecutio
   space-isolated. `createTrigger` enables the routine's `webhookEnabled`/`githubEnabled` flag
   for the paths that exist, so a webhook or GitHub trigger is enough on its own. 4 tests.
 - Broker events for other connectors (Linear/Sentry/PagerDuty) are stored and filtered by the
-  catalog, but their inbound delivery is future work; no caller exists to wake them yet.
+  catalog. Inbound delivery is a normalized-event endpoint (`POST /api/v1/bots/:botId/events`,
+  `apps/api/src/event-webhook.ts`): a shipper posts `{ provider, type, payload }`, the endpoint
+  narrows the routines whose triggers match, and delivers them through the same wake path. The
+  provider's own signature translation stays in that provider's adapter, not in the core.
 
 Test harnesses updated with an empty `trigger` delegate to match the new reads (webhook,
 messaging-inbound). Full offline suite: 5978 passed; only the two known flaky
 `infra/sandboxes/supervisor` + `desktop-runtime` `spawnSync` tests fail, unaffected by this work.
 
-## Phase 4 — Approval, quiet hours, conformance ✅ (executor wiring deferred)
+## Phase 4 — Approval, quiet hours, conformance ✅
 
 - [x] `packages/testkit/src/trust-conformance.test.ts` — the spec's named conformance suite, 10
   offline tests: a dry run applies only read/list/draft for every action; every mutating action
@@ -113,13 +118,13 @@ messaging-inbound). Full offline suite: 5978 passed; only the two known flaky
   `tsc` and blocked any package importing core's barrel), and removed the unused `ApprovalLog`
   and `RoutineExecution` models plus the tables I had added to the trigger migration. Approval
   state stays in `ExternalEffect`; a triggered run's phase stays on `Run`. One source of truth.
-- Deferred, with reasons: gating the wake path through `planTrustPhases`/`planQuietHours` needs
-  the planned effects *before* the run executes, which the executor cannot know yet, and a stored
-  `TrustPolicy` (none exists). Wiring it now would be dead code or an unbacked schema change, so
-  the pure functions stay ready and tested until effects can be derived pre-run (e.g. from the
-  routine's connected tools) and a policy is persisted.
+- Landed: the wake path is gated through `planRoutineEffects`/`planRunTrust` (a `TrustPolicy`
+  now persists per space, and a routine's effects are derived from its connected tools before the
+  run). A wake that reaches the approval line inside its quiet window is held on a choice ask that
+  shows the dry-run plan (`holdRunForChoice`), and the executor narrows the unattended boundary
+  through the space's `approvalThreshold`.
 
-## Phase 5 — UI (web/Electron) — started
+## Phase 5 — UI (web/Electron + mobile) ✅
 
 - [x] `apps/api/src/triggers.ts` + router: `events.list` exposes the provider-neutral catalog
   (`listEventDefinitions`) so any surface renders a trigger picker from one source of truth.
@@ -129,9 +134,19 @@ messaging-inbound). Full offline suite: 5978 passed; only the two known flaky
   catalog (event → field → operator → value). It loads its own catalog/triggers via
   `rpc.events.list` / `rpc.triggers.*`, so it needs only the routine id.
 - [x] `RoutineEditor.tsx` renders it when editing a saved routine.
-- [ ] Show the dry-run effect list with risk tiers before approval; reuse the approval card.
-- [ ] Settings: per-space `TrustPolicy` (approval threshold, quiet hours).
-- [ ] Mobile: trigger list/add on the routine screen.
+- [x] Show the dry-run effect list with risk tiers before approval; reuse the approval card. The
+  editor lists the planned effects (`triggers.previewEffects`, risk badges), and a held wake's ask
+  card carries the same dry-run plan.
+- [x] Settings: per-space `TrustPolicy` (approval threshold, quiet hours), in account settings.
+- [x] Mobile: trigger list/add/remove on the routine screen, with native action sheets and the
+  event catalog.
+
+## Follow-ups
+
+- A provider that only signs its own raw webhook (Linear/Sentry/PagerDuty HMAC) needs an adapter
+  that verifies the signature and forwards a normalized event to `/events`.
+- The per-tool approval card could inline the routine's dry-run plan alongside the specific tool.
+- Extend quiet hours to auto-resume when the window closes instead of waiting for a person.
 
 ## Verification
 
@@ -144,9 +159,9 @@ pnpm --filter @rakazo/contracts check && pnpm --filter @rakazo/core check \
 pnpm exec biome check <changed files>
 ```
 
-Once Phase 3 lands: `pnpm test:integration` for the Postgres journey, and a web e2e under
-`apps/web/e2e/` that creates a trigger and approves a dry-run card (link the CI screenshot from the
-PR).
+The Postgres journey runs as `packages/db/src/triggers.postgres.test.ts` under
+`VERIFY_DATABASE` (`pnpm test:integration`). A web e2e under `apps/web/e2e/` that creates a trigger
+and approves a held dry-run card is still open (link the CI screenshot from the PR).
 
 ## Reviewer checklist
 

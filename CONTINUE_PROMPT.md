@@ -1,87 +1,89 @@
 # Continue: Reactive Triggers & Routine Trust Kit
 
-## Current State (2026-10-10)
+## Current State
 
-### ✅ Completed
+All phases shipped. The authoritative checklist lives in
+`docs/superpowers/plans/2026-10-10-reactive-triggers-and-trust-kit.md`; this is the short version.
 
-**Core Primitives** (`packages/core/src/`):
-- `trigger-engine.ts` — Event→Routine matching via stored triggers
-- `trigger-filter.ts` — Predicate evaluation (exists, contains, oneOf, startsWith, endsWith, regex, caseSensitive)
-- `trust-runner.ts` — Phase machine: planned → dryRun → approval → executed (with rejection/pause transitions)
-- `trust-effects.ts` — Risk tiers: low (read/list/draft), medium (create/update/notify), high (delete/transfer/publish)
+### Pure domain (`packages/core/src/`)
 
-**Database** (`packages/db/prisma/schema.prisma`):
-- `Trigger` model (source, provider, eventType, filter, mappings, enabled)
-- `ApprovalLog` model (triggerId, executionId, step, actor, reason)
-- `RoutineExecution` model (routineId, triggerId, status, effectPreview, logs)
+- `trigger-filter.ts` — predicate evaluation (equals/contains/startsWith/endsWith/oneOf/regex/exists),
+  `matchesTriggerFilter` (AND, an empty filter never fires), `applyTriggerMappings`.
+- `trigger-engine.ts` — `selectTriggeredRoutines` + `formatRoutineInputs`; a trigger refines the
+  routines an event may wake, never broadens them.
+- `trust-effects.ts` — risk tiers, `highestRisk`, `requiresApproval`, `policyRequiresApproval`,
+  quiet-hour arithmetic, and `DEFAULT_TRUST_POLICY`/`resolveTrustPolicy`.
+- `trust-runner.ts` — phase machine plus `planTrustPhases` and `planRunTrust`.
+- `routine-effects.ts` — `planRoutineEffects`/`toolTrustAction`: the effects a routine may reach,
+  derived from the tools its bot can call (builtins such as `shell` count as writes).
 
-**API Layer** (`apps/api/src/`):
-- `triggers.ts` — RPC: list/create/update/delete triggers
-- `webhook.ts` + `github-webhook.ts` — HTTP endpoints with signature validation
-- `webhook-inbound.ts` — Integrates `selectTriggeredRoutines` from trigger-engine
+### Persistence (`packages/db/`)
 
-**Contracts** (`packages/contracts/src/triggers.ts`):
-- Zod schemas for Trigger, TriggerFilter, TriggerMapping, TriggerPredicate
-- TrustEffect, TrustPhase, TrustPolicy, TriggerEvent
-- RPC contracts under `appContract.triggers.*`
+- `Trigger` model + migration `20261010090000_routine_trigger`.
+- `TrustPolicy` model + migration `20261010110000_space_trust_policy` (per space: approval
+  threshold, quiet hours).
+- `Run.trustPhase` + migration `20261010120000_run_trust_phase`.
+- `triggers.ts` (`createTriggerRepos`), `trust-policy.ts` (`createTrustPolicyRepos`),
+  `routine-tools.ts` (`createRoutineToolRepos.listBotToolDescriptors`); all space-isolated.
+- Approval state stays in `ExternalEffect`; a triggered run's phase stays on `Run`. There is no
+  `ApprovalLog` or `RoutineExecution` table.
 
-**Tests**: All passing (32 tests: trigger-filter, trust-runner, trigger-engine, triggers API)
+### API (`apps/api/src/`)
 
-### 🔧 Integration Points
+- `triggers.ts` — `triggers.list/create/update/remove` and `triggers.previewEffects`; `events.list`
+  exposes the catalog.
+- `trust-policy.ts` — `trust.get` / `trust.set`.
+- `webhook.ts` (generic bearer webhook), `github-webhook.ts`, `messaging-inbound.ts` — load stored
+  triggers and narrow the routines they wake via `webhook-inbound.ts#deliverWebhookEvent`.
+- `event-webhook.ts` — `POST /api/v1/bots/:botId/events`: a normalized `{ provider, type, payload }`
+  event for connectors without a dedicated route (Linear/Sentry/PagerDuty/...).
+- `trigger-trust.ts` — `createWebhookTrustPlanner`, resolving a wake's plan from the bot's tools and
+  the space policy. A consequential wake inside quiet hours is held on an ask card that shows the
+  dry-run plan (`holdRunForChoice` in `packages/db/src/events.ts`).
+- Executor (`packages/adapters/src/executor.ts`) narrows the unattended boundary through the space's
+  `approvalThreshold`.
 
-Webhook delivery flow:
-1. Inbound event → parse payload → normalize to `TriggerEvent`
-2. `createTriggerRepos.listEnabledTriggersForEvent` fetches matching triggers
-3. `selectTriggeredRoutines` filters routines by trigger predicates
-4. Mapped fields folded into routine prompt as "Routine inputs:" block
-5. Routine queued for execution via existing job system
+### UI
 
-### 📋 Next Steps (Priority Order)
+- Web: `apps/web/src/pages/ReactiveTriggerSection.tsx` (trigger editor + planned-effect list with
+  risk badges), `apps/web/src/components/TrustPolicySettings.tsx` (approval threshold, quiet hours).
+- Mobile: `apps/mobile/app/routine.tsx` lists/adds/removes triggers with native action sheets.
 
-1. **Trigger Configuration UI** — Add "Triggers" tab to `RoutineEditor.tsx`:
-   - Source selector (webhook/github/messaging/cron)
-   - Provider picker (from existing connections)
-   - Filter builder (visual predicate editor)
-   - Mapping table (event field → routine input)
-   - Trust policy (approval threshold, quiet hours)
+### Event catalog
 
-2. **Approval Dashboard** — Thread UI component for approval cards:
-   - Show risk level, planned effects, phase status
-   - Approve/Reject buttons calling `triggers.advanceExecutionPhase`
+`packages/adapters/src/event-catalog.ts` — provider-neutral data (github, slack, gmail, linear,
+sentry, pagerduty, teams, webhook).
 
-3. **Worker Integration** — Execute trust phases in `apps/worker/src/index.ts`:
-   - On run start: evaluate trust policy, enter dryRun
-   - On approval: advance to executed phase
-   - Log all phase transitions to `RoutineExecution`
-
-4. **Extend Event Sources** — Wire messaging-inbound, cron scheduler to trigger engine
-
-### Key Files to Touch
-
-| Task | Files |
-|------|-------|
-| Trigger UI | `apps/web/src/pages/RoutineEditor.tsx` |
-| Approval UI | `apps/web/src/components/ApprovalCard.tsx` (new) |
-| Worker | `apps/worker/src/index.ts` (add trust runner job handler) |
-| Messaging | `apps/api/src/messaging-inbound.ts` (already imports trigger-engine) |
-| Cron | `packages/core/src/cron.ts` (add trigger evaluation on schedule) |
-
-### Commands
+## Verify
 
 ```bash
-# Type check
-pnpm check
-
-# Run trigger-related tests
-pnpm test apps/api/src/triggers.test.ts packages/core/src/trigger-filter.test.ts packages/core/src/trust-runner.test.ts packages/core/src/trigger-engine.test.ts
-
-# Generate Prisma client after schema changes
-pnpm --filter @rakazo/db generate
+pnpm exec vitest run packages/contracts/src/triggers.test.ts \
+  packages/core/src/{trigger-filter,trigger-engine,trust-effects,trust-runner,routine-effects}.test.ts \
+  packages/adapters/src/{event-catalog,executor-readonly-approval}.test.ts \
+  packages/db/src/{triggers,trust-policy,routine-tools}.test.ts \
+  apps/api/src/{triggers,trust-policy,webhook-inbound,event-webhook}.test.ts \
+  packages/testkit/src/trust-conformance.test.ts \
+  apps/web/src/pages/ReactiveTriggerSection.test.tsx \
+  apps/web/src/components/TrustPolicySettings.test.tsx
+pnpm --filter @rakazo/contracts check && pnpm --filter @rakazo/core check \
+  && pnpm --filter @rakazo/adapters check && pnpm --filter @rakazo/db check \
+  && pnpm --filter @rakazo/api check && pnpm --filter @rakazo/web check
+pnpm db:migrate            # if the database is behind
+VERIFY_DATABASE=1 pnpm test:integration   # Postgres trigger journey
 ```
 
-### Architecture Notes
+## Notes
 
-- **Provider-neutral**: Triggers store source/provider/eventType; engine evaluates without vendor logic
-- **Deterministic offline**: `trigger-filter` and `trust-runner` are pure functions — fully testable without network
-- **Backward compatible**: Existing `webhookEnabled`/`githubEnabled` flags still work; triggers are additive
-- **Security**: Empty filter rejected on create (prevents broad listeners); webhook/GitHub signature validation unchanged
+- Provider-neutral: triggers store source/provider/eventType; the engine evaluates without vendor
+  logic, and a provider is added by normalizing its webhook to a `TriggerEvent` and extending
+  `EVENT_CATALOG`, never with a provider-specific env var.
+- Deterministic and offline by default: the domain and trust kit are pure functions.
+- Backward compatible: the `webhookEnabled`/`githubEnabled` flags still work; triggers are
+  additive. The generic webhook and GitHub signature validation are unchanged.
+
+## Follow-ups
+
+- A provider that only signs its own raw webhook needs an adapter that verifies the signature and
+  forwards a normalized event to `/events`.
+- A web e2e that creates a trigger and approves a held dry-run card (link the CI screenshot).
+- Extend quiet hours to auto-resume when the window closes.

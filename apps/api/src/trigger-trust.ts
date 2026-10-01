@@ -1,4 +1,3 @@
-import type { TrustPhase } from "@rakazo/contracts";
 import { planRoutineEffects, planRunTrust } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { createRoutineToolRepos, createTrustPolicyRepos } from "@rakazo/db";
@@ -20,6 +19,6 @@ export function createWebhookTrustPlanner(prisma: PrismaClient): WebhookTrustPla
     ]);
     const effects = planRoutineEffects(descriptors);
     const { phase, paused } = planRunTrust(effects, policy, now ?? new Date());
-    return { phase: phase satisfies TrustPhase, paused };
+    return { phase, paused, effects };
   };
 }

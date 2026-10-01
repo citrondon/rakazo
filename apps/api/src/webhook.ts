@@ -1,6 +1,7 @@
 import { hasValidBearerToken } from "@rakazo/core";
 import { createTriggerRepos } from "@rakazo/db";
 import type { Hono } from "hono";
+import { mountEventWebhookRoute } from "./event-webhook.js";
 import { mountGithubWebhookRoute } from "./github-webhook.js";
 import { readBoundedBody } from "./http-body.js";
 import {
@@ -13,6 +14,7 @@ import {
   type WebhookDeps,
 } from "./webhook-inbound.js";
 
+export { eventWebhookPath, mountEventWebhookRoute } from "./event-webhook.js";
 export {
   formatGithubEventPrompt,
   githubEventName,
@@ -95,4 +97,5 @@ export function mountWebhookHttpRoutes(app: Hono, deps: WebhookDeps) {
   });
 
   mountGithubWebhookRoute(app, deps);
+  mountEventWebhookRoute(app, deps);
 }

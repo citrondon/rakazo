@@ -2,8 +2,14 @@ import { createHash } from "node:crypto";
 import type { JobPublisher } from "@rakazo/adapter-kit";
 import { runContinueJob } from "@rakazo/adapter-kit";
 import type { EncryptedSecretStore } from "@rakazo/adapters";
-import type { MessageBlock, Trigger, TriggerEvent, TrustPhase } from "@rakazo/contracts";
-import { selectTriggeredRoutines, type TriggerCandidate } from "@rakazo/core";
+import type {
+  MessageBlock,
+  Trigger,
+  TriggerEvent,
+  TrustEffect,
+  TrustPhase,
+} from "@rakazo/contracts";
+import { dryRunPreview, selectTriggeredRoutines, type TriggerCandidate } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 
@@ -15,8 +21,13 @@ export const QUIET_HOURS_ACTIONS: ReadonlyArray<{ id: string; label: string }> =
   { id: "run", label: "Run now" },
 ];
 
-/** The trust plan a wake resolves before it delivers: which phase, and whether to hold. */
-export type WebhookRunTrust = { phase: TrustPhase; paused: boolean };
+/** The trust plan a wake resolves before it delivers: which phase, whether to hold, and the plan. */
+export type WebhookRunTrust = {
+  phase: TrustPhase;
+  paused: boolean;
+  /** The effects the routine may reach, shown on the held card with their risk tiers. */
+  effects: TrustEffect[];
+};
 
 /**
  * Resolve a wake's trust plan (planned effects + the space policy) before delivery. Supplied by
@@ -29,10 +40,22 @@ export type WebhookTrustPlanner = (input: {
   now?: Date;
 }) => Promise<WebhookRunTrust>;
 
-function quietHoursAskBlock(): MessageBlock {
+/** The dry-run preview of a held plan: what the routine may touch, and how risky it is. */
+function formatEffectPreview(effects: readonly TrustEffect[]): string | undefined {
+  const preview = dryRunPreview(effects);
+  if (preview.length === 0) return undefined;
+  return [
+    "Planned effects:",
+    ...preview.map(({ effect }) => `- ${effect.risk}: ${effect.target} · ${effect.action}`),
+  ].join("\n");
+}
+
+/** The card a held, consequential routine shows: its dry-run plan, answered to run it now. */
+export function quietHoursAskBlock(effects: readonly TrustEffect[]): MessageBlock {
   return {
     kind: "ask",
     text: "Routine paused for quiet hours",
+    detail: formatEffectPreview(effects),
     status: "pending",
     actions: QUIET_HOURS_ACTIONS.map((action) => ({ ...action })),
   };
@@ -264,7 +287,7 @@ export async function deliverWebhookEvent(
       threadId: target.threadId,
       botId: target.bot.id,
       runId: sent.runId,
-      blocks: [quietHoursAskBlock()],
+      blocks: [quietHoursAskBlock(plan.effects)],
       offeredActions: QUIET_HOURS_ACTIONS.map((action) => ({ ...action })),
     });
     return { ok: true as const, messageId: sent.messageId, runId: sent.runId, seq: sent.seq };
