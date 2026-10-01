@@ -1,3 +1,4 @@
+import type { ConnectorEvent } from "@rakazo/adapter-kit";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { allowlistDrift, McpConnector } from "./mcp-connector.js";
 import { type McpOAuthBroker, StoredMcpOAuthProvider } from "./mcp-oauth.js";
@@ -926,6 +927,91 @@ describe("MCP connector private endpoints", () => {
       signal: new AbortController().signal,
     } as never);
     expect(tools.map((tool) => tool.name)).toEqual(["mcp__demo__echo"]);
+    await connector.close();
+  });
+});
+
+describe("MCP failure messages", () => {
+  const context = {
+    spaceId: "w1",
+    userId: "u1",
+    botId: "bot-1",
+    runId: "run-1",
+    signal: new AbortController().signal,
+  } as never;
+
+  // The connector's own catch paths, driven through a stubbed transport: what the user
+  // reads must be the classified sentence, never undici's `fetch failed` or a cause chain.
+  function connectorFor(
+    stub: (input: string | URL | Request, init?: RequestInit) => Promise<Response>,
+  ) {
+    vi.stubGlobal("fetch", vi.fn(stub));
+    const append = vi.fn().mockResolvedValue(undefined);
+    const connector = new McpConnector(
+      {
+        botMcpServer: {
+          findMany: vi.fn().mockResolvedValue([ASSIGNMENT]),
+          findFirst: vi.fn().mockResolvedValue(ASSIGNMENT),
+        },
+        run: { findUnique: vi.fn().mockResolvedValue({ threadId: "thread-1" }) },
+      } as never,
+      {} as never,
+      { network: TEST_NETWORK, events: { append } },
+    );
+    return { connector, append };
+  }
+
+  async function callError(connector: McpConnector): Promise<string> {
+    const events: ConnectorEvent[] = [];
+    for await (const event of connector.execute(
+      {
+        route: { connectorId: "mcp", resourceId: "server-1", toolName: "echo" },
+        tool: "echo",
+        args: {},
+        executionId: "call-1",
+      },
+      context,
+    )) {
+      events.push(event);
+    }
+    const errors = events.filter((event) => event.type === "error");
+    expect(errors).toHaveLength(1);
+    return errors.at(0)?.message ?? "";
+  }
+
+  it("answers a transport failure with the classified DNS sentence, not the raw cause", async () => {
+    const { connector, append } = connectorFor(async () => {
+      throw Object.assign(new TypeError("fetch failed"), {
+        cause: Object.assign(new Error("getaddrinfo ENOTFOUND mcp.example.test"), {
+          code: "ENOTFOUND",
+        }),
+      });
+    });
+
+    const message = await callError(connector);
+    expect(message).toContain("Could not resolve mcp.example.test");
+    expect(message).not.toMatch(/getaddrinfo|at Object\.|fetch failed/);
+
+    // The same server must not hide the other connectors' tools: discovery degrades to
+    // an empty list and leaves the classified sentence in the audit log.
+    await expect(connector.discoverTools(context)).resolves.toEqual([]);
+    expect(append).toHaveBeenCalledTimes(1);
+    const logged = String(append.mock.calls[0]?.[0].payload.error);
+    expect(logged).toContain("Could not resolve mcp.example.test");
+    expect(logged).not.toMatch(/getaddrinfo|at Object\.|fetch failed/);
+
+    await connector.close();
+  });
+
+  it("names the rejected credentials and the server that rejected them", async () => {
+    const { connector } = connectorFor(async () => new Response("unauthorized", { status: 401 }));
+
+    const message = await callError(connector);
+    expect(message).toMatch(/rejected the credentials/);
+    expect(message).toContain("mcp.example.test");
+    expect(message).not.toMatch(/getaddrinfo|at Object\.|fetch failed/);
+
+    await expect(connector.discoverTools(context)).resolves.toEqual([]);
     await connector.close();
   });
 });
