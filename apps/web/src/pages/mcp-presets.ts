@@ -45,6 +45,34 @@ export const MCP_PRESETS: McpPreset[] = [
     command: "npx",
     args: ["-y", "mcp-fetch-server@1.1.2"],
   },
+  {
+    id: "sequential-thinking",
+    slug: "sequential-thinking",
+    name: "Strukturiertes Denken",
+    description:
+      "Zerlegt harte Aufgaben in nachprüfbare Denkschritte. Reine Hilfe, kein Zugriff nach außen.",
+    badge: "Denken",
+    iconName: "Terminal",
+    transport: "stdio",
+    command: "npx",
+    args: ["-y", "@modelcontextprotocol/server-sequential-thinking@2026.8.31"],
+  },
+  {
+    id: "notion",
+    slug: "notion",
+    name: "Notion",
+    description: "Liest und schreibt Seiten und Datenbanken in deinem Notion-Workspace.",
+    badge: "Wissen",
+    iconName: "Database",
+    transport: "stdio",
+    command: "npx",
+    args: ["-y", "@notionhq/notion-mcp-server@2.5.2"],
+    requiresSecret: {
+      label: "Notion Integration Token",
+      placeholder: "ntn_...",
+      envVar: "NOTION_TOKEN",
+    },
+  },
 ];
 
 /** Why this preset cannot start yet. Null when it would run, and while the deployment

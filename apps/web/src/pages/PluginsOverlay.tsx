@@ -38,11 +38,13 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronUp,
+  Database,
   FolderKanban,
   GitBranch,
   Globe,
   Loader2,
   Sparkles,
+  Terminal,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -122,8 +124,8 @@ export function PluginsOverlay({
   const [mcpServers, setMcpServers] = useState<McpServer[]>([]);
   const [stdioStatus, setStdioStatus] = useState<McpStdioStatus | null>(null);
   const [presetPending, setPresetPending] = useState<string | null>(null);
-  const [githubToken, setGithubToken] = useState("");
-  const [githubPromptOpen, setGithubPromptOpen] = useState(false);
+  const [presetSecret, setPresetSecret] = useState("");
+  const [presetSecretOpen, setPresetSecretOpen] = useState<string | null>(null);
   const connectionAttempt = useRef<AbortController | null>(null);
 
   async function refresh() {
@@ -182,9 +184,9 @@ export function PluginsOverlay({
       );
 
       await refresh();
-      if (preset.id === "github") {
-        setGithubPromptOpen(false);
-        setGithubToken("");
+      if (preset.requiresSecret) {
+        setPresetSecretOpen(null);
+        setPresetSecret("");
       }
     } catch (err) {
       setCatalogError(err instanceof Error ? err.message : t`Could not install preset`);
@@ -842,6 +844,7 @@ export function PluginsOverlay({
                 const isInstalled = mcpServers.some((s) => s.slug === preset.slug);
                 const isPending = presetPending === preset.id;
                 const blocker = stdioBlockerReason(preset, stdioStatus);
+                const secret = preset.requiresSecret;
 
                 const renderIcon = () => {
                   switch (preset.iconName) {
@@ -853,6 +856,10 @@ export function PluginsOverlay({
                       return <BookOpen className="h-5 w-5 text-purple-500" />;
                     case "GitBranch":
                       return <GitBranch className="h-5 w-5 text-orange-500" />;
+                    case "Terminal":
+                      return <Terminal className="h-5 w-5 text-slate-500" />;
+                    case "Database":
+                      return <Database className="h-5 w-5 text-cyan-500" />;
                   }
                 };
 
@@ -904,15 +911,16 @@ export function PluginsOverlay({
                             <Trans>Trennen</Trans>
                           )}
                         </Button>
-                      ) : preset.id === "github" ? (
+                      ) : secret ? (
                         <div className="flex flex-col gap-2">
-                          {githubPromptOpen ? (
+                          {presetSecretOpen === preset.id ? (
                             <div className="flex flex-col gap-1.5">
                               <Input
                                 type="password"
-                                placeholder={t`Personal Access Token`}
-                                value={githubToken}
-                                onChange={(e) => setGithubToken(e.target.value)}
+                                placeholder={secret.placeholder}
+                                aria-label={secret.label}
+                                value={presetSecret}
+                                onChange={(e) => setPresetSecret(e.target.value)}
                                 className="h-7 text-xs"
                               />
                               <div className="flex gap-1">
@@ -920,10 +928,10 @@ export function PluginsOverlay({
                                   type="button"
                                   size="sm"
                                   className="h-7 flex-1 text-xs"
-                                  disabled={isPending || !githubToken.trim()}
+                                  disabled={isPending || !presetSecret.trim()}
                                   onClick={() =>
                                     void installPreset(preset, {
-                                      GITHUB_PERSONAL_ACCESS_TOKEN: githubToken.trim(),
+                                      [secret.envVar]: presetSecret.trim(),
                                     })
                                   }
                                 >
@@ -938,7 +946,7 @@ export function PluginsOverlay({
                                   variant="ghost"
                                   size="sm"
                                   className="h-7 text-xs px-2"
-                                  onClick={() => setGithubPromptOpen(false)}
+                                  onClick={() => setPresetSecretOpen(null)}
                                 >
                                   <Trans>Abbrechen</Trans>
                                 </Button>
@@ -950,7 +958,10 @@ export function PluginsOverlay({
                               variant="secondary"
                               size="sm"
                               className="w-full text-xs"
-                              onClick={() => setGithubPromptOpen(true)}
+                              onClick={() => {
+                                setPresetSecret("");
+                                setPresetSecretOpen(preset.id);
+                              }}
                             >
                               <Trans>Verbinden</Trans>
                             </Button>

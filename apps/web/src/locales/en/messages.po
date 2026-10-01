@@ -3259,10 +3259,6 @@ msgstr "pending"
 msgid "Personal"
 msgstr "Personal"
 
-#: src/pages/PluginsOverlay.tsx
-msgid "Personal Access Token"
-msgstr "Personal Access Token"
-
 #: src/pages/TeamTemplateOverlay.tsx
 msgid "Pick a starter roster. The lead bot receives the first task automatically."
 msgstr "Pick a starter roster. The lead bot receives the first task automatically."
