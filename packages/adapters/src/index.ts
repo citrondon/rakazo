@@ -36,6 +36,7 @@ export * from "./computer-support.js";
 export * from "./computer-tools.js";
 export * from "./computer-update.js";
 export * from "./computer-workspace.js";
+export * from "./connector-failures.js";
 export * from "./createos-sandbox.js";
 export * from "./current-time.js";
 export * from "./cursor-cloud-agent.js";
@@ -68,6 +69,7 @@ export * from "./job-reconciler.js";
 export * from "./keyless-http-web.js";
 export * from "./mcp-connector.js";
 export * from "./mcp-emulator.js";
+
 export * from "./mcp-oauth.js";
 export * from "./mcp-server-tool.js";
 export * from "./mcp-transport.js";

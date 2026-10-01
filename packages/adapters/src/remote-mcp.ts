@@ -310,7 +310,7 @@ const MAX_CAUSE_DEPTH = 5;
 /** undici reports refused ports, unreachable hosts, DNS misses and TLS errors
  * alike as `TypeError: fetch failed` and keeps the actionable reason in `cause`
  * (or in the per-address errors of a happy-eyeballs AggregateError). */
-function transportFailureDetail(error: unknown, depth = 0): string | undefined {
+export function transportFailureDetail(error: unknown, depth = 0): string | undefined {
   if (depth >= MAX_CAUSE_DEPTH || !(error instanceof Error)) return undefined;
   if (error instanceof AggregateError) {
     for (const inner of error.errors) {
