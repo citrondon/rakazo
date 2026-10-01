@@ -6,9 +6,9 @@ import {
 } from "@rakazo/adapter-kit";
 import type { MessageBlock } from "@rakazo/contracts";
 import type { Pool, PrismaClient, ThreadEvents } from "@rakazo/db";
+import { autoResumeQuietHoursRun } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import type { PoolClient } from "pg";
-import { autoResumeQuietHoursRun } from "@rakazo/db";
 import { returnBotMessageOutcome } from "./bot-messages.js";
 import { scheduleComputerControlExpiry } from "./computer-control.js";
 import { isUserProgressClientNonce } from "./user-progress.js";
