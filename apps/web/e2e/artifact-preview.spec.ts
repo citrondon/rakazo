@@ -3,7 +3,9 @@ import { captureScreenshot, completeOnboarding, signup } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
 
-test("agent-attached files appear as downloadable cards", async ({ page }, testInfo) => {
+test("agent-attached text files open a readable preview and stay downloadable", async ({
+  page,
+}, testInfo) => {
   const stamp = Date.now();
   await signup(page, `artifact-card-${stamp}@rakazo.test`, "password12", "Artifact Card");
   await completeOnboarding(page);
@@ -12,16 +14,26 @@ test("agent-attached files appear as downloadable cards", async ({ page }, testI
   await composer.fill("write notes/result.txt and attach it to the thread");
   await page.keyboard.press("Enter");
 
-  // Scope to ArtifactFileCard text (name + mime); sidebar bot status can also
-  // include the prompt path notes/result.txt once status syncs immediately.
-  const fileCard = page.getByRole("button", { name: /result\.txt text\/plain/ });
-  await expect(fileCard).toBeVisible({ timeout: 30_000 });
-  await captureScreenshot(page, testInfo, "current-file-card");
+  // Plain text used to be download-only: the whole card was a download button, so reading
+  // what the bot wrote meant saving the file and leaving the app for another program.
+  const previewButton = page.getByRole("button", { name: "Preview result.txt" });
+  await expect(previewButton).toBeVisible({ timeout: 30_000 });
+  await captureScreenshot(page, testInfo, "text-file-card");
+
+  await previewButton.click();
+  const dialog = page.getByRole("dialog", { name: "result.txt" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("attach it to the thread");
+  await captureScreenshot(page, testInfo, "text-preview-open");
 
   const downloadPromise = page.waitForEvent("download");
-  await fileCard.click();
+  await dialog.getByRole("button", { name: "Download result.txt" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe("result.txt");
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(previewButton).toBeFocused();
 });
 
 test("agent-attached Markdown opens a rendered preview and can be downloaded", async ({
