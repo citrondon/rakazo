@@ -1765,23 +1765,27 @@ export function createRouter(deps: RouterDeps) {
         // MEMORY.md) and applies every durable part of the preset. Import notes
         // land as a durable system meta message, matching spawn's "Created by" note.
         const created = await deps.prisma.$transaction(async (tx) => {
-          const bot = await repos.createBot(context.actor, {
-            ...prepared.profile,
-            notifyOnFinish: true,
-            computerMode: "team",
-            initialMessage: {
-              role: "system",
-              blocks: [
-                {
-                  kind: "meta",
-                  text:
-                    warnings.length > 0
-                      ? `Imported preset with warnings: ${warnings.join(" ")}`
-                      : "Imported from preset.",
-                },
-              ],
+          const bot = await repos.createBot(
+            context.actor,
+            {
+              ...prepared.profile,
+              notifyOnFinish: true,
+              computerMode: "team",
+              initialMessage: {
+                role: "system",
+                blocks: [
+                  {
+                    kind: "meta",
+                    text:
+                      warnings.length > 0
+                        ? `Imported preset with warnings: ${warnings.join(" ")}`
+                        : "Imported from preset.",
+                  },
+                ],
+              },
             },
-          });
+            { tx },
+          );
           await applyPreparedImport(tx, context.actor, bot.id, prepared);
           return bot;
         });
