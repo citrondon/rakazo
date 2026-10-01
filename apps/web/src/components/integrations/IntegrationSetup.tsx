@@ -162,7 +162,7 @@ export function IntegrationSetup({
         <>
           {configured ? (
             <p className="text-sm text-success">
-              <Trans>Connected</Trans>
+              <Trans>Credentials saved</Trans>
             </p>
           ) : null}
           {state?.canConfigure ? (

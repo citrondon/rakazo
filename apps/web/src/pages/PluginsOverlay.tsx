@@ -46,6 +46,12 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IntegrationSetup } from "../components/integrations/IntegrationSetup";
+import {
+  canReconnect,
+  connectionRowsFor,
+  connectionState,
+  liveConnectionsFor,
+} from "../lib/connection-state";
 import { optionalCatalogFeedProbe } from "../lib/optional-catalog-feed";
 import { rpc } from "../lib/rpc";
 import { McpPresetBlockerNote } from "./McpPresetBlockerNote";
@@ -67,18 +73,6 @@ function markConnected(
 ) {
   return items.map((entry) =>
     entry.connectorId === connectorId && entry.slug === slug ? { ...entry, connected } : entry,
-  );
-}
-
-function activeAccounts(
-  connections: Connection[],
-  item: Pick<ConnectionCatalogItem, "connectorId" | "slug">,
-) {
-  return connections.filter(
-    (row) =>
-      row.connectorId === item.connectorId &&
-      row.provider === item.slug &&
-      (row.status === "connected" || row.status === "pending"),
   );
 }
 
@@ -274,7 +268,8 @@ export function PluginsOverlay({
 
   function itemConnected(item: ConnectionCatalogItem) {
     return (
-      item.connected || activeAccounts(connections, item).some((row) => row.status === "connected")
+      item.connected ||
+      liveConnectionsFor(connections, item).some((row) => row.status === "connected")
     );
   }
 
@@ -297,7 +292,7 @@ export function PluginsOverlay({
     const key = itemKey(item);
     setPending(key);
     try {
-      const existing = activeAccounts(connections, item).filter(
+      const existing = liveConnectionsFor(connections, item).filter(
         (row) => row.status === "connected",
       );
       const started = await rpc.connections.begin({
@@ -351,7 +346,9 @@ export function PluginsOverlay({
     setPending(row.id);
     try {
       await rpc.connections.revoke({ connectionId: row.id });
-      const remaining = activeAccounts(connections, item).filter((entry) => entry.id !== row.id);
+      const remaining = liveConnectionsFor(connections, item).filter(
+        (entry) => entry.id !== row.id,
+      );
       if (remaining.every((entry) => entry.status !== "connected")) {
         setItemConnected(item, false);
       }
@@ -365,7 +362,7 @@ export function PluginsOverlay({
   }
 
   async function uninstall(item: ConnectionCatalogItem) {
-    const matches = activeAccounts(connections, item);
+    const matches = liveConnectionsFor(connections, item);
     if (matches.length === 0) {
       setItemConnected(item, false);
       closeDetail();
@@ -552,6 +549,7 @@ export function PluginsOverlay({
     opts?: { tileTestId?: boolean },
   ) {
     const connected = itemConnected(item);
+    const hasAccounts = connectionRowsFor(connections, item).length > 0;
     const tileTestId = opts?.tileTestId !== false && connected;
     const icon = logo ? (
       <img
@@ -577,7 +575,7 @@ export function PluginsOverlay({
         data-testid={tileTestId ? `connection-tile-${item.slug.toLowerCase()}` : undefined}
         className="flex min-w-0 items-center gap-3 rounded-xl px-2.5 py-2"
       >
-        {connected ? (
+        {connected || hasAccounts ? (
           <button
             type="button"
             className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-start hover:bg-accent/60"
@@ -598,7 +596,7 @@ export function PluginsOverlay({
   }
 
   function renderDetail(item: ConnectionCatalogItem) {
-    const accounts = activeAccounts(connections, item);
+    const accounts = connectionRowsFor(connections, item);
     const key = itemKey(item);
     const connecting = pending === key;
     const uninstalling = pending === `uninstall:${key}`;
@@ -652,34 +650,65 @@ export function PluginsOverlay({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {accounts.map((row) => (
-              <div key={row.id} className="flex items-center gap-2">
-                <Input
-                  value={labelDrafts[row.id] ?? row.displayName}
-                  aria-label={t`Account label`}
-                  className="h-9 rounded-lg px-3 text-[13px]"
-                  onChange={(event) =>
-                    setLabelDrafts((current) => ({ ...current, [row.id]: event.target.value }))
-                  }
-                  onBlur={() => void renameAccount(row)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.currentTarget.blur();
+            {accounts.map((row) => {
+              const state = connectionState(row);
+              return (
+                <div key={row.id} className="flex items-center gap-2">
+                  <Input
+                    value={labelDrafts[row.id] ?? row.displayName}
+                    aria-label={t`Account label`}
+                    className="h-9 rounded-lg px-3 text-[13px]"
+                    onChange={(event) =>
+                      setLabelDrafts((current) => ({ ...current, [row.id]: event.target.value }))
                     }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-9 shrink-0 rounded-full px-2 text-[12px]"
-                  size="sm"
-                  disabled={pending === row.id || uninstalling}
-                  onClick={() => void revokeAccount(row, item)}
-                >
-                  {pending === row.id ? <Trans>Removing…</Trans> : <Trans>Remove</Trans>}
-                </Button>
-              </div>
-            ))}
+                    onBlur={() => void renameAccount(row)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.currentTarget.blur();
+                      }
+                    }}
+                  />
+                  <Badge
+                    variant="secondary"
+                    className="shrink-0 uppercase"
+                    data-testid="connection-account-status"
+                  >
+                    {state === "connected" ? (
+                      <Trans>Connected</Trans>
+                    ) : state === "pending" ? (
+                      <Trans>Connecting…</Trans>
+                    ) : state === "expired" ? (
+                      <Trans>OAuth expired</Trans>
+                    ) : (
+                      <Trans>OAuth connection failed</Trans>
+                    )}
+                  </Badge>
+                  {canReconnect(state) ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="h-9 shrink-0 rounded-full px-3 text-[12px]"
+                      size="sm"
+                      disabled={connecting || uninstalling}
+                      onClick={() => void connect(item)}
+                    >
+                      <Trans>Reconnect OAuth</Trans>
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-9 shrink-0 rounded-full px-2 text-[12px]"
+                      size="sm"
+                      disabled={pending === row.id || uninstalling}
+                      onClick={() => void revokeAccount(row, item)}
+                    >
+                      {pending === row.id ? <Trans>Removing…</Trans> : <Trans>Remove</Trans>}
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
             <Button
               type="button"
               variant="secondary"
