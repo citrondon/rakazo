@@ -137,8 +137,9 @@ pnpm lint
   (`maxWorkers: 8` in `vitest.config.ts`). The worker cap is the load-bearing half: with one worker
   per core the quiesce script needed over 45 s for what takes 11 s idle, so the fix is less
   contention, not bigger timeouts. Full run since then: 78 s, both files green.
-- `pnpm lint` fails on a pre-existing `.vscode/settings.json` newline error that no window
-  introduced and none owns; it turns the merge gate (`pnpm check && pnpm lint && pnpm test`) red.
+- `pnpm lint` is `biome check .` over the working tree, so it reports any window's uncommitted
+  edits as errors. Judge it against committed content, not against another window's live files.
+  The long-standing `.vscode/settings.json` newline error is fixed (`4d0f4228`).
 - Keep providers generic: add a provider by normalizing its webhook to a `TriggerEvent` and
   extending `EVENT_CATALOG`, never with a provider-specific env var.
 - Tests are deterministic and offline by default. The desktop Playwright e2e steals focus on
