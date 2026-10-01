@@ -20,6 +20,21 @@ import { isVitestRuntime } from "./test-runtime.js";
 
 type ComposioSession = Awaited<ReturnType<Composio["create"]>>;
 
+/** Composio REST base. The SDK session listing drops `meta.categories`, so the directory
+ * reads the toolkits REST endpoint directly (override with COMPOSIO_BASE_URL). */
+const COMPOSIO_API_BASE_URL =
+  process.env.COMPOSIO_BASE_URL?.trim().replace(/\/+$/, "") || "https://backend.composio.dev";
+
+type ComposioToolkitListResponse = {
+  items?: Array<{
+    slug?: unknown;
+    name?: unknown;
+    no_auth?: unknown;
+    meta?: { logo?: unknown; categories?: unknown };
+  }>;
+  next_cursor?: unknown;
+};
+
 export function isComposioEnabled(apiKey: string | undefined): boolean {
   return Boolean(apiKey) && !isVitestRuntime();
 }
@@ -105,6 +120,25 @@ export async function collectPages<T>(
 
 function composioSlugKey(slug: string): string {
   return slug.trim().toLowerCase();
+}
+
+/** Composio exposes `meta.categories` as `{ id, name }[]`; names arrive lowercase, deduped here. */
+function composioCategoryNames(categories: unknown): string[] {
+  if (!Array.isArray(categories)) return [];
+  const names: string[] = [];
+  for (const entry of categories) {
+    const raw =
+      typeof entry === "string"
+        ? entry
+        : typeof (entry as { name?: unknown } | null)?.name === "string"
+          ? (entry as { name: string }).name
+          : "";
+    const name = raw.trim();
+    if (!name) continue;
+    const label = /[A-Z]/.test(name) ? name : name.charAt(0).toUpperCase() + name.slice(1);
+    if (!names.includes(label)) names.push(label);
+  }
+  return names;
 }
 
 export function executeSessionKey(
@@ -345,6 +379,51 @@ export class ComposioConnector implements ComposioProvider {
   }
 
   private async loadDirectory(): Promise<ToolkitDirectoryEntry[]> {
+    if (this.apiKey) {
+      try {
+        return await this.loadDirectoryFromApi();
+      } catch (error) {
+        // Categories only exist on the REST listing; if it is down, crawl the session so
+        // the catalog still renders (ungrouped) instead of coming back empty.
+        getLogger().warn("Composio toolkits listing failed; falling back to the session crawl", {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+    return this.loadDirectoryFromSession();
+  }
+
+  /** REST listing: the only Composio surface that returns each toolkit's `meta.categories`. */
+  private async loadDirectoryFromApi(): Promise<ToolkitDirectoryEntry[]> {
+    const entries: ToolkitDirectoryEntry[] = [];
+    let cursor: string | undefined;
+    for (let page = 0; page < 200; page += 1) {
+      const url = new URL("/api/v3/toolkits", COMPOSIO_API_BASE_URL);
+      url.searchParams.set("limit", "100");
+      if (cursor) url.searchParams.set("cursor", cursor);
+      const response = await fetch(url, { headers: { "x-api-key": this.apiKey ?? "" } });
+      if (!response.ok) throw new Error(`Composio toolkits listing failed (${response.status})`);
+      const body = (await response.json()) as ComposioToolkitListResponse;
+      for (const item of body.items ?? []) {
+        const slug = typeof item.slug === "string" ? item.slug : "";
+        const name = typeof item.name === "string" ? item.name : "";
+        if (!slug || !name) continue;
+        entries.push({
+          slug,
+          name,
+          logo: typeof item.meta?.logo === "string" ? item.meta.logo : null,
+          noAuth: Boolean(item.no_auth),
+          categories: composioCategoryNames(item.meta?.categories),
+        });
+      }
+      const next = typeof body.next_cursor === "string" ? body.next_cursor : "";
+      if (!next) break;
+      cursor = next;
+    }
+    return entries;
+  }
+
+  private async loadDirectoryFromSession(): Promise<ToolkitDirectoryEntry[]> {
     const session = await this.sessionFor("__rakazo_catalog__");
     const toolkits = await collectPages((cursor) => session.toolkits({ limit: 50, cursor }));
     return toolkits.map((toolkit) => ({

@@ -2,8 +2,10 @@ import type { ConnectionCatalogItem } from "@rakazo/contracts";
 import { describe, expect, it } from "vitest";
 import {
   buildFeaturedConnectorTiles,
+  CONNECTION_CATALOG_UNCATEGORIZED_ID,
   featuredConnectorProvidersMatch,
   filterConnectionCatalogItems,
+  groupConnectionCatalogItems,
   matchFeaturedConnectorId,
   resolveFeaturedCatalogItem,
 } from "./featured-connectors.js";
@@ -87,5 +89,35 @@ describe("featured connectors", () => {
     expect(filterConnectionCatalogItems(catalog, "pipedream").map(({ name }) => name)).toEqual([
       "Notion",
     ]);
+  });
+
+  it("groups rows into provider categories with the uncategorized bucket last", () => {
+    const catalog: ConnectionCatalogItem[] = [
+      { ...item("github", "GitHub"), categories: ["Developer Tools"] },
+      { ...item("gmail", "Gmail"), categories: ["Email"] },
+      { ...item("slack", "Slack"), categories: ["Communication"] },
+      { ...item("notion", "Notion"), categories: ["Productivity"] },
+      { ...item("linear", "Linear"), categories: ["Productivity"] },
+      item("hackernews", "Hacker News"),
+    ];
+    const groups = groupConnectionCatalogItems(catalog);
+    expect(groups.map((group) => group.label)).toEqual([
+      "Communication",
+      "Developer Tools",
+      "Email",
+      "Productivity",
+      "",
+    ]);
+    expect(groups.at(-1)?.id).toBe(CONNECTION_CATALOG_UNCATEGORIZED_ID);
+    expect(groups.at(-1)?.items.map(({ name }) => name)).toEqual(["Hacker News"]);
+    const productivity = groups.find((group) => group.label === "Productivity");
+    expect(productivity?.items.map(({ name }) => name)).toEqual(["Notion", "Linear"]);
+  });
+
+  it("uses the first category hint when a row carries several", () => {
+    const groups = groupConnectionCatalogItems([
+      { ...item("gmail", "Gmail"), categories: ["Email", "Google"] },
+    ]);
+    expect(groups.map((group) => group.id)).toEqual(["email"]);
   });
 });

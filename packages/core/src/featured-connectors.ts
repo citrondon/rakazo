@@ -105,5 +105,56 @@ export function filterConnectionCatalogItems(
   );
 }
 
+/** Group id for catalog rows a provider shipped without any category. */
+export const CONNECTION_CATALOG_UNCATEGORIZED_ID = "uncategorized";
+
+export type ConnectionCatalogGroup = {
+  id: string;
+  /** Category name as the provider spells it; empty for the uncategorized bucket. */
+  label: string;
+  items: ConnectionCatalogItem[];
+};
+
+function categoryGroupId(label: string): string {
+  const slug = label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || CONNECTION_CATALOG_UNCATEGORIZED_ID;
+}
+
+/**
+ * Buckets catalog rows into ordered category sections using the provider's own
+ * category hints, so a thousand-app catalog reads as a handful of tidy groups.
+ * Named groups sort alphabetically; rows without a category trail them in a
+ * single unlabeled bucket. Row order inside a group is preserved (catalogs
+ * arrive popularity-ordered).
+ */
+export function groupConnectionCatalogItems(
+  items: readonly ConnectionCatalogItem[],
+): ConnectionCatalogGroup[] {
+  const groups = new Map<string, ConnectionCatalogGroup>();
+  const uncategorized: ConnectionCatalogItem[] = [];
+  for (const item of items) {
+    const label = (item.categories ?? [])
+      .map((value) => value.trim())
+      .find((value) => value.length);
+    if (!label) {
+      uncategorized.push(item);
+      continue;
+    }
+    const id = categoryGroupId(label);
+    const existing = groups.get(id);
+    if (existing) existing.items.push(item);
+    else groups.set(id, { id, label, items: [item] });
+  }
+  const ordered = [...groups.values()].sort((left, right) => left.label.localeCompare(right.label));
+  if (uncategorized.length > 0) {
+    ordered.push({ id: CONNECTION_CATALOG_UNCATEGORIZED_ID, label: "", items: uncategorized });
+  }
+  return ordered;
+}
+
 export const EMPTY_PLUGIN_CATALOG_MESSAGE =
   "Configure a plugin catalog on the server to connect apps.";

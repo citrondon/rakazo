@@ -597,6 +597,8 @@ export const ConnectionCatalogItemSchema = z.object({
   logo: z.string().nullable(),
   connected: z.boolean(),
   noAuth: z.boolean(),
+  /** Provider-supplied grouping hints (Composio toolkit categories), display order preserved. */
+  categories: z.array(z.string()).optional(),
 });
 export type ConnectionCatalogItem = z.infer<typeof ConnectionCatalogItemSchema>;
 

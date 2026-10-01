@@ -13,6 +13,7 @@ import {
   buildFeaturedConnectorTiles,
   CONNECTION_CATALOG_PAGE_SIZE,
   filterConnectionCatalogItems,
+  groupConnectionCatalogItems,
   humanizeToolName,
 } from "@rakazo/core";
 import {
@@ -254,6 +255,7 @@ export function PluginsOverlay({
 
   const visible = useMemo(() => filterConnectionCatalogItems(catalog, query), [catalog, query]);
   const rendered = visible.slice(0, visibleCount);
+  const catalogGroups = useMemo(() => groupConnectionCatalogItems(rendered), [rendered]);
 
   function openDetail(item: ConnectionCatalogItem) {
     setCatalogError(null);
@@ -1060,13 +1062,28 @@ export function PluginsOverlay({
                 </p>
               ) : null}
               {visible.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {rendered.map((item) =>
-                    renderCatalogTile(item, item.name, item.logo, {
-                      // Avoid duplicate connection-tile-* ids while featured is also shown.
-                      tileTestId: !showFeatured,
-                    }),
-                  )}
+                <div className="flex flex-col gap-6">
+                  {catalogGroups.map((group) => (
+                    <section
+                      key={group.id}
+                      data-testid={`catalog-category-${group.id}`}
+                      className="flex flex-col gap-2"
+                    >
+                      {group.label ? (
+                        <h3 className="text-[12px] font-medium tracking-wide text-muted-foreground/70 uppercase">
+                          {group.label}
+                        </h3>
+                      ) : null}
+                      <div className="grid grid-cols-2 gap-2">
+                        {group.items.map((item) =>
+                          renderCatalogTile(item, item.name, item.logo, {
+                            // Avoid duplicate connection-tile-* ids while featured is also shown.
+                            tileTestId: !showFeatured,
+                          }),
+                        )}
+                      </div>
+                    </section>
+                  ))}
                 </div>
               ) : null}
               {rendered.length < visible.length ? (
