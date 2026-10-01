@@ -1517,7 +1517,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const { credential, thinkingLevel } = selected;
         const runModelProvider = selected.provider ?? runtimeFallback?.provider;
         const runModelId = selected.id ?? runtimeFallback?.id;
-        const failRunBeforeModel = async (message: string) => {
+        const failRunBeforeModel = async (message: string, stopReason?: string) => {
           const failed = await deps.events.finalizeRun({
             spaceId: run.spaceId,
             threadId: thread.id,
@@ -1529,6 +1529,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             leaseFence: fence,
             outcome: "failed",
             error: message,
+            stopReason,
           });
           if (!failed) return;
           if (failed.continuationRunId) {
@@ -1565,7 +1566,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         // monthly token budget is already exhausted (UTC calendar month).
         const budgetExceededMessage = await monthlyTokenBudgetExceeded(deps.prisma, bot);
         if (budgetExceededMessage) {
-          await failRunBeforeModel(budgetExceededMessage);
+          await failRunBeforeModel(budgetExceededMessage, "budget");
           return;
         }
         // The refusal above is the only pre-model stop that stays off the notification

@@ -588,6 +588,9 @@ model Run {
   modelProvider        String?
   modelId              String?
   error                String?
+  /// Free-form reason a run stopped, e.g. "budget", so a reader can classify the stop
+  /// without parsing the error message. Null for a normal completion.
+  stopReason           String?
   leaseOwner           String?
   leaseFence           Int              @default(0)
   leaseExpiresAt       DateTime?

@@ -122,6 +122,8 @@ interface FinalizeRunBase {
   attemptId: string;
   leaseOwner: string;
   leaseFence: number;
+  /** Why a failed run stopped (e.g. "budget"); ignored on a completion. */
+  stopReason?: string | null;
 }
 
 export type FinalizeRunInput = FinalizeRunBase &
@@ -1247,6 +1249,7 @@ async function finalizeRunOnce(
       data: {
         status: input.outcome,
         error: input.outcome === "failed" ? input.error : null,
+        stopReason: input.outcome === "failed" ? (input.stopReason ?? null) : null,
         completedAt: now,
         leaseOwner: null,
         leaseExpiresAt: null,
