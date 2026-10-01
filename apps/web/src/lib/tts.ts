@@ -24,6 +24,57 @@ export const VOICE_RESPONSE_TIMEOUT_MS = 70_000;
 export const MAX_VOICE_AUDIO_BYTES = 16 * 1024 * 1024;
 const MAX_VOICE_ERROR_BYTES = 64 * 1024;
 
+/** One silent 8-bit WAV sample; played once inside a user gesture to satisfy autoplay rules. */
+function silentWavDataUri(): string {
+  const bytes = new Uint8Array(45);
+  const view = new DataView(bytes.buffer);
+  const write = (offset: number, text: string) => {
+    for (let index = 0; index < text.length; index += 1) {
+      view.setUint8(offset + index, text.charCodeAt(index));
+    }
+  };
+  write(0, "RIFF");
+  view.setUint32(4, 37, true);
+  write(8, "WAVE");
+  write(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 8000, true);
+  view.setUint32(28, 8000, true);
+  view.setUint16(32, 1, true);
+  view.setUint16(34, 8, true);
+  write(36, "data");
+  view.setUint32(40, 1, true);
+  view.setUint8(44, 128);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return `data:audio/wav;base64,${btoa(binary)}`;
+}
+
+let speechPrimed = false;
+
+/**
+ * Browsers block autoplay until the page has been interacted with, and the auto-read of a
+ * bot reply never is. Call this from the first user gesture so a later programmatic play
+ * is allowed; safe to call repeatedly.
+ */
+export function primeSpeechPlayback(): void {
+  if (speechPrimed || typeof Audio === "undefined") return;
+  speechPrimed = true;
+  const audio = new Audio(silentWavDataUri());
+  audio.volume = 0;
+  void audio.play().catch(() => undefined);
+}
+
+/** Turn a rejected `play()` into something a person can act on. */
+function playFailureMessage(error: unknown): string {
+  if (error instanceof DOMException && error.name === "NotAllowedError") {
+    return "The browser blocked audio playback. Click the page once, then start the voice again.";
+  }
+  return error instanceof Error ? error.message : "The voice could not be played.";
+}
+
 export class Speaker {
   private snapshot: SpeechSnapshot = IDLE;
   private watchers = new Set<(s: SpeechSnapshot) => void>();
@@ -32,6 +83,7 @@ export class Speaker {
   private objectUrl: string | null = null;
   private settlePlayback: ((finished: boolean) => void) | null = null;
   private request: AbortController | null = null;
+  private playFailure: string | null = null;
 
   subscribe(fn: (s: SpeechSnapshot) => void): () => void {
     this.watchers.add(fn);
@@ -136,7 +188,9 @@ export class Speaker {
       });
       const finished = await this.play(rendered.blob, live);
       if (!finished || !live()) {
-        if (live()) this.set(IDLE);
+        const failure = this.playFailure;
+        if (live() && failure) this.set({ ...IDLE, error: failure });
+        else if (live()) this.set(IDLE);
         if (this.request === controller) this.request = null;
         return;
       }
@@ -195,6 +249,7 @@ export class Speaker {
     return new Promise((resolve) => {
       if (!live()) return resolve(false);
       this.teardownAudio();
+      this.playFailure = null;
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       this.audio = audio;
@@ -211,8 +266,14 @@ export class Speaker {
       };
       this.settlePlayback = done;
       audio.onended = () => done(true);
-      audio.onerror = () => done(false);
-      audio.play().catch(() => done(false));
+      audio.onerror = () => {
+        this.playFailure = "The voice could not be played.";
+        done(false);
+      };
+      audio.play().catch((error: unknown) => {
+        this.playFailure = playFailureMessage(error);
+        done(false);
+      });
     });
   }
 }

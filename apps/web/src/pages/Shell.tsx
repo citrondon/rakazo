@@ -239,7 +239,7 @@ import {
   transcriptIsNearEnd,
   transcriptMovedDown,
 } from "../lib/transcript-scroll";
-import { speaker } from "../lib/tts";
+import { primeSpeechPlayback, speaker } from "../lib/tts";
 import { usePwaInstall } from "../lib/use-pwa-install";
 import { ActivityList } from "./ActivityList";
 import type { ContextMenuPosition } from "./BotContextMenu";
@@ -1261,6 +1261,17 @@ export function ShellPage() {
     });
     return () => {
       unsubSpeech();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Autoplay needs one real gesture; prime the audio pipeline on the first tap or key press.
+    const prime = () => primeSpeechPlayback();
+    window.addEventListener("pointerdown", prime, { once: true, capture: true });
+    window.addEventListener("keydown", prime, { once: true, capture: true });
+    return () => {
+      window.removeEventListener("pointerdown", prime, { capture: true });
+      window.removeEventListener("keydown", prime, { capture: true });
     };
   }, []);
 
