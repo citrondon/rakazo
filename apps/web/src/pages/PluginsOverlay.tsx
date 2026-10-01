@@ -86,10 +86,12 @@ export function PluginsOverlay({
   onClose,
   onOpenMcp,
   activeBotId,
+  isDeploymentOwner = false,
 }: {
   onClose: () => void;
   onOpenMcp?: () => void;
   activeBotId?: string;
+  isDeploymentOwner?: boolean;
 }) {
   const { t } = useLingui();
   const [setupOpen, setSetupOpen] = useState(false);
@@ -810,185 +812,188 @@ export function PluginsOverlay({
         ) : null}
 
         <div id="integration-list" className="rk-scroll flex-1 overflow-y-auto px-8 py-6">
-          {/* 1-Klick MCP Connectors Gallery */}
-          <div className="mb-8 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-amber-500" />
-                <h3 className="text-base font-semibold text-foreground">
-                  <Trans>1-Klick Connectors (Grok-Bot Style)</Trans>
-                </h3>
+          {/* Server-side stdio connectors run beside the database, so they stay with the
+              deployment owner and only when the deployment turns stdio on. */}
+          {stdioStatus?.enabled && isDeploymentOwner ? (
+            <div className="mb-8 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-amber-500" />
+                  <h3 className="text-base font-semibold text-foreground">
+                    <Trans>1-Klick Connectors (Grok-Bot Style)</Trans>
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="hidden text-xs text-muted-foreground sm:inline">
+                    <Trans>Automatisch für alle Bots aktiv</Trans>
+                  </span>
+                  {onOpenMcp ? (
+                    <Button variant="outline" size="sm" onClick={onOpenMcp}>
+                      <Trans>Erweiterte Server</Trans>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSetupOpen((current) => !current)}
+                    >
+                      <Trans>MCP Server konfigurieren</Trans>
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="hidden text-xs text-muted-foreground sm:inline">
-                  <Trans>Automatisch für alle Bots aktiv</Trans>
-                </span>
-                {onOpenMcp ? (
-                  <Button variant="outline" size="sm" onClick={onOpenMcp}>
-                    <Trans>Erweiterte Server</Trans>
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSetupOpen((current) => !current)}
-                  >
-                    <Trans>MCP Server konfigurieren</Trans>
-                  </Button>
-                )}
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {MCP_PRESETS.map((preset) => {
-                const isInstalled = mcpServers.some((s) => s.slug === preset.slug);
-                const isPending = presetPending === preset.id;
-                const blocker = stdioBlockerReason(preset, stdioStatus);
-                const secret = preset.requiresSecret;
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {MCP_PRESETS.map((preset) => {
+                  const isInstalled = mcpServers.some((s) => s.slug === preset.slug);
+                  const isPending = presetPending === preset.id;
+                  const blocker = stdioBlockerReason(preset, stdioStatus);
+                  const secret = preset.requiresSecret;
 
-                const renderIcon = () => {
-                  switch (preset.iconName) {
-                    case "FolderKanban":
-                      return <FolderKanban className="h-5 w-5 text-blue-500" />;
-                    case "Globe":
-                      return <Globe className="h-5 w-5 text-emerald-500" />;
-                    case "BookOpen":
-                      return <BookOpen className="h-5 w-5 text-purple-500" />;
-                    case "GitBranch":
-                      return <GitBranch className="h-5 w-5 text-orange-500" />;
-                    case "Terminal":
-                      return <Terminal className="h-5 w-5 text-slate-500" />;
-                    case "Database":
-                      return <Database className="h-5 w-5 text-cyan-500" />;
-                  }
-                };
+                  const renderIcon = () => {
+                    switch (preset.iconName) {
+                      case "FolderKanban":
+                        return <FolderKanban className="h-5 w-5 text-blue-500" />;
+                      case "Globe":
+                        return <Globe className="h-5 w-5 text-emerald-500" />;
+                      case "BookOpen":
+                        return <BookOpen className="h-5 w-5 text-purple-500" />;
+                      case "GitBranch":
+                        return <GitBranch className="h-5 w-5 text-orange-500" />;
+                      case "Terminal":
+                        return <Terminal className="h-5 w-5 text-slate-500" />;
+                      case "Database":
+                        return <Database className="h-5 w-5 text-cyan-500" />;
+                    }
+                  };
 
-                return (
-                  <Card
-                    key={preset.id}
-                    className={`flex flex-col justify-between border transition-all ${
-                      isInstalled
-                        ? "border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/10"
-                        : "border-border hover:border-border/80"
-                    }`}
-                  >
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between gap-1">
-                        <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent/60">
-                          {renderIcon()}
-                        </div>
-                        {isInstalled ? (
-                          <Badge
-                            variant="outline"
-                            className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 text-[10px] gap-1 px-1.5 py-0"
-                          >
-                            <Check className="h-3 w-3" />
-                            <Trans>Aktiv</Trans>
-                          </Badge>
-                        ) : preset.badge ? (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                            {preset.badge}
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <CardTitle className="mt-2 text-sm font-semibold">{preset.name}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-1 flex-col justify-between gap-3 text-xs text-muted-foreground pt-0">
-                      <p className="line-clamp-2 leading-relaxed">{preset.description}</p>
-                      <McpPresetBlockerNote preset={preset} reason={blocker} />
-                      {isInstalled ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          disabled={isPending}
-                          onClick={() => void uninstallPreset(preset)}
-                        >
-                          {isPending ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Trans>Trennen</Trans>
-                          )}
-                        </Button>
-                      ) : secret ? (
-                        <div className="flex flex-col gap-2">
-                          {presetSecretOpen === preset.id ? (
-                            <div className="flex flex-col gap-1.5">
-                              <Input
-                                type="password"
-                                placeholder={secret.placeholder}
-                                aria-label={secret.label}
-                                value={presetSecret}
-                                onChange={(e) => setPresetSecret(e.target.value)}
-                                className="h-7 text-xs"
-                              />
-                              <div className="flex gap-1">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  className="h-7 flex-1 text-xs"
-                                  disabled={isPending || !presetSecret.trim()}
-                                  onClick={() =>
-                                    void installPreset(preset, {
-                                      [secret.envVar]: presetSecret.trim(),
-                                    })
-                                  }
-                                >
-                                  {isPending ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <Trans>Speichern</Trans>
-                                  )}
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 text-xs px-2"
-                                  onClick={() => setPresetSecretOpen(null)}
-                                >
-                                  <Trans>Abbrechen</Trans>
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              className="w-full text-xs"
-                              onClick={() => {
-                                setPresetSecret("");
-                                setPresetSecretOpen(preset.id);
-                              }}
+                  return (
+                    <Card
+                      key={preset.id}
+                      className={`flex flex-col justify-between border transition-all ${
+                        isInstalled
+                          ? "border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/10"
+                          : "border-border hover:border-border/80"
+                      }`}
+                    >
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between gap-1">
+                          <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent/60">
+                            {renderIcon()}
+                          </div>
+                          {isInstalled ? (
+                            <Badge
+                              variant="outline"
+                              className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 text-[10px] gap-1 px-1.5 py-0"
                             >
-                              <Trans>Verbinden</Trans>
-                            </Button>
-                          )}
+                              <Check className="h-3 w-3" />
+                              <Trans>Aktiv</Trans>
+                            </Badge>
+                          ) : preset.badge ? (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                              {preset.badge}
+                            </Badge>
+                          ) : null}
                         </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          className="w-full text-xs"
-                          disabled={isPending}
-                          onClick={() => void installPreset(preset)}
-                        >
-                          {isPending ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Trans>Verbinden</Trans>
-                          )}
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                        <CardTitle className="mt-2 text-sm font-semibold">{preset.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex flex-1 flex-col justify-between gap-3 text-xs text-muted-foreground pt-0">
+                        <p className="line-clamp-2 leading-relaxed">{preset.description}</p>
+                        <McpPresetBlockerNote preset={preset} reason={blocker} />
+                        {isInstalled ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            disabled={isPending}
+                            onClick={() => void uninstallPreset(preset)}
+                          >
+                            {isPending ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trans>Trennen</Trans>
+                            )}
+                          </Button>
+                        ) : secret ? (
+                          <div className="flex flex-col gap-2">
+                            {presetSecretOpen === preset.id ? (
+                              <div className="flex flex-col gap-1.5">
+                                <Input
+                                  type="password"
+                                  placeholder={secret.placeholder}
+                                  aria-label={secret.label}
+                                  value={presetSecret}
+                                  onChange={(e) => setPresetSecret(e.target.value)}
+                                  className="h-7 text-xs"
+                                />
+                                <div className="flex gap-1">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    className="h-7 flex-1 text-xs"
+                                    disabled={isPending || !presetSecret.trim()}
+                                    onClick={() =>
+                                      void installPreset(preset, {
+                                        [secret.envVar]: presetSecret.trim(),
+                                      })
+                                    }
+                                  >
+                                    {isPending ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <Trans>Speichern</Trans>
+                                    )}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-xs px-2"
+                                    onClick={() => setPresetSecretOpen(null)}
+                                  >
+                                    <Trans>Abbrechen</Trans>
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                className="w-full text-xs"
+                                onClick={() => {
+                                  setPresetSecret("");
+                                  setPresetSecretOpen(preset.id);
+                                }}
+                              >
+                                <Trans>Verbinden</Trans>
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="w-full text-xs"
+                            disabled={isPending}
+                            onClick={() => void installPreset(preset)}
+                          >
+                            {isPending ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trans>Verbinden</Trans>
+                            )}
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ) : null}
           {setupOpen ? (
             <div className="mb-6">
               <IntegrationSetup
