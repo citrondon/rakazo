@@ -946,11 +946,11 @@ export async function autoResumeQuietHoursRun(
 ): Promise<boolean> {
   const now = new Date();
   if (now < resumeAt) return false;
-  
+
   const run = await prisma.run.findUnique({ where: { id: runId } });
   if (!run || !run.trustPhase || run.trustPhase !== "paused") return false;
   if (run.status !== "waiting_input" && run.status !== "paused") return false;
-  
+
   const fence = nextFence(run.leaseFence);
   const leased = await prisma.run.updateMany({
     where: {
@@ -970,9 +970,9 @@ export async function autoResumeQuietHoursRun(
       updatedAt: now,
     },
   });
-  
+
   if (leased.count !== 1) return false;
-  
+
   // Create a checkpoint message for the UI so users see the run resumed
   await createThreadMessage(prisma, {
     threadId: run.threadId,
@@ -980,13 +980,13 @@ export async function autoResumeQuietHoursRun(
     blocks: [
       {
         kind: "text",
-        text: `Run auto-resumed from quiet hours pause. Reason: ${reason}`,}
-      ],
-      botId: run.botId,
-      runId: runId,
-    }
-  );
-  
+        text: `Run auto-resumed from quiet hours pause. Reason: ${reason}`,
+      },
+    ],
+    botId: run.botId,
+    runId: runId,
+  });
+
   return true;
 }
 
