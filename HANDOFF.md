@@ -140,6 +140,11 @@ pnpm lint
 - `pnpm lint` is `biome check .` over the working tree, so it reports any window's uncommitted
   edits as errors. Judge it against committed content, not against another window's live files.
   The long-standing `.vscode/settings.json` newline error is fixed (`4d0f4228`).
+- After any `packages/db/prisma/schema.prisma` change, **every worktree needs `pnpm db:generate`**.
+  Generated output is gitignored (`.gitignore:34`), so the branch merges the new schema but keeps the
+  old client, and the symptom is a confusing `error TS2339` on the new field (it bit `sprint/ux` and
+  `sprint/reach` after `995a4485` added `Run.resumeAt`: `events.ts(891,12) Property 'resumeAt' does
+  not exist on type 'RunUpdateInput'`). `pnpm db:generate` in that worktree is the whole fix.
 - Sprint branch state, integrator support, 2026-10-01 04:47 — `sprint/library` merged to `main`
   and clean at origin. `sprint/reach` and `sprint/ux` were both aligned with `main`, merge commits
   `3fd09505` and `e87b2fd1` (revert points `496b25c5` and `8aca4ee1`), each verified green in its own
