@@ -26,6 +26,7 @@ import {
 } from "@rakazo/ui-web";
 import { X } from "lucide-react";
 import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
+import { instructionsPatch } from "../../lib/bot-instructions-patch";
 import { thinkingLevelLabel } from "../../lib/model-catalog";
 import { rpc } from "../../lib/rpc";
 import { AvatarStudioPopover } from "./avatar-studio-popover";
@@ -361,7 +362,7 @@ export function BotSettings({
         name: nextName || bot.name,
         title: nextTitle,
         description: nextDescription,
-        instructions: nextDescription,
+        ...instructionsPatch(bot.description, nextDescription),
         // Unchanged color stays off the wire so a legacy named value cannot fail a name save.
         ...(nextColor !== bot.color ? { color: nextColor } : {}),
         notifyOnFinish: nextNotify,
