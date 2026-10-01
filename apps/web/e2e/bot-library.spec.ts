@@ -8,9 +8,8 @@ test("starts a bot from the shipped library", async ({ page }, testInfo) => {
   await page.goto("/app");
   await page.waitForURL(/\/app\/[^/]+$/);
 
-  // The library opens from the same create menu that holds Import bot.
-  await page.getByTestId("create-menu-trigger").click();
-  await page.getByTestId("open-bot-library").click();
+  // The sidebar keeps the library one click away; the create menu remains an alternate route.
+  await page.getByTestId("open-bot-library-direct").click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("Bot library")).toBeVisible();
 

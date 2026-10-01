@@ -96,6 +96,7 @@ import {
   FolderOpen,
   Gauge,
   LayoutGrid,
+  Library,
   Lock,
   LogOut,
   Maximize2,
@@ -2802,6 +2803,19 @@ export function ShellPage() {
               onClick={() => setBotsSidebarCollapsedPref(true)}
             >
               <PanelLeftClose size={15} strokeWidth={1.8} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="app-no-drag flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground/75"
+              aria-label={t`Bot library`}
+              title={t`Bot library`}
+              data-testid="open-bot-library-direct"
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                setBotLibraryOpen(true);
+              }}
+            >
+              <Library size={15} strokeWidth={1.8} aria-hidden="true" />
             </button>
             <Popover open={createMenuOpen} onOpenChange={setCreateMenuOpen}>
               <PopoverTrigger

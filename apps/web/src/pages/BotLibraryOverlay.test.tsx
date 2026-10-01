@@ -33,6 +33,8 @@ vi.mock("@lingui/react/macro", () => {
 vi.mock("@rakazo/ui-web", () => {
   const Container = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   return {
+    BotAvatar: ({ identity }: { identity: string }) => <span data-testid={`avatar-${identity}`} />,
+    GROK_BOT_COLORS: ["#8B5CF6", "#10B981", "#3B82F6"],
     Button: ({
       children,
       variant: _variant,
@@ -147,6 +149,10 @@ it("lists the summaries and pulls a preset body only once one is picked", async 
   try {
     expect(overlay.container.textContent).toContain("OpenResearch");
     expect(overlay.container.textContent).toContain("Support Desk");
+    expect(overlay.container.querySelector("[data-testid='avatar-openresearch']")).not.toBeNull();
+    expect(
+      overlay.container.querySelector("[data-testid='bot-category-engineering']"),
+    ).not.toBeNull();
     // Nothing but the summary list travelled, so nothing can be imported yet.
     expect(bots.preset).not.toHaveBeenCalled();
     expect(importButton(overlay.container)?.disabled).toBe(true);
@@ -193,7 +199,7 @@ it("narrows the list by description without fetching a preset body", async () =>
     await act(async () => {
       typeSearch(overlay.container, "gibt es nicht");
     });
-    expect(overlay.container.textContent).toContain("No presets match");
+    expect(overlay.container.textContent).toContain("No bots in this category match your search.");
     expect(bots.preset).not.toHaveBeenCalled();
   } finally {
     await overlay.cleanup();
