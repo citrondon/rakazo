@@ -9,7 +9,8 @@ import { isLocalMcpHost } from "@rakazo/contracts";
 import type { McpServer, PrismaClient, ThreadEvents } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { catalogToolPrefix } from "./approval-effect.js";
-import { redactConnectorPayload, sanitizeConnectorError } from "./connector-safety.js";
+import { describeMcpFailure } from "./connector-failures.js";
+import { redactConnectorPayload } from "./connector-safety.js";
 import { appendToolCompletionAudit } from "./executor.js";
 import {
   CATALOG_EXECUTE,
@@ -48,6 +49,18 @@ export function allowlistDrift(
     offered: names.size,
     stringAllowedCount: stringAllowed.length,
   };
+}
+
+/** Name the endpoint in a classified failure: its host, or the stdio command. */
+function endpointHost(server: Pick<McpServer, "transport" | "endpoint" | "command">): string {
+  if (server.endpoint) {
+    try {
+      return new URL(server.endpoint).host;
+    } catch {
+      return server.endpoint.slice(0, 120);
+    }
+  }
+  return String(server.command ?? server.transport);
 }
 
 function reportAllowlistDrift(
@@ -162,7 +175,7 @@ export class McpConnector implements ConnectorProvider {
           // A single unavailable server must not hide tools from other connectors.
           getLogger().error(
             `mcp discovery failed for server ${assignment.server.slug}:`,
-            sanitizeConnectorError(error),
+            describeMcpFailure(error, { host: endpointHost(assignment.server) }).message,
           );
           // Capture material before eviction so the audited reason stays redacted, the
           // same reason execute() captures it before callTool.
@@ -234,7 +247,7 @@ export class McpConnector implements ConnectorProvider {
           (resolved) => this.execute(resolved, context),
         );
       } catch (error) {
-        yield { type: "error", message: sanitizeConnectorError(error) };
+        yield { type: "error", message: describeMcpFailure(error).message };
       }
       return;
     }
@@ -281,7 +294,13 @@ export class McpConnector implements ConnectorProvider {
       // A thrown call means the transport or auth broke; drop the session so the next call reconnects.
       const secrets = material ? oauthMaterialSecrets(material) : [];
       await this.evict(sessionKey);
-      yield { type: "error", message: sanitizeConnectorError(error, secrets) };
+      yield {
+        type: "error",
+        message: describeMcpFailure(error, {
+          host: endpointHost(assignment.server),
+          secrets,
+        }).message,
+      };
     }
   }
 
@@ -415,7 +434,12 @@ export class McpConnector implements ConnectorProvider {
       // the secrets: the session never reached `sessions`. Sanitizing per caller would
       // cover only whoever looked first.
       if (!material) throw error;
-      throw new Error(sanitizeConnectorError(error, oauthMaterialSecrets(material)));
+      throw new Error(
+        describeMcpFailure(error, {
+          host: endpointHost(server),
+          secrets: oauthMaterialSecrets(material),
+        }).message,
+      );
     }
   }
 }
