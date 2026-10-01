@@ -148,7 +148,7 @@ class RakazoNotificationService : Service() {
                 .forEach { immediate += it to attentionCopy(it) }
             }
             alertedAttention.retainAll(active.map { "${it.runId}:${it.status}" }.toSet())
-            immediate.forEach { (run, copy) -> post(run, copy) }
+            immediate.forEach { (run, copy) -> post(run, copy, avatarStyle) }
           }
         ) {
           return
@@ -170,6 +170,7 @@ class RakazoNotificationService : Service() {
                   body = reply.ifBlank { run.prompt },
                   channel = if (scheduled) Channels.SCHEDULED else Channels.MESSAGES,
                 ),
+                avatarStyle,
               )
             }
           ) {
@@ -223,7 +224,7 @@ class RakazoNotificationService : Service() {
       state.getBoolean(SEEN_RUNS_SEEDED, false)
     }
 
-  private fun post(run: RunRecord, copy: NotificationCopy) {
+  private fun post(run: RunRecord, copy: NotificationCopy, avatarStyle: String) {
     if (!run.notificationsEnabled || isOpenThread(run)) return
     // One group per bot, so a roster reads as a stack per bot rather than one pile of
     // alerts from every bot at once, and the owner sees who spoke without opening anything.
@@ -243,7 +244,7 @@ class RakazoNotificationService : Service() {
       .setCategory(Notification.CATEGORY_MESSAGE)
     // Reuse the bot's own avatar where the product already draws one, so the group is
     // recognizable at a glance instead of carrying the same generic icon as everything else.
-    if (selectedAvatarStyle == "organic") alert.setLargeIcon(botAvatarBitmap(run))
+    if (avatarStyle == "organic") alert.setLargeIcon(botAvatarBitmap(run))
     val notification = alert.build()
     manager.notify(run.threadId.hashCode(), notification)
   }

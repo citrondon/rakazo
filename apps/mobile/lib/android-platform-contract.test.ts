@@ -82,7 +82,7 @@ describe("Android mobile platform contract", () => {
       'private fun botGroupKey(botId: String): String = "rakazo.bot.$botId"',
     );
     expect(service).toContain(
-      'if (selectedAvatarStyle == "organic") alert.setLargeIcon(botAvatarBitmap(run))',
+      'if (avatarStyle == "organic") alert.setLargeIcon(botAvatarBitmap(run))',
     );
     expect(service).toContain(
       "private fun runIfCurrent(generation: Long, action: () -> Unit): Boolean",
