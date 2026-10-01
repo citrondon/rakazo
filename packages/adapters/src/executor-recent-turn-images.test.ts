@@ -61,6 +61,7 @@ async function runWithModel(modelId: string) {
     status: "queued",
     trigger: "user",
     leaseFence: 0,
+    space: { maxToolCallsPerTurn: 200 },
   };
   const get = vi.fn(async () => new Uint8Array([1, 2, 3, 4]));
   let request: AgentRunRequest | undefined;
@@ -167,6 +168,7 @@ describe("recent turn images follow model vision", () => {
     const { request, get } = await runWithModel(VISION_MODEL);
 
     expect(request.model.id).toBe(VISION_MODEL);
+    expect(request.maxToolCallsPerTurn).toBe(200);
     expect(request.history.find((entry) => entry.id === "earlier")?.images?.[0]).toMatchObject({
       name: "shot.png",
       mimeType: "image/png",

@@ -423,6 +423,11 @@ export interface AgentRunRequest {
   model: AgentRunModel;
   /** Resolve an explicitly requested helper model within the active user and space scope. */
   resolveModel?: (provider: string, modelId: string) => Promise<AgentRunModel>;
+  /**
+   * Space-level per-turn tool-call fuse. null/undefined inherits the deployment value
+   * (`MAX_TOOL_CALLS_PER_TURN`); 0 means unlimited.
+   */
+  maxToolCallsPerTurn?: number | null;
   resumeFromCheckpoint?: string;
   script?: ScriptedTurn[];
   /**

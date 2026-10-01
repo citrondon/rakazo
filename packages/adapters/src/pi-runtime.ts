@@ -30,7 +30,7 @@ import type {
   AgentToolExecutionResult,
   ConnectorTool,
 } from "@rakazo/adapter-kit";
-import { usableModelId } from "@rakazo/contracts";
+import { parseToolCallLimit, resolveToolCallLimit, usableModelId } from "@rakazo/contracts";
 import { getLogger } from "@rakazo/logging";
 import { isToolPauseResult } from "./approval-effect.js";
 import { builtinAgentTools, DELEGATION_TOOL_NAMES } from "./builtin-tools.js";
@@ -114,11 +114,7 @@ const FALLBACK_AGENT_TOOL_NAME = "connector_tool";
 
 /** Optional self-host fuse. Unset, empty, or 0 means unlimited (default). */
 export function maxToolCallsPerTurn(env: NodeJS.ProcessEnv = process.env): number {
-  const raw = env.MAX_TOOL_CALLS_PER_TURN?.trim();
-  if (!raw) return 0;
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
-  return Math.floor(parsed);
+  return parseToolCallLimit(env.MAX_TOOL_CALLS_PER_TURN);
 }
 
 export interface PiAgentRuntimeOptions {
@@ -201,7 +197,13 @@ export class PiAgentRuntime implements AgentRuntime {
         const toolDefs = request.tools.length ? request.tools : builtinAgentTools;
         const nestedAgents = new Set<Agent>();
         const completionModel = modelForCompletion(model, request.model.maxTokens);
-        trackedBudget = toolCallBudgetFor(request.runId);
+        const { limit: turnToolCallLimit, source: turnToolCallLimitSource } =
+          resolveTurnToolCallLimit(request);
+        getLogger().info("Turn tool-call limit", {
+          limit: turnToolCallLimit,
+          source: turnToolCallLimitSource,
+        });
+        trackedBudget = toolCallBudgetFor(request.runId, turnToolCallLimit);
         const host: ToolHost = {
           queue,
           request,
@@ -1777,17 +1779,30 @@ function toolCallBudgetExceededMessage(limit: number) {
   return `I stopped after reaching the limit of ${limit} tool calls in this turn. Send another message to continue.`;
 }
 
-function toolCallBudgetFor(runId: string): ToolCallBudget {
+type ToolCallLimitSource = "space" | "deployment" | "unlimited";
+
+/** The fuse a turn starts with: the space's stored value when set, otherwise the deployment value. */
+function resolveTurnToolCallLimit(request: AgentRunRequest): {
+  limit: number;
+  source: ToolCallLimitSource;
+} {
+  const limit = resolveToolCallLimit(request.maxToolCallsPerTurn, maxToolCallsPerTurn());
+  const source: ToolCallLimitSource =
+    request.maxToolCallsPerTurn == null ? "deployment" : limit === 0 ? "unlimited" : "space";
+  return { limit, source };
+}
+
+function toolCallBudgetFor(runId: string, limit: number): ToolCallBudget {
   const existing = toolCallBudgetsByRun.get(runId);
   if (existing) {
     existing.inFlight = 0;
-    existing.limit = maxToolCallsPerTurn();
+    existing.limit = limit;
     return existing;
   }
   const budget: ToolCallBudget = {
     count: 0,
     exceeded: false,
-    limit: maxToolCallsPerTurn(),
+    limit,
     inFlight: 0,
   };
   if (budget.limit > 0) toolCallBudgetsByRun.set(runId, budget);

@@ -1153,6 +1153,129 @@ describe("Pi connector tool dispatch", () => {
       text: "Stopped: more than 2 tool calls in one turn.",
     });
   });
+  it("stops at the space limit even when no deployment fuse exists", async () => {
+    delete process.env.MAX_TOOL_CALLS_PER_TURN;
+    fakeAgentState.mode = "parent-limit";
+    const executeTool = vi.fn(async () => ({ ok: true }));
+    const runtime = new PiAgentRuntime();
+    const events: unknown[] = [];
+
+    for await (const event of runtime.run(
+      {
+        botId: "b",
+        threadId: "t",
+        runId: "space-limit-30",
+        prompt: "keep going",
+        instructions: "Use shell.",
+        history: [],
+        tools: [shellTool],
+        model: { provider: "test", id: "dispatch-test-model" },
+        executeTool,
+        maxToolCallsPerTurn: 30,
+      },
+      {
+        operationId: "2d",
+        traceId: "2d",
+        spaceId: "w",
+        userId: "u",
+        signal: new AbortController().signal,
+      },
+    )) {
+      events.push(event);
+    }
+
+    expect(executeTool).toHaveBeenCalledTimes(30);
+    expect(fakeAgentState.abortCount).toBeGreaterThanOrEqual(1);
+    expect(events).toContainEqual({
+      type: "progress",
+      text: "Stopped: more than 30 tool calls in one turn.",
+    });
+    expect(events).toContainEqual({
+      type: "text",
+      text: "I stopped after reaching the limit of 30 tool calls in this turn. Send another message to continue.",
+    });
+  });
+
+  it("lets an explicit 0 in the space override a deployment fuse", async () => {
+    process.env.MAX_TOOL_CALLS_PER_TURN = "2";
+    fakeAgentState.mode = "parent-parallel";
+    const executeTool = vi.fn(async () => ({ ok: true }));
+    const runtime = new PiAgentRuntime();
+    const events: unknown[] = [];
+
+    for await (const event of runtime.run(
+      {
+        botId: "b",
+        threadId: "t",
+        runId: "space-unlimited",
+        prompt: "run them together",
+        instructions: "Use shell.",
+        history: [],
+        tools: [shellTool],
+        model: { provider: "test", id: "dispatch-test-model" },
+        executeTool,
+        maxToolCallsPerTurn: 0,
+      },
+      {
+        operationId: "2e",
+        traceId: "2e",
+        spaceId: "w",
+        userId: "u",
+        signal: new AbortController().signal,
+      },
+    )) {
+      events.push(event);
+    }
+
+    expect(executeTool).toHaveBeenCalledTimes(4);
+    expect(fakeAgentState.abortCount).toBe(0);
+    expect(events).not.toContainEqual(
+      expect.objectContaining({
+        type: "progress",
+        text: expect.stringContaining("tool calls in one turn"),
+      }),
+    );
+  });
+
+  it("falls back to the deployment fuse when the space stores nothing", async () => {
+    process.env.MAX_TOOL_CALLS_PER_TURN = "2";
+    fakeAgentState.mode = "parent-parallel";
+    const executeTool = vi.fn(async () => ({ ok: true }));
+    const runtime = new PiAgentRuntime();
+    const events: unknown[] = [];
+
+    for await (const event of runtime.run(
+      {
+        botId: "b",
+        threadId: "t",
+        runId: "space-inherits",
+        prompt: "run them together",
+        instructions: "Use shell.",
+        history: [],
+        tools: [shellTool],
+        model: { provider: "test", id: "dispatch-test-model" },
+        executeTool,
+        maxToolCallsPerTurn: null,
+      },
+      {
+        operationId: "2f",
+        traceId: "2f",
+        spaceId: "w",
+        userId: "u",
+        signal: new AbortController().signal,
+      },
+    )) {
+      events.push(event);
+    }
+
+    expect(executeTool).toHaveBeenCalledTimes(2);
+    expect(events).toContainEqual({
+      type: "progress",
+      text: "Stopped: more than 2 tool calls in one turn.",
+    });
+  });
+
+
 
   it("keeps an optional tool-call fuse across a second run() for the same runId", async () => {
     process.env.MAX_TOOL_CALLS_PER_TURN = "5";
