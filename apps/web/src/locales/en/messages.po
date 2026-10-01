@@ -28,6 +28,18 @@ msgstr "{0, plural, one {# model} other {# models}}"
 msgid "{0, plural, one {Skill: #} other {Skills: #}}"
 msgstr "{0, plural, one {Skill: #} other {Skills: #}}"
 
+#. placeholder {0}: Math.ceil(oauth.expiresInSeconds / 60)
+#: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Onboarding.tsx
+msgid "{0, plural, one {Waiting for sign-in — the code expires in about # minute.} other {Waiting for sign-in — the code expires in about # minutes.}}"
+msgstr "{0, plural, one {Waiting for sign-in — the code expires in about # minute.} other {Waiting for sign-in — the code expires in about # minutes.}}"
+
+#. placeholder {0}: Math.ceil(oauth.expiresInSeconds / 60)
+#: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Onboarding.tsx
+msgid "{0, plural, one {Waiting for sign-in — the link expires in about # minute.} other {Waiting for sign-in — the link expires in about # minutes.}}"
+msgstr "{0, plural, one {Waiting for sign-in — the link expires in about # minute.} other {Waiting for sign-in — the link expires in about # minutes.}}"
+
 #. placeholder {0}: preview.memoryCount
 #: src/pages/BotImportOverlay.tsx
 #: src/pages/BotLibraryOverlay.tsx
@@ -204,6 +216,12 @@ msgstr "1-Klick Connectors (Grok-Bot Style)"
 #: src/pages/shell/message-cards.tsx
 msgid "A bit of everything"
 msgstr "A bit of everything"
+
+#. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
+#: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Onboarding.tsx
+msgid "A sign-in tab opened at <0>{0}</0>. Enter this code there — this window keeps waiting:"
+msgstr "A sign-in tab opened at <0>{0}</0>. Enter this code there — this window keeps waiting:"
 
 #: src/pages/ReactiveTriggerSection.tsx
 msgid "a, b, c"
@@ -417,6 +435,10 @@ msgstr "Aktivieren…"
 #: src/pages/BotLibraryOverlay.tsx
 msgid "All bots"
 msgstr "All bots"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "All providers"
+msgstr "All providers"
 
 #: src/pages/Artifacts.tsx
 msgid "All time"
@@ -773,6 +795,8 @@ msgstr "Can't reach the server."
 #: src/pages/BotImportOverlay.tsx
 #: src/pages/BotLibraryOverlay.tsx
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Onboarding.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/ReactiveTriggerSection.tsx
 #: src/pages/shell/dialogs.tsx
@@ -1167,6 +1191,13 @@ msgstr "Continue in Background"
 msgid "Continue with email"
 msgstr "Continue with email"
 
+#: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Onboarding.tsx
+msgid "Copied"
+msgstr "Copied"
+
+#: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Onboarding.tsx
 #: src/pages/Shell.tsx
 msgid "Copy"
 msgstr "Copy"
@@ -1305,6 +1336,10 @@ msgstr "Could not disconnect memory provider"
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not disconnect OAuth"
 msgstr "Could not disconnect OAuth"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Could not disconnect this provider"
+msgstr "Could not disconnect this provider"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not disconnect this voice provider"
@@ -1734,7 +1769,15 @@ msgstr "Decline"
 msgid "Default"
 msgstr "Default"
 
+#. js-lingui-explicit-id
+#. placeholder {0}: thinkingLevelLabel("medium")
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Default ({0})"
+msgstr "Default ({0})"
+
+#. placeholder {0}: thinkingLevelLabel("medium")
 #. placeholder {0}: thinkingLevelLabel(defaultThinkingLevel)
+#: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Default ({0})"
 msgstr "Default ({0})"
@@ -1832,11 +1875,22 @@ msgstr "Direct MCP"
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/MemorySettingsOverlay.tsx
+#: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Disconnect"
 msgstr "Disconnect"
 
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Disconnect {disconnectName}?"
+msgstr "Disconnect {disconnectName}?"
+
+#. placeholder {0}: selected.providerName ?? selected.provider
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Disconnected {0}."
+msgstr "Disconnected {0}."
+
 #: src/pages/MemorySettingsOverlay.tsx
+#: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Disconnecting…"
 msgstr "Disconnecting…"
@@ -1978,12 +2032,6 @@ msgstr "Enter a whole number from 1 to 1000 for the image limit."
 msgid "Enter a whole number of tool calls"
 msgstr "Enter a whole number of tool calls"
 
-#. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
-#: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/Onboarding.tsx
-msgid "Enter this code at <0>{0}</0>"
-msgstr "Enter this code at <0>{0}</0>"
-
 #: src/pages/PluginsOverlay.tsx
 msgid "Erweiterte Server"
 msgstr "Erweiterte Server"
@@ -2054,7 +2102,11 @@ msgstr "External conversation"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/bot-panel.tsx
+msgid "Extra high"
+msgstr "Extra high"
+
+#. js-lingui-explicit-id
+#: src/lib/model-catalog.ts
 msgid "Extra high"
 msgstr "Extra high"
 
@@ -2244,7 +2296,11 @@ msgstr "Hide transcript"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/bot-panel.tsx
+msgid "High"
+msgstr "High"
+
+#. js-lingui-explicit-id
+#: src/lib/model-catalog.ts
 msgid "High"
 msgstr "High"
 
@@ -2557,7 +2613,11 @@ msgstr "Log out"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/bot-panel.tsx
+msgid "Low"
+msgstr "Low"
+
+#. js-lingui-explicit-id
+#: src/lib/model-catalog.ts
 msgid "Low"
 msgstr "Low"
 
@@ -2595,7 +2655,11 @@ msgstr "Mark as Unread"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/bot-panel.tsx
+msgid "Max"
+msgstr "Max"
+
+#. js-lingui-explicit-id
+#: src/lib/model-catalog.ts
 msgid "Max"
 msgstr "Max"
 
@@ -2631,7 +2695,11 @@ msgstr "MCP servers"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/bot-panel.tsx
+msgid "Medium"
+msgstr "Medium"
+
+#. js-lingui-explicit-id
+#: src/lib/model-catalog.ts
 msgid "Medium"
 msgstr "Medium"
 
@@ -2705,7 +2773,11 @@ msgstr "Microphone failed"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
-#: src/pages/shell/bot-panel.tsx
+msgid "Minimal"
+msgstr "Minimal"
+
+#. js-lingui-explicit-id
+#: src/lib/model-catalog.ts
 msgid "Minimal"
 msgstr "Minimal"
 
@@ -2975,10 +3047,6 @@ msgstr "No trigger"
 msgid "None yet"
 msgstr "None yet"
 
-#: src/pages/ModelSettingsOverlay.tsx
-msgid "Not connected"
-msgstr "Not connected"
-
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
 msgstr "Not in the plugin catalog"
@@ -3053,6 +3121,18 @@ msgstr "Open"
 #: src/pages/Shell.tsx
 msgid "Open {0}"
 msgstr "Open {0}"
+
+#. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
+#: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Onboarding.tsx
+msgid "Open <0>{0}</0> and enter this code:"
+msgstr "Open <0>{0}</0> and enter this code:"
+
+#. placeholder {0}: new URL(oauth.verificationUri).hostname
+#: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Onboarding.tsx
+msgid "Open <0>{0}</0> to finish signing in."
+msgstr "Open <0>{0}</0> to finish signing in."
 
 #: src/pages/Shell.tsx
 msgid "Open in full window"
@@ -3185,10 +3265,6 @@ msgstr "Personal"
 #: src/pages/PluginsOverlay.tsx
 msgid "Personal Access Token"
 msgstr "Personal Access Token"
-
-#: src/pages/ModelSettingsOverlay.tsx
-msgid "Personal credential"
-msgstr "Personal credential"
 
 #: src/pages/TeamTemplateOverlay.tsx
 msgid "Pick a starter roster. The lead bot receives the first task automatically."
@@ -3532,6 +3608,10 @@ msgstr "Reset your password"
 msgid "Resetting…"
 msgstr "Resetting…"
 
+#: src/pages/ResizableSidePanel.tsx
+msgid "Resize panel"
+msgstr "Resize panel"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Restart to update"
 msgstr "Restart to update"
@@ -3638,6 +3718,10 @@ msgstr "Sales & support"
 #: src/pages/shell/dialogs.tsx
 msgid "Save"
 msgstr "Save"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Save limits"
+msgstr "Save limits"
 
 #: src/components/AskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
@@ -3869,6 +3953,10 @@ msgstr "Show transcript"
 msgid "Sign in"
 msgstr "Sign in"
 
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Sign in again"
+msgstr "Sign in again"
+
 #: src/pages/Auth.tsx
 msgid "Sign in to Rakazo"
 msgstr "Sign in to Rakazo"
@@ -4094,9 +4182,15 @@ msgstr "The API did not come back. Refresh this page."
 msgid "The selected memory provider is not available in this build."
 msgstr "The selected memory provider is not available in this build."
 
+#: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Thinking"
 msgstr "Thinking"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Thinking: {activeThinkingLabel}"
+msgstr "Thinking: {activeThinkingLabel}"
 
 #: src/pages/Shell.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
@@ -4144,6 +4238,10 @@ msgstr "This month"
 #: src/pages/shell/dialogs.tsx
 msgid "This permanently removes every message and stops current work. The chat remains available."
 msgstr "This permanently removes every message and stops current work. The chat remains available."
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "This removes the connection from every space."
+msgstr "This removes the connection from every space."
 
 #: src/pages/Auth.tsx
 msgid "This reset link is invalid or expired"
@@ -4388,11 +4486,6 @@ msgstr "Voice"
 #: src/components/call/VoiceChatCard.tsx
 msgid "Voice chat"
 msgstr "Voice chat"
-
-#: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/Onboarding.tsx
-msgid "Waiting for sign-in…"
-msgstr "Waiting for sign-in…"
 
 #: src/components/SoftwareUpdateSection.tsx
 msgid "Waiting for the API to come back…"
