@@ -65,13 +65,29 @@ describe("monthlyTokenBudgetExceeded", () => {
     );
   });
 
-  it("includes cache tokens in the total", async () => {
+  it("weights cache reads down and keeps cache writes at face value", async () => {
     const prisma = prismaWithUsage({
       inputTokens: 100,
       outputTokens: 100,
       cacheReadTokens: 500,
       cacheWriteTokens: 200,
     });
+    // 100 + 100 + 200 + round(500 * 0.1) = 450, so a 900 ceiling is not reached yet.
+    const result = await monthlyTokenBudgetExceeded(prisma, {
+      id: "bot-1",
+      monthlyTokenBudget: 900,
+    });
+    expect(result).toBeNull();
+  });
+
+  it("stops once the weighted total reaches the ceiling", async () => {
+    const prisma = prismaWithUsage({
+      inputTokens: 500,
+      outputTokens: 300,
+      cacheReadTokens: 500,
+      cacheWriteTokens: 100,
+    });
+    // 500 + 300 + 100 + round(500 * 0.1) = 950 >= 900.
     const result = await monthlyTokenBudgetExceeded(prisma, {
       id: "bot-1",
       monthlyTokenBudget: 900,
