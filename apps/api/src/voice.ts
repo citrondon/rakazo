@@ -473,6 +473,24 @@ function decodeAudioBase64(value: string): Uint8Array {
   }
 }
 
+function voiceErrorName(error: unknown): string {
+  return typeof error === "object" && error !== null && "name" in error
+    ? String((error as { name?: unknown }).name ?? "")
+    : "";
+}
+
+function isClientAbort(c: Context, error: unknown): boolean {
+  // A caller that walked away, or a newer utterance that replaced this one, aborts the
+  // request; that is not a voice failure and must not read as one in the logs.
+  return c.req.raw.signal.aborted || voiceErrorName(error) === "AbortError";
+}
+
+function describeVoiceError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  const name = voiceErrorName(error);
+  return name || "Voice request failed.";
+}
+
 function voiceHttpError(c: Context, error: unknown) {
   if (error instanceof IsolationError) {
     return c.json({ error: "Resource not found" }, 404);
@@ -486,7 +504,12 @@ function voiceHttpError(c: Context, error: unknown) {
       code === "UNAUTHORIZED" ? 401 : code === "NOT_FOUND" ? 404 : code === "CONFLICT" ? 409 : 400;
     return c.json({ error: error.message }, status);
   }
-  const message = error instanceof Error ? error.message : "Voice request failed.";
+  if (isClientAbort(c, error)) {
+    getLogger().info("voice request aborted", { route: c.req.path });
+    // The caller is gone; there is nobody left to read a status.
+    return c.body(null, 204);
+  }
+  const message = describeVoiceError(error);
   // Message only: request bodies, keys and audio never reach the log.
   getLogger().warn("voice request failed", { route: c.req.path, reason: message });
   return c.json({ error: message }, 502);
