@@ -131,9 +131,14 @@ pnpm lint
 - `pnpm check` (Turbo) hashes tracked files only, so it can report success while an **untracked**
   file is broken. Prefer the per-package `pnpm --filter <pkg> check` calls above after adding
   files.
-- Two sandbox tests (`infra/sandboxes/supervisor/src/browser-profile.test.ts`,
-  `packages/core/src/node/desktop-runtime.test.ts`) are `spawnSync`-based and can time out under
-  a fully parallel run; they pass in isolation and are unrelated to this work.
+- Two `spawnSync`-based tests (`infra/sandboxes/supervisor/src/browser-profile.test.ts`,
+  `packages/core/src/node/desktop-runtime.test.ts`) used to time out under a fully parallel run.
+  Fixed by `d96eabd2` (child timeouts 25 s / 45 s, per-test 60 s / 90 s) and `a8ca34e1`
+  (`maxWorkers: 8` in `vitest.config.ts`). The worker cap is the load-bearing half: with one worker
+  per core the quiesce script needed over 45 s for what takes 11 s idle, so the fix is less
+  contention, not bigger timeouts. Full run since then: 78 s, both files green.
+- `pnpm lint` fails on a pre-existing `.vscode/settings.json` newline error that no window
+  introduced and none owns; it turns the merge gate (`pnpm check && pnpm lint && pnpm test`) red.
 - Keep providers generic: add a provider by normalizing its webhook to a `TriggerEvent` and
   extending `EVENT_CATALOG`, never with a provider-specific env var.
 - Tests are deterministic and offline by default. The desktop Playwright e2e steals focus on
