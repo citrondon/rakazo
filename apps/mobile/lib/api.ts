@@ -652,7 +652,17 @@ export async function rpc<T>(
       throw abortReason(error);
     });
     if (!res.ok || parsed.error) {
-      const message = parsed.error?.message ?? `rpc ${proc} failed`;
+      // oRPC reports failures as {"json": {"code", "message"}}; that message is
+      // the real cause. Keep the legacy {"error": {"message"}} envelope as a
+      // fallback so older servers still surface a reason.
+      const envelopeMessage = (parsed.json as unknown as { message?: unknown } | undefined)
+        ?.message;
+      const message =
+        (typeof envelopeMessage === "string" && envelopeMessage.length > 0
+          ? envelopeMessage
+          : undefined) ??
+        parsed.error?.message ??
+        `rpc ${proc} failed`;
       const unauthorized = res.status === 401 || /unauthorized/i.test(message);
       // After a delete where SecureStore could not clear the stale id, restart
       // reloads it and the first RPCs 401. Probe once without a Space header:

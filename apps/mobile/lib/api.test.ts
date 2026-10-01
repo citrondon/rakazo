@@ -564,6 +564,23 @@ describe("mobile API authentication", () => {
     await expect(rpc("bots/get", { botId: "missing" })).rejects.toThrow("Bot does not exist");
   });
 
+  it("surfaces the oRPC json envelope message when a call fails", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockResolvedValue("session-token");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { json: { code: "BAD_REQUEST", message: "Connect a model to start a run." } },
+          { status: 400 },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(rpc("threads/send", { botId: "bot-1", text: "hi" })).rejects.toThrow(
+      "Connect a model to start a run.",
+    );
+  });
+
   it("blocks mobile message and attachment submission when AI sharing is declined", async () => {
     vi.mocked(promptAiConsent).mockResolvedValue(false);
     const fetchMock = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) =>
