@@ -1,5 +1,6 @@
 import type { ConnectorTool } from "@rakazo/adapter-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { BOT_SAFETY_PREAMBLE } from "./bot-safety-preamble.js";
 
 const fakeAgentState = vi.hoisted(() => ({
   result: undefined as unknown,
@@ -116,7 +117,9 @@ describe("Pi computer tool dispatch", () => {
     expect(fakeAgentState.result).toMatchObject({
       content: [{ type: "text" }, { type: "image", mimeType: "image/png", data: "iVBORw0KGgo=" }],
     });
-    expect(fakeAgentState.systemPrompt).toBe("Follow the user's instructions.");
+    expect(fakeAgentState.systemPrompt).toBe(
+      `${BOT_SAFETY_PREAMBLE}\n\nFollow the user's instructions.`,
+    );
   });
 
   it("keeps the run alive when a graphical tool returns an error object", async () => {
