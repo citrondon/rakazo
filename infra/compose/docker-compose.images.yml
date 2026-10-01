@@ -135,9 +135,6 @@ services:
       WAKEUP_DRIVER: graphile
       AGENT_RUNTIME: pi
       MAX_TOOL_CALLS_PER_TURN: ${MAX_TOOL_CALLS_PER_TURN:-10}
-      MCP_STDIO_ENABLED: "true"
-      MCP_STDIO_ALLOWED_COMMANDS: "npx,uvx,node,/usr/local/bin/npx,/usr/local/bin/node,mcp-server-commands,/usr/local/bin/mcp-server-commands,python3,bash"
-      MCP_ALLOW_PRIVATE_ENDPOINT: "true"
       # Optional egress proxy (Mainland / corporate). Empty = unset; either case works.
       HTTP_PROXY: ${HTTP_PROXY:-${http_proxy:-}}
       HTTPS_PROXY: ${HTTPS_PROXY:-${https_proxy:-}}
@@ -198,9 +195,6 @@ services:
       WAKEUP_DRIVER: graphile
       AGENT_RUNTIME: pi
       MAX_TOOL_CALLS_PER_TURN: ${MAX_TOOL_CALLS_PER_TURN:-10}
-      MCP_STDIO_ENABLED: "true"
-      MCP_STDIO_ALLOWED_COMMANDS: "npx,uvx,node,/usr/local/bin/npx,/usr/local/bin/node,mcp-server-commands,/usr/local/bin/mcp-server-commands,python3,bash"
-      MCP_ALLOW_PRIVATE_ENDPOINT: "true"
       # Optional egress proxy (Mainland / corporate). Empty = unset; either case works.
       HTTP_PROXY: ${HTTP_PROXY:-${http_proxy:-}}
       HTTPS_PROXY: ${HTTPS_PROXY:-${https_proxy:-}}
@@ -228,8 +222,12 @@ services:
     restart: unless-stopped
     command: ["pnpm", "--filter", "@rakazo/web", "preview", "--host", "0.0.0.0", "--port", "5173"]
     init: true
-    pids_limit: 1024
-    mem_limit: 1024m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 128
+    mem_limit: 512m
     environment:
       NODE_ENV: production
       API_PROXY_TARGET: http://api:3100
