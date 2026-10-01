@@ -959,24 +959,13 @@ async function ensureComputerImage() {
           `Missing ${COMPUTER_IMAGE}. Build it with: docker build -t ${COMPUTER_IMAGE} infra/sandboxes/computer`,
         );
       }
+      // Pack the whole context instead of a hand-listed set of files: the
+      // list drifts from the Dockerfile's COPY sources and silently drops
+      // scripts (e.g. rakazo-local-bin.sh) from the fallback build.
       const stream = await docker.buildImage(
         {
           context: computerContext,
-          src: [
-            "Dockerfile",
-            "start.sh",
-            "control.py",
-            "xcapture.c",
-            "rakazo-browser",
-            "rakazo-page-browser",
-            "rakazo-browser.desktop",
-            "embed.html",
-            "clipboard-bridge.js",
-            "mobile-keyboard.js",
-            "fluxbox.init",
-            "fluxbox.apps",
-            "fluxbox.menu",
-          ],
+          src: ["."],
         },
         { t: COMPUTER_IMAGE },
       );

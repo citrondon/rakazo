@@ -213,7 +213,9 @@ describe("host clipboard paste bridge", () => {
     expect(embed).toMatch(/id="mobile-paste"/);
     expect(embed).toMatch(/clipboard-bridge\.js/);
     expect(start).toMatch(/clipboard-bridge\.js/);
-    expect(supervisor).toMatch(/"clipboard-bridge\.js"/);
+    // The fallback build packs the whole computer context, so every file the
+    // Dockerfile COPYs ships without a hand-maintained list.
+    expect(supervisor).toMatch(/src:\s*\["\."\]/);
   });
 });
 

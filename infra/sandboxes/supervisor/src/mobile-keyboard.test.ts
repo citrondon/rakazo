@@ -232,7 +232,9 @@ describe("mobile computer keyboard", () => {
     expect(embed).toMatch(/mobile-keyboard-open #screen/);
     expect(embed).toMatch(/--mobile-visual-height/);
     expect(start).toMatch(/mobile-keyboard\.js/);
-    expect(supervisor).toMatch(/"mobile-keyboard\.js"/);
+    // The fallback build packs the whole computer context, so every file the
+    // Dockerfile COPYs ships without a hand-maintained list.
+    expect(supervisor).toMatch(/src:\s*\["\."\]/);
   });
 
   it("pastes host clipboard text instead of typing an insertFromPaste", () => {
