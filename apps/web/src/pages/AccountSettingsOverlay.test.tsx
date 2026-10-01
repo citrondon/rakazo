@@ -61,6 +61,7 @@ vi.mock("@rakazo/ui-web", () => ({
 }));
 
 vi.mock("../components/ApprovalRulesSettings", () => ({ ApprovalRulesSettings: () => null }));
+vi.mock("../components/TrustPolicySettings", () => ({ TrustPolicySettings: () => null }));
 vi.mock("../components/ai/primitives", () => ({ SuccessPop: () => null }));
 vi.mock("../components/ComputersUnavailableHint", () => ({
   ComputersUnavailableHint: () => null,

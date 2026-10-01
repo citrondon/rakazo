@@ -16,6 +16,7 @@ import { SuccessPop } from "../components/ai/primitives";
 import { ComputersUnavailableHint } from "../components/ComputersUnavailableHint";
 import { DesktopUpdateSection } from "../components/DesktopUpdates";
 import { SoftwareUpdateSection } from "../components/SoftwareUpdateSection";
+import { TrustPolicySettings } from "../components/TrustPolicySettings";
 import { authClient } from "../lib/auth";
 import { getActiveUiLocale, setUiLocale } from "../lib/i18n";
 import {
@@ -226,6 +227,7 @@ export function GeneralSettingsPanels({
             </Label>
           </div>
           <ApprovalRulesSettings />
+          <TrustPolicySettings />
         </div>
       </details>
     </div>

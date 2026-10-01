@@ -1,13 +1,15 @@
-import type { Routine } from "@rakazo/contracts";
+import type { EventDefinition, Routine, Trigger } from "@rakazo/contracts";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { rpc } from "../lib/api";
 import { useI18n } from "../lib/i18n";
-import { useMobileTokens } from "../lib/native";
+import { presentMessageActionSheet } from "../lib/message-action-sheet";
+import { useMobileTokens, useResolvedAppearance } from "../lib/native";
 
 export default function RoutineDetail() {
   const tokens = useMobileTokens();
+  const colorScheme = useResolvedAppearance();
   const { t } = useI18n();
   const { botId, botName, routineId } = useLocalSearchParams<{
     botId?: string;
@@ -16,6 +18,8 @@ export default function RoutineDetail() {
   }>();
   const router = useRouter();
   const [routine, setRoutine] = useState<Routine | null>(null);
+  const [triggers, setTriggers] = useState<Trigger[]>([]);
+  const [catalog, setCatalog] = useState<EventDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,12 +31,18 @@ export default function RoutineDetail() {
     }
     let cancelled = false;
     setLoading(true);
-    void rpc<Routine[]>("routines/list", { botId })
-      .then((routines) => {
+    void Promise.all([
+      rpc<Routine[]>("routines/list", { botId }),
+      rpc<Trigger[]>("triggers/list", { routineId }),
+      rpc<EventDefinition[]>("events/list"),
+    ])
+      .then(([routines, nextTriggers, nextCatalog]) => {
         if (cancelled) return;
         const match = routines.find((item) => item.id === routineId);
         if (match) setRoutine(match);
         else setError(t("This routine no longer exists"));
+        setTriggers(nextTriggers);
+        setCatalog(nextCatalog);
       })
       .catch((loadError) => {
         if (!cancelled) {
@@ -46,6 +56,65 @@ export default function RoutineDetail() {
       cancelled = true;
     };
   }, [botId, routineId]);
+
+  function triggerLabel(trigger: Trigger): string {
+    const match =
+      catalog.find(
+        (entry) => entry.provider === trigger.provider && entry.type === trigger.eventType,
+      ) ?? catalog.find((entry) => entry.provider === trigger.provider);
+    return match?.label ?? `${trigger.provider}${trigger.eventType ? `:${trigger.eventType}` : ""}`;
+  }
+
+  async function addTrigger(definition: EventDefinition): Promise<void> {
+    if (!routineId) return;
+    const field = definition.fields[0] ?? "payload";
+    try {
+      const created = await rpc<Trigger>("triggers/create", {
+        routineId,
+        source: definition.source,
+        provider: definition.provider,
+        eventType: definition.type,
+        filter: { predicates: [{ field, operator: "exists", caseSensitive: false }] },
+        mappings: [],
+        enabled: true,
+      });
+      setTriggers((current) => [...current, created]);
+    } catch (addError) {
+      Alert.alert(t("Could not add trigger"), addError instanceof Error ? addError.message : "");
+    }
+  }
+
+  function pickEvent(): void {
+    presentMessageActionSheet({
+      actions: catalog.map((definition) => ({
+        text: definition.label,
+        onPress: () => void addTrigger(definition),
+      })),
+      title: t("Add trigger"),
+      cancel: t("Cancel"),
+      more: t("More"),
+      colorScheme,
+    });
+  }
+
+  async function removeTrigger(triggerId: string): Promise<void> {
+    try {
+      await rpc("triggers/remove", { triggerId });
+      setTriggers((current) => current.filter((item) => item.id !== triggerId));
+    } catch (removeError) {
+      Alert.alert(
+        t("Could not remove trigger"),
+        removeError instanceof Error ? removeError.message : "",
+      );
+    }
+  }
+
+  function confirmRemove(trigger: Trigger): void {
+    Alert.alert(t("Remove trigger"), triggerLabel(trigger), [
+      { text: t("Cancel"), style: "cancel" },
+      { text: t("Remove"), style: "destructive", onPress: () => void removeTrigger(trigger.id) },
+    ]);
+  }
 
   return (
     <ScrollView
@@ -113,6 +182,54 @@ export default function RoutineDetail() {
             >
               {routine.prompt}
             </Text>
+          </View>
+          <View style={{ gap: 10 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Text
+                style={{ color: tokens.mutedForeground, fontSize: 13, textTransform: "uppercase" }}
+              >
+                {t("Reactive triggers")}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("Add trigger")}
+                hitSlop={10}
+                onPress={pickEvent}
+              >
+                <Text style={{ color: tokens.foreground, fontSize: 22, lineHeight: 24 }}>+</Text>
+              </Pressable>
+            </View>
+            {triggers.length === 0 ? (
+              <Text style={{ color: tokens.mutedForeground, fontSize: 14 }}>
+                {t("The routine runs on every matched event.")}
+              </Text>
+            ) : (
+              triggers.map((trigger) => (
+                <Pressable
+                  key={trigger.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("Remove trigger")}
+                  onPress={() => confirmRemove(trigger)}
+                  style={{
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: tokens.border,
+                    backgroundColor: tokens.card,
+                    padding: 14,
+                  }}
+                >
+                  <Text style={{ color: tokens.foreground, fontSize: 15 }}>
+                    {triggerLabel(trigger)}
+                  </Text>
+                </Pressable>
+              ))
+            )}
           </View>
           <Pressable
             accessibilityRole="button"
