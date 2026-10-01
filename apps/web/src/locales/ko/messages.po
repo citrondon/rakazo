@@ -1108,6 +1108,7 @@ msgstr "Treg 연결"
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-cards.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connected"
@@ -1137,6 +1138,7 @@ msgstr "연결되었습니다. 다음 메시지부터 이 도구를 사용할 �
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
+#: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-cards.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connecting…"
@@ -1682,6 +1684,10 @@ msgstr "인증 정보 저장됨"
 #: src/pages/PluginsOverlay.tsx
 msgid "Credentials are encrypted and never sent to the model."
 msgstr "인증 정보는 암호화되며 모델에 전송되지 않습니다."
+
+#: src/components/integrations/IntegrationSetup.tsx
+msgid "Credentials saved"
+msgstr ""
 
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron"
@@ -3011,10 +3017,12 @@ msgid "OAuth connected"
 msgstr "OAuth 연결됨"
 
 #: src/pages/McpOAuthCallback.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "OAuth connection failed"
 msgstr "OAuth 연결 실패"
 
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "OAuth expired"
 msgstr ""
 
@@ -3315,6 +3323,7 @@ msgid "Recent"
 msgstr "최근"
 
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "Reconnect OAuth"
 msgstr "OAuth 다시 연결"
 

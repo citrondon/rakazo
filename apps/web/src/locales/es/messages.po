@@ -1108,6 +1108,7 @@ msgstr "Conectar Treg"
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-cards.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connected"
@@ -1137,6 +1138,7 @@ msgstr "Conectado: sus herramientas estarán disponibles desde tu próximo mensa
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
+#: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-cards.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connecting…"
@@ -1682,6 +1684,10 @@ msgstr "credencial guardada"
 #: src/pages/PluginsOverlay.tsx
 msgid "Credentials are encrypted and never sent to the model."
 msgstr "Las credenciales se cifran y nunca se envían al modelo."
+
+#: src/components/integrations/IntegrationSetup.tsx
+msgid "Credentials saved"
+msgstr ""
 
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron"
@@ -3011,10 +3017,12 @@ msgid "OAuth connected"
 msgstr "OAuth conectado"
 
 #: src/pages/McpOAuthCallback.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "OAuth connection failed"
 msgstr "Falló la conexión OAuth"
 
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "OAuth expired"
 msgstr "OAuth expirado"
 
@@ -3315,6 +3323,7 @@ msgid "Recent"
 msgstr "Recientes"
 
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "Reconnect OAuth"
 msgstr "Reconectar OAuth"
 

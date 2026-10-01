@@ -1108,6 +1108,7 @@ msgstr "Treg'i bağla"
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-cards.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connected"
@@ -1137,6 +1138,7 @@ msgstr "Bağlandı. Araçları bir sonraki mesajından itibaren kullanılabilir.
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/memory-providers/SupermemorySettingsForm.tsx
+#: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-cards.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connecting…"
@@ -1682,6 +1684,10 @@ msgstr "kimlik bilgisi kaydedildi"
 #: src/pages/PluginsOverlay.tsx
 msgid "Credentials are encrypted and never sent to the model."
 msgstr "Kimlik bilgileri şifrelenir ve modele asla gönderilmez."
+
+#: src/components/integrations/IntegrationSetup.tsx
+msgid "Credentials saved"
+msgstr ""
 
 #: src/pages/RoutineSchedule.tsx
 msgid "Cron"
@@ -3011,10 +3017,12 @@ msgid "OAuth connected"
 msgstr "OAuth bağlandı"
 
 #: src/pages/McpOAuthCallback.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "OAuth connection failed"
 msgstr "OAuth bağlantısı başarısız"
 
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "OAuth expired"
 msgstr ""
 
@@ -3315,6 +3323,7 @@ msgid "Recent"
 msgstr "Son"
 
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "Reconnect OAuth"
 msgstr "OAuth'u yeniden bağla"
 
