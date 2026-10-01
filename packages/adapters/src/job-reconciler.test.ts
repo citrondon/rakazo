@@ -280,9 +280,10 @@ describe("createJobReconciler", () => {
     }));
     const runPages = [runs.slice(0, 2), runs.slice(2, 4), runs.slice(4)];
     let runPage = 0;
-    const runFindMany = vi.fn(async (args: { where?: Record<string, unknown> } = {}) =>
-      args.where?.messagingMirroredAt === null ? [] : (runPages[runPage++] ?? []),
-    );
+    const runFindMany = vi.fn(async (args: { where?: Record<string, unknown> } = {}) => {
+      if (args.where?.trustPhase === "paused" && args.where?.status === "waiting_input") return [];
+      return args.where?.messagingMirroredAt === null ? [] : (runPages[runPage++] ?? []);
+    });
     const routineFindMany = vi
       .fn()
       .mockResolvedValueOnce(routines.slice(0, 2))
@@ -314,7 +315,7 @@ describe("createJobReconciler", () => {
       "run:run-5",
       "routine:routine-5",
     ]);
-    expect(runFindMany.mock.calls[2]?.[0]).toMatchObject({
+    expect(runFindMany.mock.calls[4]?.[0]).toMatchObject({
       orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
       where: {
         AND: [
@@ -407,7 +408,7 @@ describe("createJobReconciler", () => {
     await reconciler.reconcileOnce();
 
     expect(runFindMany).toHaveBeenNthCalledWith(
-      3,
+      4,
       expect.objectContaining({
         orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
         where: {
