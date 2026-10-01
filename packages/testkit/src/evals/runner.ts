@@ -129,7 +129,7 @@ export async function runTrial(
         name: "Assistant",
         title: "",
         description: "",
-        instructions: "",
+        instructions: scenario.botInstructions?.() ?? "",
         notifyOnFinish: false,
       });
       botId = bot.id;
