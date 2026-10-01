@@ -427,10 +427,6 @@ msgstr "Agentes:"
 msgid "Aktiv"
 msgstr ""
 
-#: src/pages/McpServersOverlay.tsx
-msgid "Aktivieren…"
-msgstr ""
-
 #: src/pages/Artifacts.tsx
 #: src/pages/BotLibraryOverlay.tsx
 msgid "All bots"
@@ -2196,10 +2192,6 @@ msgstr "Esqueceu a senha?"
 msgid "Free"
 msgstr ""
 
-#: src/pages/McpServersOverlay.tsx
-msgid "Füge einen GitHub-Token (mit repo/read-Rechten) ein, um den Connector zu aktivieren:"
-msgstr ""
-
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "Tela Cheia"
@@ -2222,10 +2214,6 @@ msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Git event"
-msgstr ""
-
-#: src/pages/McpServersOverlay.tsx
-msgid "GitHub Personal Access Token erforderlich"
 msgstr ""
 
 #: src/pages/MessagingSettingsOverlay.tsx
@@ -4459,7 +4447,6 @@ msgstr ""
 msgid "Value to match"
 msgstr ""
 
-#: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Verbinden"
 msgstr ""

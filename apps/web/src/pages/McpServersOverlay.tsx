@@ -73,15 +73,13 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
   const [oauthPending, setOauthPending] = useState<string | null>(null);
   const [presetPending, setPresetPending] = useState<string | null>(null);
   const [stdioStatus, setStdioStatus] = useState<McpStdioStatus | null>(null);
-  const [githubToken, setGithubToken] = useState("");
-  const [githubPromptOpen, setGithubPromptOpen] = useState(false);
   const endpointNotice = endpointGateNotice(endpoint);
 
   async function installPreset(preset: McpPreset, envOverride?: Record<string, string>) {
     setError(null);
     setPresetPending(preset.id);
     try {
-      const created = await rpc.mcp.servers.create({
+      await rpc.mcp.servers.create({
         slug: preset.slug,
         name: preset.name,
         transport: preset.transport,
@@ -91,28 +89,9 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
         enabled: true,
       });
 
-      // Assign this preset connector to the active bots with the least privilege:
-      // a new assignment grants no tools until the user enables them per bot.
-      await Promise.all(
-        bots.map((bot) => {
-          const existing = (botAssignments[bot.id] ?? []).filter(
-            (entry) => entry.serverId !== created.id,
-          );
-          return rpc.mcp.assignments.replace({
-            botId: bot.id,
-            assignments: [
-              ...existing,
-              { serverId: created.id, allowAllTools: false, allowedTools: [] },
-            ],
-          });
-        }),
-      );
-
+      // Least privilege: a new preset is assigned to no bot. The owner picks the bots
+      // that need it in the server list below, one by one.
       await refresh();
-      if (preset.id === "github") {
-        setGithubPromptOpen(false);
-        setGithubToken("");
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t`Could not install preset`);
     } finally {
@@ -432,17 +411,6 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
                             <Trans>Trennen</Trans>
                           )}
                         </Button>
-                      ) : preset.id === "github" ? (
-                        <Button
-                          type="button"
-                          variant="default"
-                          size="sm"
-                          className="w-full text-xs"
-                          disabled={isPending}
-                          onClick={() => setGithubPromptOpen(true)}
-                        >
-                          <Trans>Aktivieren…</Trans>
-                        </Button>
                       ) : (
                         <Button
                           type="button"
@@ -465,53 +433,6 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
               })}
             </div>
           </div>
-
-          {/* GitHub Token Prompt */}
-          {githubPromptOpen ? (
-            <div className="rounded-xl border border-primary/20 bg-accent/30 p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">
-                  <Trans>GitHub Personal Access Token erforderlich</Trans>
-                </span>
-                <Button variant="ghost" size="icon-sm" onClick={() => setGithubPromptOpen(false)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                <Trans>
-                  Füge einen GitHub-Token (mit repo/read-Rechten) ein, um den Connector zu
-                  aktivieren:
-                </Trans>
-              </p>
-              <div className="flex gap-2">
-                <Input
-                  type="password"
-                  value={githubToken}
-                  onChange={(e) => setGithubToken(e.target.value)}
-                  placeholder="ghp_..."
-                  className="text-xs"
-                />
-                <Button
-                  size="sm"
-                  disabled={!githubToken.trim() || presetPending === "github"}
-                  onClick={() => {
-                    const preset = MCP_PRESETS.find((p) => p.id === "github");
-                    if (preset) {
-                      void installPreset(preset, {
-                        GITHUB_PERSONAL_ACCESS_TOKEN: githubToken.trim(),
-                      });
-                    }
-                  }}
-                >
-                  {presetPending === "github" ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Trans>Verbinden</Trans>
-                  )}
-                </Button>
-              </div>
-            </div>
-          ) : null}
 
           {/* Manual Configuration & Existing Servers */}
           <div className="grid min-h-0 grid-cols-1 gap-5 lg:grid-cols-2">

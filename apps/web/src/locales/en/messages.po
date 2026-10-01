@@ -427,10 +427,6 @@ msgstr "Agents:"
 msgid "Aktiv"
 msgstr "Aktiv"
 
-#: src/pages/McpServersOverlay.tsx
-msgid "Aktivieren…"
-msgstr "Aktivieren…"
-
 #: src/pages/Artifacts.tsx
 #: src/pages/BotLibraryOverlay.tsx
 msgid "All bots"
@@ -2196,10 +2192,6 @@ msgstr "Forgot password?"
 msgid "Free"
 msgstr "Free"
 
-#: src/pages/McpServersOverlay.tsx
-msgid "Füge einen GitHub-Token (mit repo/read-Rechten) ein, um den Connector zu aktivieren:"
-msgstr "Füge einen GitHub-Token (mit repo/read-Rechten) ein, um den Connector zu aktivieren:"
-
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "Fullscreen"
@@ -2223,10 +2215,6 @@ msgstr "Getting ready"
 #: src/pages/RoutineEditor.tsx
 msgid "Git event"
 msgstr "Git event"
-
-#: src/pages/McpServersOverlay.tsx
-msgid "GitHub Personal Access Token erforderlich"
-msgstr "GitHub Personal Access Token erforderlich"
 
 #: src/pages/MessagingSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -4459,7 +4447,6 @@ msgstr "Value"
 msgid "Value to match"
 msgstr "Value to match"
 
-#: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Verbinden"
 msgstr "Verbinden"
