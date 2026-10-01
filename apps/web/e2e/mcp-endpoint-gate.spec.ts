@@ -1,0 +1,65 @@
+import { expect, type Page, test } from "@playwright/test";
+import { captureScreenshot, completeOnboarding, signup } from "./helpers";
+
+/** Open Integrations → the advanced group → MCP servers. The first user is the owner. */
+async function openMcpServers(page: Page) {
+  await page.getByText("Integrations", { exact: true }).click();
+  await page.getByTestId("integrations-advanced").evaluate((element) => {
+    (element as HTMLDetailsElement).open = true;
+  });
+  await page.getByRole("button", { name: "Manage MCP servers", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "MCP servers" })).toBeVisible();
+}
+
+async function addServer(page: Page, name: string, endpoint: string) {
+  await page.locator("#mcp-name").fill(name);
+  await page.locator("#mcp-endpoint").fill(endpoint);
+  await page.getByRole("button", { name: "Add server", exact: true }).click();
+}
+
+test("a gated URL fails with a short cause, not a stack trace", async ({ page }, testInfo) => {
+  await signup(page, `mcp-gate-${Date.now()}@rakazo.test`, "password12", "MCP Gate");
+  await completeOnboarding(page);
+  await openMcpServers(page);
+
+  // An https endpoint that the gate refuses for a non-resolving host: the sentence names
+  // the rule (HTTPS or DNS) and the flag, never the undici cause chain.
+  await addServer(page, "Gate Probe", "http://mcp.example.test/mcp");
+
+  const alert = page.getByRole("alert");
+  await expect(alert).toBeVisible();
+  await expect(alert).toContainText(
+    /must use HTTPS|Could not resolve|MCP_ALLOW_PRIVATE_ENDPOINT=true/,
+  );
+  await expect(alert).not.toContainText(/getaddrinfo|EAI_AGAIN|at Object\.|TypeError/);
+  await captureScreenshot(page, testInfo, "mcp-endpoint-gate-refused");
+});
+
+test("the owner can save a private endpoint without an env flag", async ({ page }, testInfo) => {
+  await signup(page, `mcp-gate-private-${Date.now()}@rakazo.test`, "password12", "MCP Private");
+  await completeOnboarding(page);
+  await openMcpServers(page);
+
+  // The documented escape: the deployment owner reaches a private endpoint with
+  // MCP_ALLOW_PRIVATE_ENDPOINT unset.
+  await addServer(page, "Private LAN", "http://10.0.0.8:3927/mcp");
+
+  await expect(page.getByText("Private LAN", { exact: true })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "mcp-endpoint-gate-private-owner");
+});
+
+test("the add form names the flag before the round trip", async ({ page }, testInfo) => {
+  await signup(page, `mcp-gate-notice-${Date.now()}@rakazo.test`, "password12", "MCP Notice");
+  await completeOnboarding(page);
+  await openMcpServers(page);
+
+  const endpoint = page.locator("#mcp-endpoint");
+  await endpoint.fill("http://mcp.example.test/mcp");
+  await expect(page.getByText("MCP_ALLOW_PRIVATE_ENDPOINT=true")).toBeVisible();
+
+  // An https URL never carries the extra copy.
+  await endpoint.fill("https://mcp.example.test/mcp");
+  await expect(page.getByText("MCP_ALLOW_PRIVATE_ENDPOINT=true")).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "mcp-endpoint-gate-notice");
+});
