@@ -1,5 +1,10 @@
 import type { TrustEffect, TrustPhase, TrustPolicy } from "@rakazo/contracts";
-import { isMutating, planQuietHours, policyRequiresApproval, quietHoursEndsAt } from "./trust-effects.js";
+import {
+  isMutating,
+  planQuietHours,
+  policyRequiresApproval,
+  quietHoursEndsAt,
+} from "./trust-effects.js";
 
 /**
  * The trust runner's phase machine. A triggered run is planned, previewed against a

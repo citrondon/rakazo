@@ -1,7 +1,7 @@
 import { planRoutineEffects, planRunTrust } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { createRoutineToolRepos, createTrustPolicyRepos } from "@rakazo/db";
-import type { WebhookTrustPlanner, WebhookRunTrust } from "./webhook-inbound.js";
+import type { WebhookRunTrust, WebhookTrustPlanner } from "./webhook-inbound.js";
 
 /**
  * Resolve a wake's trust plan from the bot's reachable tools and the space policy. All planning
