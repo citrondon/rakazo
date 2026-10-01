@@ -1,8 +1,14 @@
-# Window E — Backlog audit (read-only, runs while others work)
+# Window E — Backlog audit (read-only)
 
-Start prompt for a spare Cline window. **Read-only.** Do not edit, create, or commit anything
-except the single output file named below. Editing source, plans, or `bot-library/**` now would
-collide with the agents still working.
+> **Read-only. This window never commits.** No `git add`, no `git commit`, no `git push`, no
+> worktrees, and no edits to source, plans, or `bot-library/**`. The only file you may write is the
+> one output file named below. Start with `git status --short`: if it is not empty, you are too
+> early — stop and say so instead of working around it. Another window sweeping your half-finished
+> reads into its own commit is exactly the failure this rule prevents.
+
+Start prompt for a spare Cline window. Do not edit, create, or commit anything except the single
+output file named below. Editing source, plans, or `bot-library/**` collides with the windows that
+own those paths.
 
 ## Model suggestion
 `claude-sonnet-4-6` (strong + cheap) or `claude-opus-4-8` for the sharpest judgment. Do not use a

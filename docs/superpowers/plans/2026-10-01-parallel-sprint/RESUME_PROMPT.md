@@ -25,26 +25,24 @@ code review.
   `~/.config/open-code-review/config.yaml`.
 - The four GrokBot features are live: research→code, avatar studio, artifacts, teams & identities.
 
-## Done (NOT committed — waiting for a clean tree)
-- `docs/superpowers/plans/2026-10-01-parallel-sprint.md` — board: roles, path ownership, merge flow.
-- `…/A-web.md`, `B-library.md`, `C-reach.md`, `D-integrator.md`, `E-audit.md` — window start prompts.
-- `…/backlog-audit.md` — verified open backlog (5 tasks + uncertainties).
-- `scripts/setup-parallel-sprint.sh` — creates worktrees `../rakazo-{ux,library,reach}` and branches
-  `sprint/{ux,library,reach}`. It refuses a dirty tree.
+## Done (committed and pushed on `main`)
+- `aef87e2b docs(sprint): add the four-window parallel sprint plan` — the board, the five window
+  briefs, `backlog-audit.md`, and `scripts/setup-parallel-sprint.sh` in one commit.
+- The backlog was then frozen and the audit's two wrong evidence rows were corrected; `main` is
+  clean and nothing is unpushed.
 
-## Blocked
-Other agents still work on `main`: 3 unpushed commits plus active changes
-(`apps/api/src/event-webhook*.ts`, `packages/adapters/src/event-catalog*`, `apps/api/src/router.ts`).
-Do not commit, create worktrees, or start feature work until the tree is clean.
-OCR CI stays inactive until the repo sets variable `OCR_ENABLED=true` and secrets
-`OCR_LLM_URL`, `OCR_LLM_MODEL`, `OCR_LLM_TOKEN`.
+## Unblocked
+The in-flight agents finished, their work is committed and pushed, and the tree is clean. The sprint
+prep is committed — **do not re-commit it.** OCR CI stays inactive until the repository sets the
+variable `OCR_ENABLED=true` and the secrets `OCR_LLM_URL`, `OCR_LLM_MODEL`, `OCR_LLM_TOKEN`
+(optionally `OCR_USE_ANTHROPIC=true` for the Anthropic protocol). That is a repository-settings
+action, not a repo change.
 
 ## Next, in order
-1. Wait for the other agents, make `main` clean, push.
-2. Commit the sprint prep: `docs(sprint): add four-window parallel sprint plan`.
-3. `bash scripts/setup-parallel-sprint.sh`.
-4. Open 3 Cline windows (A/B/C briefs, each in its worktree) plus 1 Opus integrator (D, main checkout).
-5. Replace the board's seed backlog with the verified tasks from `backlog-audit.md`.
+1. `bash scripts/setup-parallel-sprint.sh` — creates `../rakazo-{ux,library,reach}` on the branches
+   `sprint/{ux,library,reach}` from a clean `main`.
+2. Open 3 Cline windows (A/B/C briefs, each in its worktree) plus 1 Opus integrator (D, main checkout).
+3. Nothing else: the board's backlog is already the verified list.
 
 ## Rules that matter
 - No secrets, personal data, or tool output in commits, PRs, or reviews.
