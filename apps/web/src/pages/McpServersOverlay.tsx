@@ -39,6 +39,7 @@ import { useEffect, useState } from "react";
 import { connectMcpOauth, MCP_OAUTH_CHANNEL } from "../lib/mcp-connect";
 import { rpc } from "../lib/rpc";
 import { McpPresetBlockerNote } from "./McpPresetBlockerNote";
+import { endpointGateNotice } from "./mcp-endpoint-notice";
 import { MCP_PRESETS, type McpPreset, stdioBlockerReason } from "./mcp-presets";
 
 function oauthStatusText(server: McpServer): string | null {
@@ -74,6 +75,7 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
   const [stdioStatus, setStdioStatus] = useState<McpStdioStatus | null>(null);
   const [githubToken, setGithubToken] = useState("");
   const [githubPromptOpen, setGithubPromptOpen] = useState(false);
+  const endpointNotice = endpointGateNotice(endpoint);
 
   async function installPreset(preset: McpPreset, envOverride?: Record<string, string>) {
     setError(null);
@@ -577,6 +579,21 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
                         onChange={(e) => setEndpoint(e.target.value)}
                         placeholder="https://api.mobbin.com/mcp"
                       />
+                      {endpointNotice ? (
+                        <p className="mt-1.5 text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
+                          {endpointNotice === "https" ? (
+                            <Trans>
+                              Plain http:// needs an https:// URL, or
+                              MCP_ALLOW_PRIVATE_ENDPOINT=true on the API and worker.
+                            </Trans>
+                          ) : (
+                            <Trans>
+                              Private endpoints need MCP_ALLOW_PRIVATE_ENDPOINT=true on the API and
+                              worker.
+                            </Trans>
+                          )}
+                        </p>
+                      ) : null}
                     </Field>
                   )}
                   <details className="group rounded-xl border border-border">
