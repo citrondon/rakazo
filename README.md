@@ -122,6 +122,9 @@ pnpm dev
 
 Postgres stays network-internal in the default Compose file (same as published images). The
 `postgres-host` overlay publishes loopback `127.0.0.1:5433` for host-side `pnpm` and DB tools.
+`docker-compose.build.yml` is the source-build counterpart of `docker-compose.images.yml`: it
+builds api, worker, supervisor, computer and web from the checkout instead of pulling them, which
+is what you want when working on the source tree rather than deploying a published tag.
 Without the overlay, open a shell with
 `docker compose --env-file .env -f infra/compose/docker-compose.yml exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'`.
 Use a URI-safe `POSTGRES_PASSWORD` (`openssl rand -hex 16`). An existing `pgdata` volume keeps the
