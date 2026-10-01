@@ -49,7 +49,7 @@ test("a reactive webhook trigger holds a consequential wake for quiet hours and 
   await page.locator("label:has-text('Name') input").fill("Release watch");
   await page
     .locator("label:has-text('Instruction') textarea")
-    .fill("remember the release checklist");
+    .fill("write this to the destination crm as a note");
   await page.getByRole("button", { name: "Add trigger" }).click();
   await page.getByRole("menuitem", { name: "On a schedule" }).hover();
   await page.getByRole("menuitem", { name: "Every day", exact: true }).click();
@@ -117,16 +117,34 @@ test("a reactive webhook trigger holds a consequential wake for quiet hours and 
     timeout: 15_000,
   });
   await expect(page.getByRole("button", { name: "Run now", exact: true })).toHaveCount(0);
+  await expect.poll(() => heldRunStatus(page, botId), { timeout: 30_000 }).toBe("waiting_input");
+
+  // Resuming the routine reaches the concrete connector action; it must pause again before
+  // the destination receives any write, and the approval preview describes that exact effect.
+  const approvalPreview = page.getByTestId("approval-effect-preview");
+  await expect(approvalPreview).toHaveText("medium: destination.write · update", {
+    timeout: 30_000,
+  });
+  const approvalButtons = page.getByRole("button", { name: "Allow once", exact: true });
+  await expect(approvalButtons).toBeVisible();
+  const waitingSnapshot = await rpc<{ run?: { id: string; status: string } | null }>(
+    page,
+    "threads/get",
+    { botId },
+  );
+  expect(waitingSnapshot.run).toMatchObject({ status: "waiting_input" });
+  const beforeApproval = await rpc<{
+    effects: Array<{ kind: string; status: string }>;
+  } | null>(page, "runs/receipt", { runId: waitingSnapshot.run!.id });
+  expect(beforeApproval?.effects).toContainEqual({ kind: "destination.write", status: "intended" });
+  await captureScreenshot(page, testInfo, "trigger-tool-approval-preview");
+
+  await approvalButtons.click();
+  await expect(page.getByText("Allowed once", { exact: true })).toBeVisible();
   await expect.poll(() => heldRunStatus(page, botId), { timeout: 30_000 }).toBeNull();
-  // Answering a choice ask resumes the run with the selected option, so the bot finishes with
-  // the same background line and echo the free-text answer path produces.
-  await expect(
-    page.getByText("on it. i will work this in the background and come back with a result.", {
-      exact: true,
-    }),
-  ).toBeVisible({ timeout: 30_000 });
-  await expect(
-    page.getByText("done. i handled: Selected choice run: Run now", { exact: true }),
-  ).toBeVisible();
+  const afterApproval = await rpc<{
+    effects: Array<{ kind: string; status: string }>;
+  } | null>(page, "runs/receipt", { runId: waitingSnapshot.run!.id });
+  expect(afterApproval?.effects).toContainEqual({ kind: "destination.write", status: "completed" });
   await captureScreenshot(page, testInfo, "held-dry-run-approved");
 });

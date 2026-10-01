@@ -2986,6 +2986,15 @@ const MessageBubble = memo(function MessageBubble({
               {askBlock.text}
             </Text>
           ) : null}
+          {isApprovalAskBlock(askBlock) && askBlock.effect ? (
+            <Text
+              accessibilityRole="text"
+              testID="approval-effect-preview"
+              style={{ color: tokens.mutedForeground, marginTop: 6, fontSize: 12.5 }}
+            >
+              {askBlock.effect.risk}: {askBlock.effect.target} · {askBlock.effect.action}
+            </Text>
+          ) : null}
           {askBlock.detail ? (
             <Text
               {...(askBlock.text ? {} : actionProps)}

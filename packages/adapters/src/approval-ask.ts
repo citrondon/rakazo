@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock, TrustEffect } from "@rakazo/contracts";
 import { redactSecrets } from "@rakazo/core";
 
 const MAX_APPROVAL_SUMMARY_LENGTH = 500;
@@ -9,7 +9,7 @@ export function buildApprovalAskBlock(
   toolName: string,
   args: Record<string, unknown>,
   secrets: string[],
-  options?: { reviewReason?: string },
+  options?: { reviewReason?: string; effect?: TrustEffect },
 ): MessageBlock {
   const summary = describeApprovalAction(toolName, args);
   const detail = formatApprovalDetail(toolName, args, options?.reviewReason);
@@ -17,6 +17,14 @@ export function buildApprovalAskBlock(
   return {
     kind: "ask",
     approvalEffectId: effectId,
+    ...(options?.effect
+      ? {
+          effect: {
+            ...options.effect,
+            target: truncate(redactSecrets(options.effect.target, secrets), 200),
+          },
+        }
+      : {}),
     text: truncate(
       redactSecrets(
         toolName === "create_space" ? `${summary}?` : `Review before ${summary}`,

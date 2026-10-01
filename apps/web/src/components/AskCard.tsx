@@ -103,6 +103,15 @@ export function AskCard({
           {block.credential.origin}
         </div>
       ) : null}
+      {approvalActions && block.effect ? (
+        <div
+          data-testid="approval-effect-preview"
+          className="mt-2 text-[12.5px] text-muted-foreground"
+          dir="auto"
+        >
+          {block.effect.risk}: {block.effect.target} · {block.effect.action}
+        </div>
+      ) : null}
       {block.detail && !secretInput ? (
         <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-muted px-3.5 py-3 font-mono text-[12.5px] leading-[1.7] text-muted-foreground">
           {block.detail}

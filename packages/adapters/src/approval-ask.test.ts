@@ -1,3 +1,4 @@
+import { MessageBlock } from "@rakazo/contracts";
 import { describe, expect, it } from "vitest";
 import { buildApprovalAskBlock } from "./approval-ask.js";
 
@@ -8,11 +9,15 @@ describe("buildApprovalAskBlock", () => {
       "gmail_send_email",
       { to: "person@example.test", body: "token-secret" },
       ["token-secret"],
+      {
+        effect: { action: "publish", target: "gmail_send_email", risk: "high" },
+      },
     );
 
     expect(block).toMatchObject({
       kind: "ask",
       approvalEffectId: "effect-1",
+      effect: { action: "publish", target: "gmail_send_email", risk: "high" },
       actions: [
         { id: "allow", label: "Allow once" },
         { id: "always", label: "Always allow this tool" },
@@ -20,6 +25,28 @@ describe("buildApprovalAskBlock", () => {
       ],
     });
     expect(JSON.stringify(block)).not.toContain("token-secret");
+    expect(MessageBlock.parse(block)).toMatchObject({
+      kind: "ask",
+      effect: { action: "publish", target: "gmail_send_email", risk: "high" },
+    });
+  });
+
+  it("redacts and bounds the effect target before persisting it", () => {
+    const block = buildApprovalAskBlock("effect-1", "custom_write", {}, ["private-target"], {
+      effect: {
+        action: "update",
+        target: `private-target${"x".repeat(250)}`,
+        risk: "medium",
+      },
+    });
+
+    expect(block).toMatchObject({
+      kind: "ask",
+      effect: { action: "update", risk: "medium" },
+    });
+    if (block.kind !== "ask") throw new Error("expected ask block");
+    expect(block.effect?.target).not.toContain("private-target");
+    expect(block.effect?.target.length).toBeLessThanOrEqual(201);
   });
 
   it("bounds model-controlled summaries and details", () => {

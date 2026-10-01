@@ -2,6 +2,7 @@ import * as z from "zod";
 import { botSecretDestinationSchema } from "./bot-secrets.js";
 import { Id } from "./ids.js";
 import { McpTransportSchema } from "./mcp.js";
+import { TrustEffectSchema } from "./triggers.js";
 
 export const ProductEventType = z.enum([
   "thread.message.created",
@@ -102,6 +103,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     kind: z.literal("ask"),
     text: z.string(),
     approvalEffectId: Id.optional(),
+    /** The engine-derived action summary attached to this exact approval effect. */
+    effect: TrustEffectSchema.optional(),
     detail: z.string().optional(),
     input: z.enum(["text", "secret"]).optional(),
     /** Why the secret is needed; drives field label on the masked card. */

@@ -57,6 +57,8 @@ test("actions run by default while optional confirmations live in advanced user 
   });
 
   await requestDestinationWrite(page, "write this to the destination crm as a note again");
+  const effectPreview = page.getByTestId("approval-effect-preview");
+  await expect(effectPreview).toHaveText("medium: destination.write · update");
   const allowOnce = page.getByRole("button", { name: "Allow once", exact: true });
   const alwaysAllow = page.getByRole("button", { name: "Always allow this tool", exact: true });
   const deny = page.getByRole("button", { name: "Deny", exact: true });

@@ -30,7 +30,13 @@ import {
   routineWakeupJob,
   runContinueJob,
 } from "@rakazo/adapter-kit";
-import type { ComputerCommand, MessageBlock, RunStatus, TrustPolicy } from "@rakazo/contracts";
+import type {
+  ComputerCommand,
+  MessageBlock,
+  RunStatus,
+  TrustEffect,
+  TrustPolicy,
+} from "@rakazo/contracts";
 import {
   ATTACHMENT_MAX_BYTES,
   BOT_DESCRIPTION_MAX_LENGTH,
@@ -1142,7 +1148,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
     },
 
     async continueRun(runId: string, workerId: string) {
-      const run = await deps.prisma.run.findUnique({ where: { id: runId } });
+      const run = await deps.prisma.run.findUnique({
+        where: { id: runId },
+        include: { space: { select: { maxToolCallsPerTurn: true } } },
+      });
       if (!run) return;
       if (isTerminal(run.status as RunStatus)) return;
       let { resumeCheckpoint, heldForTakeover, resumeHeldLease, takeoverResume } =
@@ -2330,6 +2339,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
               return pauseForApproval();
             }
             await workspaceCheckpoint.flush();
+            const action = toolTrustAction({ name, viaConnector, readOnly: declaredReadOnly });
+            const effect: TrustEffect = { action, target: name, risk: effectRisk(action) };
             const paused = await deps.events.pauseRunForInput({
               spaceId: run.spaceId,
               threadId: run.threadId,
@@ -2341,6 +2352,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               blocks: [
                 buildApprovalAskBlock(applied!.effect.id, name, args, runSecrets, {
                   reviewReason,
+                  effect,
                 }),
               ],
             });
@@ -4045,6 +4057,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
               botId: bot.id,
               threadId: thread.id,
               runId,
+              // The space's fuse is resolved per run; the deployment env value stays the runtime fallback.
+              maxToolCallsPerTurn: run.space?.maxToolCallsPerTurn ?? null,
               sourceMessageId: run.sourceMessageId,
               prompt,
               instructions: userTurnInstructions({
