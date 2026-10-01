@@ -379,6 +379,14 @@ export class PiAgentRuntime implements AgentRuntime {
               queue.push({ type: "text", text: delta });
             }
           }
+          if (
+            event.type === "message_update" &&
+            event.assistantMessageEvent.type === "thinking_delta"
+          ) {
+            const delta = event.assistantMessageEvent.delta;
+            // Redacted thinking arrives empty; skip so the block stays honest.
+            if (delta) queue.push({ type: "thinking", text: delta });
+          }
           if (event.type === "turn_end") {
             const messageText =
               event.message.role === "assistant" ? assistantText(event.message) : "";
@@ -1222,6 +1230,10 @@ async function executeSubagent(host: ToolHost, executionId: string, args: Record
           });
         }
       }
+    }
+    if (event.type === "message_update" && event.assistantMessageEvent.type === "thinking_delta") {
+      const delta = event.assistantMessageEvent.delta;
+      if (delta) host.queue.push({ type: "thinking", text: delta });
     }
     if (event.type === "message_end" && event.message.role === "assistant") {
       const text = assistantText(event.message);
