@@ -177,6 +177,18 @@ function fixture({
     actionApprovalRule: { findMany: vi.fn(async () => rules) },
     actionAutoReviewPreference: { findUnique: vi.fn(async () => ({ enabled: autoReview })) },
     trustPolicy: { findUnique: vi.fn(async () => trustPolicy) },
+    // The trust-policy read loads the space row (it carries the per-turn tool-call fuse).
+    space: {
+      findUnique: vi.fn(async () => ({
+        maxToolCallsPerTurn: null,
+        trustPolicy: trustPolicy
+          ? {
+              approvalThreshold: trustPolicy.approvalThreshold,
+              quietHours: trustPolicy.quietHours,
+            }
+          : null,
+      })),
+    },
     externalEffect,
   };
   const pauseRunForInput = vi.fn(async () => {
