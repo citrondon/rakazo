@@ -36,6 +36,14 @@ describe("contracts", () => {
     );
   });
 
+  it("carries a thinking block and the thread.thinking event", () => {
+    expect(MessageBlock.parse({ kind: "thinking", text: "weighing options" })).toEqual({
+      kind: "thinking",
+      text: "weighing options",
+    });
+    expect(ProductEventType.options).toContain("thread.thinking");
+  });
+
   it("parses bounded model image limits", () => {
     expect(parseModelMaxImagesPerPrompt("1")).toBe(1);
     expect(parseModelMaxImagesPerPrompt("1000")).toBe(1000);

@@ -10,6 +10,7 @@ export const ProductEventType = z.enum([
   "thread.message.updated",
   "thread.message.reaction",
   "thread.progress",
+  "thread.thinking",
   "thread.artifact",
   "thread.ask",
   "thread.choice",
@@ -171,6 +172,11 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     /** Provider-generated tool status rather than assistant-authored narration. */
     activity: z.literal(true).optional(),
     pendingToolNames: z.array(z.string()).optional(),
+  }),
+  z.object({
+    /** Model reasoning, shown only when the viewer opted in. Never the answer. */
+    kind: z.literal("thinking"),
+    text: z.string(),
   }),
   z.object({
     kind: z.literal("steps"),
