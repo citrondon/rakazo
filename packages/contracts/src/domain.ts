@@ -1328,6 +1328,20 @@ export const ExportManifestSchema = z.object({
 });
 export type ExportManifest = z.infer<typeof ExportManifestSchema>;
 
+/** A shipped preset as a browser needs it: enough to list and search, without the body.
+ * The full manifest is only needed once a preset is actually chosen. */
+export const BotPresetSummarySchema = z.object({
+  slug: z.string(),
+  name: z.string(),
+  title: z.string(),
+  description: z.string(),
+  integrations: z.array(z.string()),
+  routineCount: z.number().int().nonnegative(),
+  memoryCount: z.number().int().nonnegative(),
+  fileCount: z.number().int().nonnegative(),
+});
+export type BotPresetSummary = z.infer<typeof BotPresetSummarySchema>;
+
 /** Memory path cap mirrors the home file export; longer paths are never produced by export. */
 const BOT_IMPORT_PATH_MAX = 512;
 /** Per-item cap for memory/file contents; the home export writes UTF-8 text files. */

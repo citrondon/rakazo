@@ -21,6 +21,7 @@ import {
   AvatarStyleSchema,
   BotImportInputSchema,
   BotMcpServerSchema,
+  BotPresetSummarySchema,
   BotSchema,
   BotSectionSchema,
   CapabilityInstallSchema,
@@ -272,6 +273,10 @@ export const appContract = {
     remove: oc
       .input(z.object({ botId: Id, deleteMemories: z.boolean().default(false) }))
       .output(z.object({ ok: z.literal(true) })),
+    /** The presets the library ships, so a client can offer what it actually has. */
+    presets: oc.output(z.array(BotPresetSummarySchema)),
+    /** One preset's full manifest, fetched only once a preset is chosen. */
+    preset: oc.input(z.object({ slug: z.string() })).output(ExportManifestSchema),
     importPreview: oc.input(BotImportInputSchema).output(ImportPreviewSchema),
     import: oc.input(BotImportInputSchema).output(BotSchema),
     rotateWebhookSecret: oc.input(botId).output(
