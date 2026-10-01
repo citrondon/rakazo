@@ -207,6 +207,11 @@ export default function Models() {
   const currentEntry = catalog.find(
     (entry) => entry.provider === me?.defaultProvider && entry.id === me?.defaultModel,
   );
+  // needsModel is the gate the server enforces before a run starts. The
+  // deployment fallback (me.defaultProvider / me.defaultModel) is set whether or
+  // not a usable model exists, so without this the card claims "Deployment
+  // default" while every send is rejected with "Connect a model to start a run."
+  const needsModel = me?.needsModel === true;
   const isActive =
     me?.defaultProvider === selected?.provider &&
     me?.defaultModel === (isOpenAiCompatible ? modelId.trim() : selected?.id);
@@ -491,12 +496,23 @@ export default function Models() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.activeCard}>
           <Text style={styles.eyebrow}>{t("Active model")}</Text>
-          <Text style={styles.activeModel}>
-            {currentEntry?.label ?? me?.defaultModel ?? t("Deployment default")}
-          </Text>
-          <Text style={styles.secondary}>
-            {currentEntry?.providerName ?? me?.defaultProvider ?? t("Configured by deployment")}
-          </Text>
+          {needsModel ? (
+            <>
+              <Text style={styles.activeModel}>{t("No model connected")}</Text>
+              <Text style={styles.secondary}>
+                {t("Connect a model below so this bot can reply.")}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.activeModel}>
+                {currentEntry?.label ?? me?.defaultModel ?? t("Deployment default")}
+              </Text>
+              <Text style={styles.secondary}>
+                {currentEntry?.providerName ?? me?.defaultProvider ?? t("Configured by deployment")}
+              </Text>
+            </>
+          )}
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}

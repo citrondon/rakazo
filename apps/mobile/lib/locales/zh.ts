@@ -253,6 +253,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   Denied: "已拒绝",
   Deny: "拒绝",
   "Deployment default": "部署默认",
+  "No model connected": "未连接模型",
+  "Connect a model below so this bot can reply.": "请在下方连接模型，以便该机器人回复。",
   Description: "描述",
   "Describe what this bot does": "描述这个 Bot 的工作",
   "Don’t have an account?": "还没有账户？",

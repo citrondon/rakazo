@@ -285,6 +285,9 @@ export const DE_MESSAGES: Record<string, string> = {
   "Could not start sign-in": "Anmeldung konnte nicht gestartet werden",
   Default: "Standard",
   "Deployment default": "Bereitstellungsstandard",
+  "No model connected": "Kein Modell verbunden",
+  "Connect a model below so this bot can reply.":
+    "Verbinde unten ein Modell, damit dieser Bot antworten kann.",
   "Enter a whole number from 1 to 1000 for the image limit.":
     "Gib eine ganze Zahl von 1 bis 1000 für das Bilderlimit ein.",
   "Enter a whole number from 1 to {max} for maximum output tokens.":

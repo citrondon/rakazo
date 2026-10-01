@@ -269,6 +269,9 @@ export const RU_MESSAGES: Record<string, string> = {
   Denied: "Запрещено",
   Deny: "Запретить",
   "Deployment default": "Развертывание по умолчанию",
+  "No model connected": "Модель не подключена",
+  "Connect a model below so this bot can reply.":
+    "Подключите модель ниже, чтобы этот бот мог отвечать.",
   Description: "Описание",
   "Describe what this bot does": "Опишите, что делает этот бот",
   "Don’t have an account?": "Нет аккаунта?",
