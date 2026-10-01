@@ -101,7 +101,8 @@ function push(target, localDir) {
   const supervisorName = supervisor();
   if (supervisorName) {
     // Bots write as uid 1000; files copied in from the host arrive as whoever ran this.
-    execSh(supervisorName, "chown -R 1000:1000 /data/homes 2>/dev/null || true");
+    // Chown only the synced folder, not all of /data/homes, which may hold other teams.
+    execSh(supervisorName, `chown -R 1000:1000 '${target.remoteDir}' 2>/dev/null || true`);
   }
 }
 

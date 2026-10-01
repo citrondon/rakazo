@@ -165,5 +165,5 @@ Kontext-Export für andere LLMs (schließt `.env` und Secrets aus). Das Ergebnis
 inlined Pfade aus dem Checkout und ist über `docs/repomix-*.xml` in `.gitignore` gehalten.
 
 ```bash
-npx repomix --include "docs/**/*.md,bot-library/**/*.json" -o docs/repomix-grokbot-context.xml
+npx repomix --include "docs/**/*.md,bot-library/**/*.json" -o "$HOME/repomix-grokbot-context.xml"
 ```
