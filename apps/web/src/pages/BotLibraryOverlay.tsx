@@ -259,7 +259,7 @@ export function BotLibraryOverlay({ onClose }: { onClose: () => void }) {
   if (loading) {
     return (
       <Dialog open onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="sm:max-w-[520px]">
+        <DialogContent showCloseButton={false} className="sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle>
               <Trans>Bot library</Trans>
@@ -279,7 +279,7 @@ export function BotLibraryOverlay({ onClose }: { onClose: () => void }) {
   if (imported) {
     return (
       <Dialog open onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="sm:max-w-[520px]">
+        <DialogContent showCloseButton={false} className="sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle>
               <Trans>Bot imported</Trans>
@@ -305,7 +305,10 @@ export function BotLibraryOverlay({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[min(88vh,800px)] overflow-hidden sm:max-w-[760px]">
+      <DialogContent
+        showCloseButton={false}
+        className="flex max-h-[min(88vh,800px)] flex-col overflow-hidden sm:max-w-[760px]"
+      >
         <DialogHeader>
           <DialogTitle>
             <Trans>Bot library</Trans>
@@ -358,148 +361,154 @@ export function BotLibraryOverlay({ onClose }: { onClose: () => void }) {
           </fieldset>
         </div>
 
-        <div className="grid max-h-[min(36vh,320px)] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
-          {matched.map((preset) => {
-            const category = categoryOptions.find(
-              (item) => item.id === categoryForPreset(preset.slug),
-            );
-            return (
-              <button
-                key={preset.slug}
-                type="button"
-                data-testid={`preset-${preset.slug}`}
-                aria-pressed={selectedSlug === preset.slug}
-                onClick={() => setSelectedSlug(preset.slug)}
-                className={`flex min-w-0 items-center gap-3 rounded-2xl border p-3 text-start transition-colors ${
-                  selectedSlug === preset.slug
-                    ? "border-foreground bg-accent"
-                    : "border-border bg-card hover:bg-accent"
-                }`}
-              >
-                <BotAvatar
-                  color={avatarColorForPreset(preset.slug)}
-                  identity={preset.slug}
-                  size={42}
-                  className="shrink-0"
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-medium text-foreground">
-                    {preset.name}
-                  </span>
-                  <span className="block truncate text-[12px] text-muted-foreground">
-                    {preset.title || preset.description}
-                  </span>
-                  {category ? (
-                    <span className="mt-1 block truncate text-[11px] text-muted-foreground/80">
-                      {category.label}
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {matched.map((preset) => {
+                const category = categoryOptions.find(
+                  (item) => item.id === categoryForPreset(preset.slug),
+                );
+                return (
+                  <button
+                    key={preset.slug}
+                    type="button"
+                    data-testid={`preset-${preset.slug}`}
+                    aria-pressed={selectedSlug === preset.slug}
+                    onClick={() => setSelectedSlug(preset.slug)}
+                    className={`flex min-w-0 items-center gap-3 rounded-2xl border p-3 text-start transition-colors ${
+                      selectedSlug === preset.slug
+                        ? "border-foreground bg-accent"
+                        : "border-border bg-card hover:bg-accent"
+                    }`}
+                  >
+                    <BotAvatar
+                      color={avatarColorForPreset(preset.slug)}
+                      identity={preset.slug}
+                      size={42}
+                      className="shrink-0"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-medium text-foreground">
+                        {preset.name}
+                      </span>
+                      <span className="block truncate text-[12px] text-muted-foreground">
+                        {preset.title || preset.description}
+                      </span>
+                      {category ? (
+                        <span className="mt-1 block truncate text-[11px] text-muted-foreground/80">
+                          {category.label}
+                        </span>
+                      ) : null}
                     </span>
+                    <Library
+                      size={15}
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                      className="shrink-0 text-muted-foreground/70"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            {matched.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-border py-8 text-center text-[13px] text-muted-foreground">
+                <Trans>No bots in this category match your search.</Trans>
+              </p>
+            ) : null}
+
+            {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
+          </div>
+
+          <div className="max-h-[min(46vh,340px)] shrink-0 overflow-y-auto">
+            {preview ? (
+              <div className="flex flex-col gap-3 rounded-xl border border-border px-4 py-3">
+                <div>
+                  <div className="text-[16px] text-foreground">{preview.name}</div>
+                  {preview.title ? (
+                    <div className="text-[13px] text-muted-foreground">{preview.title}</div>
                   ) : null}
-                </span>
-                <Library
-                  size={15}
-                  strokeWidth={1.8}
-                  aria-hidden="true"
-                  className="shrink-0 text-muted-foreground/70"
-                />
-              </button>
-            );
-          })}
+                  <div className="text-[13px] text-muted-foreground">{preview.description}</div>
+                </div>
+                <div className="text-[13px] text-muted-foreground">
+                  <Plural
+                    value={preview.memoryCount}
+                    zero="No memories"
+                    one="# memory"
+                    other="# memories"
+                  />
+                </div>
+                {preview.routineNames.length > 0 ? (
+                  <div className="text-[13px] text-muted-foreground">
+                    <Plural
+                      value={preview.routineNames.length}
+                      zero="No routines"
+                      one="Routine: #"
+                      other="Routines: #"
+                    />
+                  </div>
+                ) : null}
+                {preview.skillNames.length > 0 ? (
+                  <div className="text-[13px] text-muted-foreground">
+                    <Plural value={preview.skillNames.length} one="Skill: #" other="Skills: #" />
+                  </div>
+                ) : null}
+                {integrations.length > 0 ? (
+                  <div className="text-[13px] text-muted-foreground">
+                    <Trans>Integrations</Trans>: {integrations.join(", ")}
+                  </div>
+                ) : null}
+                <div className="flex flex-col gap-2 text-[13.5px]">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={includeMemory}
+                      onChange={(event) => setIncludeMemory(event.target.checked)}
+                    />
+                    <Trans>Include memories</Trans>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={includeRoutines}
+                      onChange={(event) => setIncludeRoutines(event.target.checked)}
+                    />
+                    <Trans>Include routines (imported inactive)</Trans>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={includeSkills}
+                      onChange={(event) => setIncludeSkills(event.target.checked)}
+                    />
+                    <Trans>Include skills (added to your space)</Trans>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={includeFiles}
+                      onChange={(event) => setIncludeFiles(event.target.checked)}
+                    />
+                    <Trans>Include files</Trans>
+                  </label>
+                </div>
+                {preview.warnings.length > 0 ? (
+                  <ul className="flex flex-col gap-1 text-[13px] text-warning">
+                    {preview.warnings.map((warning) => (
+                      <li key={warning}>{warning}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : (
+              <p className="py-4 text-center text-[13px] text-muted-foreground">
+                <Trans>Select a preset to continue.</Trans>
+              </p>
+            )}
+          </div>
         </div>
 
-        {matched.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-border py-8 text-center text-[13px] text-muted-foreground">
-            <Trans>No bots in this category match your search.</Trans>
-          </p>
-        ) : null}
-
-        {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
-
-        {preview ? (
-          <div className="flex flex-col gap-3 rounded-xl border border-border px-4 py-3">
-            <div>
-              <div className="text-[16px] text-foreground">{preview.name}</div>
-              {preview.title ? (
-                <div className="text-[13px] text-muted-foreground">{preview.title}</div>
-              ) : null}
-              <div className="text-[13px] text-muted-foreground">{preview.description}</div>
-            </div>
-            <div className="text-[13px] text-muted-foreground">
-              <Plural
-                value={preview.memoryCount}
-                zero="No memories"
-                one="# memory"
-                other="# memories"
-              />
-            </div>
-            {preview.routineNames.length > 0 ? (
-              <div className="text-[13px] text-muted-foreground">
-                <Plural
-                  value={preview.routineNames.length}
-                  zero="No routines"
-                  one="Routine: #"
-                  other="Routines: #"
-                />
-              </div>
-            ) : null}
-            {preview.skillNames.length > 0 ? (
-              <div className="text-[13px] text-muted-foreground">
-                <Plural value={preview.skillNames.length} one="Skill: #" other="Skills: #" />
-              </div>
-            ) : null}
-            {integrations.length > 0 ? (
-              <div className="text-[13px] text-muted-foreground">
-                <Trans>Integrations</Trans>: {integrations.join(", ")}
-              </div>
-            ) : null}
-            <div className="flex flex-col gap-2 text-[13.5px]">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={includeMemory}
-                  onChange={(event) => setIncludeMemory(event.target.checked)}
-                />
-                <Trans>Include memories</Trans>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={includeRoutines}
-                  onChange={(event) => setIncludeRoutines(event.target.checked)}
-                />
-                <Trans>Include routines (imported inactive)</Trans>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={includeSkills}
-                  onChange={(event) => setIncludeSkills(event.target.checked)}
-                />
-                <Trans>Include skills (added to your space)</Trans>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={includeFiles}
-                  onChange={(event) => setIncludeFiles(event.target.checked)}
-                />
-                <Trans>Include files</Trans>
-              </label>
-            </div>
-            {preview.warnings.length > 0 ? (
-              <ul className="flex flex-col gap-1 text-[13px] text-warning">
-                {preview.warnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-        ) : (
-          <p className="py-4 text-center text-[13px] text-muted-foreground">
-            <Trans>Select a preset to continue.</Trans>
-          </p>
-        )}
-
-        <div className="flex justify-end gap-2 pb-2">
+        <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" onClick={onClose} disabled={importing}>
             <Trans>Cancel</Trans>
           </Button>
