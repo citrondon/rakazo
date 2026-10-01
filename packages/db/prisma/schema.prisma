@@ -167,6 +167,8 @@ model Space {
   organization                Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name                        String
   isDefault                   Boolean                      @default(false)
+  /// Per-space per-turn tool-call fuse. null inherits MAX_TOOL_CALLS_PER_TURN; 0 means unlimited.
+  maxToolCallsPerTurn         Int?
   createdByUserId             String?
   createdByUser               User?                        @relation("SpaceCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
   createdAt                   DateTime                     @default(now())
