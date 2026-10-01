@@ -78,6 +78,8 @@ and the L2 run.
 
 The gate, the baselines, and the traps are taken from `emirbartu/jev-for-all`
 ("When Jev wins"), the measured field record for TypeSafe's System One decision
-model. The plugin itself is not adopted: it wires OpenCode hooks, and we run
-Cline, so nothing in it installs here. The method is provider-neutral, and the
-method is what transfers.
+model. Two parts of it are adopted here: this gate, and the `pi` adapter wired
+for the Pi CLI through a project-local extension. Its OpenCode, Claude Code,
+Hermes and browser surfaces are not used. The adapter ships Bun-only
+`import.meta.dir` usage that crashes under pi's Node loader, so the local clone
+carries a small Node-compatibility patch. Upstream it if it is still broken.
