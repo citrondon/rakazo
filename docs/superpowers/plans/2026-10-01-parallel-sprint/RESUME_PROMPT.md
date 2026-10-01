@@ -15,10 +15,14 @@ GrokBot parity on all three surfaces plus one visible convenience, then an opt-i
 code review.
 
 ## Done (committed and pushed on main)
-- Triggers: normalized event → `EVENT_CATALOG` → dry run → `EVENT_TRIGGERED` hold → approval →
-  `executeEvent`.
-- Trust kit: per-tool trust policy → `TrustEffect` → tier routing → `TRUST_HOLD` pause; `dryRun`
-  preview; `packages/core/src/trust-effects.ts`.
+- Triggers: normalized event → `EVENT_CATALOG` (`packages/adapters/src/event-catalog.ts`) →
+  `selectTriggeredRoutines` (`packages/core/src/trigger-engine.ts`) → `deliverWebhookEvent`
+  (`apps/api/src/webhook-inbound.ts`) → `holdRunForChoice` (`packages/db/src/events.ts`).
+- Trust kit: `TrustPolicy` → `TrustEffect` → `TrustPhase`
+  (`planned | dryRun | approval | executed | paused | rejected`). `dryRunPreview` and
+  `planQuietHours` live in `packages/core/src/trust-runner.ts`; policy and quiet-hours helpers in
+  `packages/core/src/trust-effects.ts`. The pause is the `paused` phase — there is no `TRUST_HOLD`,
+  no `EVENT_TRIGGERED` and no `executeEvent` in the code, so do not grep for them.
 - `.github/workflows/open-code-review.yml` — opt-in, pinned `alibaba/open-code-review@v1.12.11`,
   gated on the variable `OCR_ENABLED`, skips draft PRs, reads `OCR_LLM_{URL,TOKEN,MODEL}` secrets by
   name only. `ocr` installed locally; `ocr llm test` passes; a sample review ran. Config lives in

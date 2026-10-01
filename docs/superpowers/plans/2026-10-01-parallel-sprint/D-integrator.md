@@ -10,10 +10,11 @@ Start prompt for the Claude Opus window. Work in the main repo checkout on branc
 every `index.ts` barrel, `apps/api/src/router.ts`, and `main` itself.
 
 ## Tasks (in order)
-- [ ] **Freeze first.** Once the in-flight agents stop: make `main` clean, push, then run
-      `bash scripts/setup-parallel-sprint.sh`. Confirm the three worktrees exist.
-- [ ] **Finalize the backlog.** Replace the seed list in the board with the verified concrete tasks
-      per window. Announce it; the other windows read the board.
+- [x] **Freeze first.** Done: the in-flight agents finished, `main` is clean and pushed. Remaining:
+      run `bash scripts/setup-parallel-sprint.sh` and confirm the three worktrees exist.
+- [x] **Finalize the backlog.** Done — the board now carries the backlog verified against the code,
+      with two wrong evidence lines corrected (the dry-run plan is not in the web UI at all, and the
+      library picker already shipped). Announce it; the other windows read the board.
 - [ ] Quiet hours auto-resume when the window closes instead of waiting for a person
       (`packages/core` planning + whatever the executor needs).
 - [ ] Apply any contract/barrel change a window requests, in one small commit.

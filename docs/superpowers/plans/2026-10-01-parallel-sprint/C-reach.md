@@ -2,6 +2,14 @@
 
 Start prompt for one Cline window. Work in `../rakazo-reach` on branch `sprint/reach`.
 
+## Before you start
+
+```bash
+pnpm install --frozen-lockfile     # a fresh worktree has no node_modules yet
+```
+
+Running a dev server too? `cp .env.example .env` first. Never commit `.env`.
+
 ## Read first
 - `docs/superpowers/plans/2026-10-01-parallel-sprint.md` — rules, ownership, merge flow.
 - `packages/adapters/src/event-catalog.ts` and `apps/api/src/event-webhook.ts` — the existing
@@ -19,8 +27,10 @@ Start prompt for one Cline window. Work in `../rakazo-reach` on branch `sprint/r
 - [ ] HMAC signature adapters for providers that only sign their own raw webhook (Linear, Sentry,
       PagerDuty): verify the signature, then forward a normalized `{ provider, type, payload }` event
       to `/events`. Reuse `EVENT_CATALOG`; never add a provider-specific env var.
-- [ ] Confirm the existing `/events` path (`event-webhook.ts`) before writing new code — it may
-      already cover part of this.
+- [ ] Already confirmed, do not re-litigate: `apps/api/src/event-webhook.ts` accepts
+      `{ provider, type, payload }` and authenticates with a bearer token only — it verifies no
+      provider signature by design, and says so in its doc comment. Your adapters are additive:
+      reuse that route, do not change it.
 - [ ] Mobile parity polish for the new trust/trigger surfaces, if anything still diverges.
 
 ## Verify before every commit

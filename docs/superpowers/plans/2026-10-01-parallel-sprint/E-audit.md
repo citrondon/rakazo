@@ -24,10 +24,14 @@ small fast model here — this is reasoning, not throughput.
 4. Give each: exact file path(s), the evidence that it is open, the verify command, and a size
    (S/M/L).
 
-## Do NOT
+## Do NOT — read-only, re-checked before every step
 - Edit any source, plan, or `bot-library/**` file.
-- Commit, push, or create worktrees.
-- Start feature work — the running agents own those paths right now.
+- Commit, push, or create worktrees. Nothing you produce enters git except the one output file below.
+- Start feature work — another window may own those paths right now.
+
+Run `git status --short` first. If it prints anything, another window is mid-edit: keep reading,
+write nothing, and say so in your handoff. Committing now would sweep that window's unfinished work
+into your commit.
 
 ## Write only this file
 `docs/superpowers/plans/2026-10-01-parallel-sprint/backlog-audit.md`, as a table:
