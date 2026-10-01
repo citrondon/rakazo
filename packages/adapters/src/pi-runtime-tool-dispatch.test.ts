@@ -1275,8 +1275,6 @@ describe("Pi connector tool dispatch", () => {
     });
   });
 
-
-
   it("keeps an optional tool-call fuse across a second run() for the same runId", async () => {
     process.env.MAX_TOOL_CALLS_PER_TURN = "5";
     fakeAgentState.mode = "parent-limit";
