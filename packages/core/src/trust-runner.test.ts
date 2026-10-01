@@ -16,7 +16,11 @@ function effect(action: TrustEffect["action"]): TrustEffect {
   return { action, target: "x", risk: effectRisk(action) };
 }
 
-const defaultPolicy: TrustPolicy = { approvalThreshold: "medium", quietHours: null };
+const defaultPolicy: TrustPolicy = {
+  approvalThreshold: "medium",
+  quietHours: null,
+  maxToolCallsPerTurn: null,
+};
 
 describe("trust transitions", () => {
   it("allows the documented moves and blocks the rest", () => {
@@ -64,7 +68,11 @@ describe("planTrustPhases", () => {
   });
 
   it("honors a raised threshold", () => {
-    const strict: TrustPolicy = { approvalThreshold: "high", quietHours: null };
+    const strict: TrustPolicy = {
+      approvalThreshold: "high",
+      quietHours: null,
+      maxToolCallsPerTurn: null,
+    };
     expect(planTrustPhases([effect("update")], strict)).toEqual(["planned", "dryRun", "executed"]);
     expect(planTrustPhases([effect("delete")], strict)).toEqual([
       "planned",
@@ -113,6 +121,7 @@ describe("planRunTrust", () => {
   const night: TrustPolicy = {
     approvalThreshold: "medium",
     quietHours: { start: "22:00", end: "07:00", timezone: "UTC" },
+    maxToolCallsPerTurn: null,
   };
   const midnight = new Date("2026-10-10T23:00:00Z");
   const noon = new Date("2026-10-10T12:00:00Z");

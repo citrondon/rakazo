@@ -21,6 +21,7 @@ const RISK_RANK: Record<TrustRisk, number> = { low: 0, medium: 1, high: 2 };
 export const DEFAULT_TRUST_POLICY: TrustPolicy = {
   approvalThreshold: "medium",
   quietHours: null,
+  maxToolCallsPerTurn: null,
 };
 
 /** Fill a partial or absent policy with the defaults, so callers never branch on missing fields. */
@@ -28,6 +29,8 @@ export function resolveTrustPolicy(partial: Partial<TrustPolicy> | null | undefi
   return {
     approvalThreshold: partial?.approvalThreshold ?? DEFAULT_TRUST_POLICY.approvalThreshold,
     quietHours: partial?.quietHours ?? DEFAULT_TRUST_POLICY.quietHours,
+    // `??` and not `||`: a stored 0 means unlimited and must survive resolution.
+    maxToolCallsPerTurn: partial?.maxToolCallsPerTurn ?? DEFAULT_TRUST_POLICY.maxToolCallsPerTurn,
   };
 }
 

@@ -20,7 +20,11 @@ function effect(action: TrustEffect["action"]): TrustEffect {
   return { action, target: "x", risk: effectRisk(action) };
 }
 
-const defaultPolicy: TrustPolicy = { approvalThreshold: "medium", quietHours: null };
+const defaultPolicy: TrustPolicy = {
+  approvalThreshold: "medium",
+  quietHours: null,
+  maxToolCallsPerTurn: null,
+};
 
 describe("risk tiers", () => {
   it("classifies every action into its tier", () => {
@@ -64,7 +68,11 @@ describe("requiresApproval", () => {
   });
 
   it("can be raised to ask only on the top tier", () => {
-    const strict: TrustPolicy = { approvalThreshold: "high", quietHours: null };
+    const strict: TrustPolicy = {
+      approvalThreshold: "high",
+      quietHours: null,
+      maxToolCallsPerTurn: null,
+    };
     expect(requiresApproval("medium", strict)).toBe(false);
     expect(requiresApproval("high", strict)).toBe(true);
   });
@@ -107,6 +115,7 @@ describe("planQuietHours", () => {
   const night: TrustPolicy = {
     approvalThreshold: "medium",
     quietHours: { start: "22:00", end: "07:00", timezone: "UTC" },
+    maxToolCallsPerTurn: null,
   };
   const midnight = new Date("2026-10-10T23:00:00Z");
   const noon = new Date("2026-10-10T12:00:00Z");
@@ -127,8 +136,12 @@ describe("planQuietHours", () => {
 });
 
 describe("DEFAULT_TRUST_POLICY", () => {
-  it("asks before any write and never pauses", () => {
-    expect(DEFAULT_TRUST_POLICY).toEqual({ approvalThreshold: "medium", quietHours: null });
+  it("asks before any write, never pauses, and inherits the deployment limit", () => {
+    expect(DEFAULT_TRUST_POLICY).toEqual({
+      approvalThreshold: "medium",
+      quietHours: null,
+      maxToolCallsPerTurn: null,
+    });
     expect(policyRequiresApproval([effect("update")], DEFAULT_TRUST_POLICY)).toBe(true);
     expect(policyRequiresApproval([effect("read")], DEFAULT_TRUST_POLICY)).toBe(false);
   });
@@ -141,11 +154,17 @@ describe("resolveTrustPolicy", () => {
     expect(resolveTrustPolicy({ approvalThreshold: "high" })).toEqual({
       approvalThreshold: "high",
       quietHours: null,
+      maxToolCallsPerTurn: null,
     });
   });
 
   it("keeps a configured quiet window", () => {
     const window = { start: "22:00", end: "07:00", timezone: "UTC" };
     expect(resolveTrustPolicy({ quietHours: window }).quietHours).toEqual(window);
+  });
+
+  it("keeps a stored limit and treats 0 as unlimited, not as a fallback", () => {
+    expect(resolveTrustPolicy({ maxToolCallsPerTurn: 0 }).maxToolCallsPerTurn).toBe(0);
+    expect(resolveTrustPolicy({ maxToolCallsPerTurn: 200 }).maxToolCallsPerTurn).toBe(200);
   });
 });
