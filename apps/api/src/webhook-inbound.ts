@@ -2,13 +2,41 @@ import { createHash } from "node:crypto";
 import type { JobPublisher } from "@rakazo/adapter-kit";
 import { runContinueJob } from "@rakazo/adapter-kit";
 import type { EncryptedSecretStore } from "@rakazo/adapters";
-import type { Trigger, TriggerEvent } from "@rakazo/contracts";
+import type { MessageBlock, Trigger, TriggerEvent, TrustPhase } from "@rakazo/contracts";
 import { selectTriggeredRoutines, type TriggerCandidate } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 
 export const WEBHOOK_MAX_BODY_BYTES = 64 * 1024;
 export const WEBHOOK_SECRET_KIND = "webhook";
+
+/** The choice a paused, quiet-hours routine offers: answer it to run the routine now. */
+export const QUIET_HOURS_ACTIONS: ReadonlyArray<{ id: string; label: string }> = [
+  { id: "run", label: "Run now" },
+];
+
+/** The trust plan a wake resolves before it delivers: which phase, and whether to hold. */
+export type WebhookRunTrust = { phase: TrustPhase; paused: boolean };
+
+/**
+ * Resolve a wake's trust plan (planned effects + the space policy) before delivery. Supplied by
+ * the composition root; when absent the wake behaves exactly as before, so the trust kit is
+ * opt-in at the boundary rather than baked into every caller.
+ */
+export type WebhookTrustPlanner = (input: {
+  spaceId: string;
+  userId: string;
+  now?: Date;
+}) => Promise<WebhookRunTrust>;
+
+function quietHoursAskBlock(): MessageBlock {
+  return {
+    kind: "ask",
+    text: "Routine paused for quiet hours",
+    status: "pending",
+    actions: QUIET_HOURS_ACTIONS.map((action) => ({ ...action })),
+  };
+}
 
 export type WebhookEvents = {
   sendUserMessage(input: {
@@ -20,8 +48,22 @@ export type WebhookEvents = {
     prompt: string;
     trigger: "webhook";
     clientNonce?: string;
+    /** Trust-kit phase to record on the created run, when trust planning is enabled. */
+    trustPhase?: string;
     allowParallelRun?: boolean;
   }): Promise<{ messageId: string; runId: string | null; seq: number }>;
+  /**
+   * Optional: hold a queued run for a choice ask instead of scheduling it (quiet-hours pause).
+   * Present on the real event store; absent in small mocks, where the wake never pauses.
+   */
+  holdRunForChoice?(input: {
+    spaceId: string;
+    threadId: string;
+    botId: string;
+    runId: string;
+    blocks: MessageBlock[];
+    offeredActions: Array<{ id: string; label: string }>;
+  }): Promise<boolean>;
 };
 
 export type WebhookDeps = {
@@ -29,6 +71,8 @@ export type WebhookDeps = {
   secrets: EncryptedSecretStore;
   events: WebhookEvents;
   jobs: Pick<JobPublisher, "enqueue">;
+  /** Optional trust planner; when present, a wake records its phase and may pause on quiet hours. */
+  trust?: WebhookTrustPlanner;
 };
 
 export type WebhookTarget = {
@@ -151,7 +195,7 @@ export function inboundDeliveryClientNonce(
 }
 
 export async function deliverWebhookEvent(
-  deps: Pick<WebhookDeps, "events" | "jobs">,
+  deps: Pick<WebhookDeps, "events" | "jobs" | "trust">,
   target: InboundTarget,
   input: {
     prompt: string;
@@ -194,6 +238,12 @@ export async function deliverWebhookEvent(
     ? inboundDeliveryClientNonce(input.source, target.bot.id, input.idempotencyKey)
     : undefined;
 
+  // Resolve the trust plan before delivery: which phase the run starts under, and whether a
+  // quiet window should hold a consequential routine. Absent a planner, the wake is unchanged.
+  const plan = deps.trust
+    ? await deps.trust({ spaceId: target.bot.spaceId, userId: target.bot.userId })
+    : undefined;
+
   const sent = await deps.events.sendUserMessage({
     spaceId: target.bot.spaceId,
     threadId: target.threadId,
@@ -203,8 +253,22 @@ export async function deliverWebhookEvent(
     prompt: promptText,
     trigger: "webhook",
     clientNonce,
+    ...(plan ? { trustPhase: plan.phase } : {}),
     ...(input.allowParallelRun ? { allowParallelRun: true } : {}),
   });
+
+  if (sent.runId && plan?.paused && deps.events.holdRunForChoice) {
+    // Hold the run on an ask instead of starting it; the ordinary answer path resumes it.
+    await deps.events.holdRunForChoice({
+      spaceId: target.bot.spaceId,
+      threadId: target.threadId,
+      botId: target.bot.id,
+      runId: sent.runId,
+      blocks: [quietHoursAskBlock()],
+      offeredActions: QUIET_HOURS_ACTIONS.map((action) => ({ ...action })),
+    });
+    return { ok: true as const, messageId: sent.messageId, runId: sent.runId, seq: sent.seq };
+  }
 
   if (sent.runId) {
     await deps.jobs.enqueue(runContinueJob(sent.runId)).catch((error) => {

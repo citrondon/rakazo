@@ -1,5 +1,9 @@
 .deepsec/
 .freebuff/
+
+# pi coding-agent project scope (trusted per-machine in ~/.pi/agent/trust.json)
+.pi/
+
 node_modules
 __pycache__/
 *.py[cod]

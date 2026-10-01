@@ -260,6 +260,7 @@ import {
   listTriggers,
   updateTrigger,
 } from "./triggers.js";
+import { getTrustPolicy, setTrustPolicy } from "./trust-policy.js";
 import { loadUsageMonth } from "./usage-month.js";
 import {
   disconnectVoiceCredential,
@@ -3369,6 +3370,12 @@ export function createRouter(deps: RouterDeps) {
     },
     events: {
       list: authed.events.list.handler(async () => listEvents()),
+    },
+    trust: {
+      get: authed.trust.get.handler(async ({ context }) => getTrustPolicy(deps, context.actor)),
+      set: authed.trust.set.handler(async ({ context, input }) =>
+        setTrustPolicy(deps, context.actor, input),
+      ),
     },
     scratchpad: {
       list: authed.scratchpad.list.handler(async ({ context, input }) => {

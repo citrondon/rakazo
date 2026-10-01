@@ -7,6 +7,7 @@ import {
   dryRunAppliedEffects,
   dryRunPreview,
   isDryRunSideEffectFree,
+  planRunTrust,
   planTrustPhases,
   TRUST_PHASE_TRANSITIONS,
 } from "./trust-runner.js";
@@ -105,5 +106,42 @@ describe("dry run conformance", () => {
     const writes = [effect("create"), effect("update"), effect("publish")];
     expect(isDryRunSideEffectFree(writes)).toBe(true);
     expect(dryRunAppliedEffects(writes)).toEqual([]);
+  });
+});
+
+describe("planRunTrust", () => {
+  const night: TrustPolicy = {
+    approvalThreshold: "medium",
+    quietHours: { start: "22:00", end: "07:00", timezone: "UTC" },
+  };
+  const midnight = new Date("2026-10-10T23:00:00Z");
+  const noon = new Date("2026-10-10T12:00:00Z");
+
+  it("starts planned when no quiet window is set", () => {
+    expect(planRunTrust([effect("delete")], defaultPolicy, midnight)).toEqual({
+      phase: "planned",
+      paused: false,
+    });
+  });
+
+  it("pauses a consequential plan inside the window", () => {
+    expect(planRunTrust([effect("update")], night, midnight)).toEqual({
+      phase: "paused",
+      paused: true,
+    });
+  });
+
+  it("never holds a read-only plan", () => {
+    expect(planRunTrust([effect("read")], night, midnight)).toEqual({
+      phase: "planned",
+      paused: false,
+    });
+  });
+
+  it("runs once the window closes", () => {
+    expect(planRunTrust([effect("delete")], night, noon)).toEqual({
+      phase: "planned",
+      paused: false,
+    });
   });
 });

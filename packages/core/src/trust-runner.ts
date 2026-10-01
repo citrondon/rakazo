@@ -1,5 +1,5 @@
 import type { TrustEffect, TrustPhase, TrustPolicy } from "@rakazo/contracts";
-import { isMutating, policyRequiresApproval } from "./trust-effects.js";
+import { isMutating, planQuietHours, policyRequiresApproval } from "./trust-effects.js";
 
 /**
  * The trust runner's phase machine. A triggered run is planned, previewed against a
@@ -63,4 +63,19 @@ export function dryRunAppliedEffects(effects: readonly TrustEffect[]): TrustEffe
 /** True when the dry run applies nothing that would mutate the outside world. */
 export function isDryRunSideEffectFree(effects: readonly TrustEffect[]): boolean {
   return dryRunAppliedEffects(effects).every((effect) => !isMutating(effect.action));
+}
+
+/**
+ * The phase a triggered run starts under, decided before it runs: a run whose effects would
+ * reach the approval line is held when it lands inside the policy's quiet window, otherwise it
+ * starts planned. A run that only reads is never held, so quiet hours silence the consequential
+ * work rather than all work.
+ */
+export function planRunTrust(
+  effects: readonly TrustEffect[],
+  policy: TrustPolicy,
+  now: Date,
+): { phase: TrustPhase; paused: boolean } {
+  const paused = planQuietHours(effects, policy, now) === "pause";
+  return { phase: paused ? "paused" : "planned", paused };
 }

@@ -15,6 +15,23 @@ import type {
 const RISK_RANK: Record<TrustRisk, number> = { low: 0, medium: 1, high: 2 };
 
 /**
+ * The policy a space gets before it stores its own: ask before any write (medium and above),
+ * and never pause. One source of truth, so storage, the API, and the runner cannot drift.
+ */
+export const DEFAULT_TRUST_POLICY: TrustPolicy = {
+  approvalThreshold: "medium",
+  quietHours: null,
+};
+
+/** Fill a partial or absent policy with the defaults, so callers never branch on missing fields. */
+export function resolveTrustPolicy(partial: Partial<TrustPolicy> | null | undefined): TrustPolicy {
+  return {
+    approvalThreshold: partial?.approvalThreshold ?? DEFAULT_TRUST_POLICY.approvalThreshold,
+    quietHours: partial?.quietHours ?? DEFAULT_TRUST_POLICY.quietHours,
+  };
+}
+
+/**
  * Risk is derived from what the action does, not from the provider. Reading, listing, and
  * drafting leave the world unchanged; creating, updating, and notifying are reversible
  * writes; deleting, transferring, and publishing are the tiers that ask a person by default.

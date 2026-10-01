@@ -109,6 +109,7 @@ import {
   settleWithTimeout,
   TEAM_CHAT_STARTUP_SHUTDOWN_MS,
 } from "./team-chat-startup.js";
+import { createWebhookTrustPlanner } from "./trigger-trust.js";
 import { mountVoiceHttpRoutes } from "./voice.js";
 import { mountWebhookHttpRoutes } from "./webhook.js";
 
@@ -578,7 +579,8 @@ export async function createApp(
     if (actor) enrichLogContext({ "user.id": actor.userId, "space.id": actor.spaceId });
     return actor;
   });
-  mountWebhookHttpRoutes(app, { prisma, secrets, events, jobs });
+  const trustPlanner = createWebhookTrustPlanner(prisma);
+  mountWebhookHttpRoutes(app, { prisma, secrets, events, jobs, trust: trustPlanner });
   // Shared with stop so a shutdown during retry delays does not restart polling.
   let messagingStopped = false;
   let clearMessagingRetryDelay: (() => void) | undefined;
@@ -595,6 +597,7 @@ export async function createApp(
       prisma,
       events,
       jobs,
+      trust: trustPlanner,
       provision: (request, policyEnv) => provisionMessagingIdentity(prisma, request, policyEnv),
       openSignup: env.messagingOpenSignup,
       signupPolicy: {

@@ -27,12 +27,15 @@ import {
   formatUntrustedDeliveryPayload,
   inboundEventName,
   messagingWakeIdempotencyKey,
+  type WebhookTrustPlanner,
 } from "./webhook-inbound.js";
 
 export interface MessagingInboundDeps {
   prisma: PrismaClient;
-  events: Pick<ThreadEvents, "sendUserMessage" | "notify">;
+  events: Pick<ThreadEvents, "sendUserMessage" | "notify" | "holdRunForChoice">;
   jobs: Pick<JobPublisher, "enqueue">;
+  /** Optional trust planner; when present, a message wake records its phase and may pause. */
+  trust?: WebhookTrustPlanner;
   provision: (
     request: MessagingIdentityRequest,
     env: SignupPolicyEnv,
@@ -167,7 +170,7 @@ async function handleDirectEvent(
 
 /** Wake provider-neutral message routines through the same approval boundary as webhooks. */
 export async function wakeMessageRoutines(
-  deps: Pick<MessagingInboundDeps, "prisma" | "events" | "jobs">,
+  deps: Pick<MessagingInboundDeps, "prisma" | "events" | "jobs" | "trust">,
   target: Pick<ProvisionedMessagingIdentity, "spaceId" | "userId" | "botId" | "threadId">,
   event: MessagingInboundMessage,
   options?: {
@@ -241,7 +244,7 @@ export async function wakeMessageRoutines(
     eventType: "message",
   });
   await deliverWebhookEvent(
-    { events: deps.events, jobs: deps.jobs },
+    { events: deps.events, jobs: deps.jobs, trust: deps.trust },
     {
       bot: { id: target.botId, spaceId: target.spaceId, userId: target.userId },
       threadId: target.threadId,

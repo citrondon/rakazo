@@ -207,6 +207,7 @@ model Space {
   botSecrets BotSecret[]
   externalConversations       ExternalConversation[]
   agentSecrets                AgentSecret[]
+  trustPolicy                 TrustPolicy?
 
   @@unique([id, organizationId])
   @@index([organizationId, createdAt])
@@ -578,6 +579,8 @@ model Run {
   userId               String
   status               String
   trigger              String
+  /** Trust-kit phase for a triggered run: planned, dryRun, approval, executed, paused, rejected. */
+  trustPhase           String?
   modelProvider        String?
   modelId              String?
   error                String?
@@ -1367,4 +1370,17 @@ model Trigger {
   @@index([routineId])
   @@index([spaceId, provider, eventType, enabled])
   @@map("triggers")
+}
+
+model TrustPolicy {
+  id                String   @id @default(cuid())
+  spaceId           String   @unique
+  space             Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  approvalThreshold String   @default("medium")
+  quietHours        Json?
+  createdByUserId   String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("trust_policies")
 }

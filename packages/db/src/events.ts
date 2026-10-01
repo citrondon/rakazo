@@ -54,6 +54,11 @@ export interface ThreadEvents {
   notify(threadId: string, seq: number): Promise<void>;
   pauseRunForInput(input: PauseRunForInput): Promise<boolean>;
   pauseRunForTakeover(input: PauseRunForTakeover): Promise<boolean>;
+  /**
+   * Hold a not-yet-started run for a choice ask (quiet hours pauses a consequential plan). The
+   * run resumes through the ordinary answer path. Optional so small test mocks stay valid.
+   */
+  holdRunForChoice?(input: HoldRunForChoiceInput): Promise<boolean>;
   sendUserMessage(input: SendUserMessageInput): Promise<SendUserMessageResult>;
   follow(threadId: string, cursor: number, signal?: AbortSignal): AsyncGenerator<ProductEvent>;
 }
@@ -143,6 +148,17 @@ export interface PauseRunForInput {
   offeredActions?: Array<{ id: string; label: string }>;
 }
 
+/** Hold a queued run for a choice ask before it ever starts (a quiet-hours pause). */
+export interface HoldRunForChoiceInput {
+  spaceId: string;
+  threadId: string;
+  botId: string;
+  runId: string;
+  blocks: MessageBlock[];
+  /** Unredacted choice actions for resume, kept off the message blocks. */
+  offeredActions: Array<{ id: string; label: string }>;
+}
+
 const CHOICE_ASK_CHECKPOINT_KIND = "choice_ask_v1";
 
 function choiceAskCheckpoint(actions: Array<{ id: string; label: string }>): string {
@@ -205,6 +221,8 @@ export interface SendUserMessageInput {
   trigger: "user" | "follow_up" | "webhook" | "messaging";
   clientNonce?: string;
   linkMessageToRun?: boolean;
+  /** Trust-kit phase to record on the created run (triggered runs carry it). */
+  trustPhase?: string;
   /** When false, persist the user message without starting a run (team-chat transcript). */
   createRun?: boolean;
   /** When true, start a new run even if the bot is already busy (team-chat delivery). */
@@ -246,6 +264,7 @@ export function createThreadEvents(
     notify: (threadId, seq) => notifyRealtime(realtime, threadId, seq),
     pauseRunForInput: (input) => pauseRunForInput(prisma, input, realtime),
     pauseRunForTakeover: (input) => pauseRunForTakeover(prisma, input, realtime),
+    holdRunForChoice: (input) => holdRunForChoice(prisma, input, realtime),
     sendUserMessage: (input) => sendUserMessage(prisma, input, realtime),
     follow: (threadId, cursor, signal) =>
       followThreadEvents(prisma, threadId, cursor, realtime, signal, options.catchUpMs),
@@ -425,6 +444,7 @@ export async function sendUserMessage(
             userId: input.userId,
             status: "queued",
             trigger: input.trigger,
+            trustPhase: input.trustPhase,
             clientNonce: input.clientNonce ? `send:${message.id}` : undefined,
             sourceMessageId: message.id,
           },
@@ -836,6 +856,67 @@ export async function pauseRunForInput(
       payload: {},
     });
     await tx.event.deleteMany({ where: { runId: input.runId, type: "thread.progress" } });
+    return { threadId: waitingEvent.threadId, seq: waitingEvent.seq };
+  });
+
+  if (!committed) return false;
+  await notifyRealtime(realtime, committed.threadId, committed.seq);
+  return true;
+}
+
+/**
+ * Hold a run that has not started yet for a choice ask, without a lease. Used by the trust kit
+ * to pause a consequential routine inside the policy's quiet window: the run records its
+ * `paused` phase, shows an ask in the thread, and resumes through the ordinary answer path.
+ * Only a `queued` run can be held, so this cannot interrupt live work.
+ */
+export async function holdRunForChoice(
+  prisma: PrismaClient,
+  input: HoldRunForChoiceInput,
+  realtime?: RealtimeFanout,
+): Promise<boolean> {
+  const committed = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Thread row first, then run rows — the same order as clearThread and finalizeRun.
+    await tx.$queryRaw`SELECT id FROM threads WHERE id = ${input.threadId} FOR UPDATE`;
+    const held = await tx.run.updateMany({
+      where: {
+        id: input.runId,
+        spaceId: input.spaceId,
+        threadId: input.threadId,
+        botId: input.botId,
+        status: "queued",
+      },
+      data: {
+        status: "waiting_input",
+        trustPhase: "paused",
+        checkpoint: choiceAskCheckpoint(input.offeredActions),
+      },
+    });
+    if (held.count !== 1) return null;
+
+    const message = await createThreadMessageInTransaction(tx, {
+      threadId: input.threadId,
+      role: "bot",
+      blocks: input.blocks,
+      botId: input.botId,
+      runId: input.runId,
+    });
+    await appendEventInTransaction(tx, {
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      botId: input.botId,
+      type: "thread.message.created",
+      runId: input.runId,
+      payload: { messageId: message.id, role: "bot", blocks: input.blocks },
+    });
+    const waitingEvent = await appendEventInTransaction(tx, {
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      botId: input.botId,
+      type: "run.waiting_input",
+      runId: input.runId,
+      payload: {},
+    });
     return { threadId: waitingEvent.threadId, seq: waitingEvent.seq };
   });
 

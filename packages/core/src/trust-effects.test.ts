@@ -1,6 +1,7 @@
 import type { TrustEffect, TrustPolicy } from "@rakazo/contracts";
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_TRUST_POLICY,
   EFFECT_RISK,
   effectRisk,
   highestRisk,
@@ -10,6 +11,7 @@ import {
   planQuietHours,
   policyRequiresApproval,
   requiresApproval,
+  resolveTrustPolicy,
   riskRank,
   withinQuietHours,
 } from "./trust-effects.js";
@@ -121,5 +123,29 @@ describe("planQuietHours", () => {
 
   it("runs again once the window closes", () => {
     expect(planQuietHours([effect("delete")], night, noon)).toBe("run");
+  });
+});
+
+describe("DEFAULT_TRUST_POLICY", () => {
+  it("asks before any write and never pauses", () => {
+    expect(DEFAULT_TRUST_POLICY).toEqual({ approvalThreshold: "medium", quietHours: null });
+    expect(policyRequiresApproval([effect("update")], DEFAULT_TRUST_POLICY)).toBe(true);
+    expect(policyRequiresApproval([effect("read")], DEFAULT_TRUST_POLICY)).toBe(false);
+  });
+});
+
+describe("resolveTrustPolicy", () => {
+  it("fills an absent or partial policy with the defaults", () => {
+    expect(resolveTrustPolicy(null)).toEqual(DEFAULT_TRUST_POLICY);
+    expect(resolveTrustPolicy({})).toEqual(DEFAULT_TRUST_POLICY);
+    expect(resolveTrustPolicy({ approvalThreshold: "high" })).toEqual({
+      approvalThreshold: "high",
+      quietHours: null,
+    });
+  });
+
+  it("keeps a configured quiet window", () => {
+    const window = { start: "22:00", end: "07:00", timezone: "UTC" };
+    expect(resolveTrustPolicy({ quietHours: window }).quietHours).toEqual(window);
   });
 });

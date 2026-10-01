@@ -103,7 +103,9 @@ import {
   CreateTriggerInput,
   EventDefinitionSchema,
   TriggerSchema,
+  TrustPolicySchema,
   UpdateTriggerInput,
+  UpdateTrustPolicyInput,
 } from "./triggers.js";
 
 const botId = z.object({ botId: Id });
@@ -530,6 +532,11 @@ export const appContract = {
   events: {
     /** The discoverable events a trigger can listen for, provider-neutral. */
     list: oc.output(z.array(EventDefinitionSchema)),
+  },
+  trust: {
+    /** The space's trust policy, or the safe default when none is stored yet. */
+    get: oc.output(TrustPolicySchema),
+    set: oc.input(UpdateTrustPolicyInput).output(TrustPolicySchema),
   },
   scratchpad: {
     list: oc

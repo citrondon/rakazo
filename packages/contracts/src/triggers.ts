@@ -197,6 +197,13 @@ export const TrustPolicySchema = z.object({
 });
 export type TrustPolicy = z.infer<typeof TrustPolicySchema>;
 
+/**
+ * Parsed shape a caller passes to store a space's trust policy. Both fields carry defaults, so an
+ * empty object yields the safe policy rather than an implicit allow.
+ */
+export const UpdateTrustPolicyInput = TrustPolicySchema;
+export type UpdateTrustPolicyInput = z.infer<typeof UpdateTrustPolicyInput>;
+
 /** A normalized inbound event any provider adapter can produce for the trigger engine. */
 export const TriggerEventSchema = z.object({
   source: TriggerSourceSchema,
