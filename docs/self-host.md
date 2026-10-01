@@ -305,6 +305,24 @@ owner can attach one on localhost, the same LAN, or a Docker network. Set
 `MCP_ALLOW_PRIVATE_ENDPOINT=true` on the API and worker to allow these for every user. Cloud
 metadata addresses stay blocked. Leave the flag unset on public installs.
 
+### Endpoint gates (public vs private)
+
+| Gate | Enable with | Default | What it allows |
+| --- | --- | --- | --- |
+| `MCP_ALLOW_PRIVATE_ENDPOINT` | `true` (literal, not `1`) | off | Remote MCP servers and installed API/GraphQL connectors on loopback, RFC1918, `*.internal`, Docker-network and `host.docker.internal` hosts, for every user. The deployment owner needs no flag. Cloud-metadata and link-local addresses stay blocked. Set it on **both** the API and the worker process. |
+| `RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC` | `1` (literal, not `true`) | off | User-connected OpenAI-compatible endpoints on public hostnames. Private/loopback endpoints need no flag. An endpoint that receives an API key must use HTTPS either way. |
+| `RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP` | `1` | off | Bot credentials (`request_secret` / website logins) against plain-`http://` private origins. |
+| `MCP_STDIO_ENABLED` | `true` | off | stdio MCP servers, which spawn a process on the API/worker host. |
+| `MCP_STDIO_ALLOWED_COMMANDS` | comma-separated executables, e.g. `npx,node` | empty | The exact executables a stdio server may start; anything else is refused. |
+
+The `MCP_*` switches are read as the literal `true` and the `RAKAZO_*` escape hatches as the literal
+`1`; any other spelling (`TRUE`, `yes`, `true` for a `RAKAZO_*` gate) leaves the gate off.
+
+Where the operator sees the refusal: adding an MCP server on web answers
+`MCP endpoint targets a private host (…)` plus the assignment to set, the same sentence carries the
+fix at connect time, and a blocked public model endpoint answers with
+`RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC=1`.
+
 For servers that accept standard `reasoning_effort`, enable **Supports thinking** under
 **Advanced** when connecting. The setting is saved on the connection (no env var or restart).
 Existing connections default to disabled. Reconnect former Qwen-list or deployment-local models
