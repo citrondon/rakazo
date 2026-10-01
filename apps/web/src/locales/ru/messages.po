@@ -3185,7 +3185,7 @@ msgstr "ОТПРАВИТЬ в"
 msgid "Preview {0}"
 msgstr "Предварительный просмотр {0}"
 
-#: src/pages/Artifacts.tsx
+#: src/components/ArtifactPreviewContent.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr ""
 

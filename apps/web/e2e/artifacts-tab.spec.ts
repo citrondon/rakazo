@@ -84,3 +84,33 @@ test("opens Artifacts from the account menu and lists created files", async ({
   await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "account-menu-artifacts-mobile");
 });
+
+test("opens a text artifact in the viewer instead of offering only a download", async ({
+  page,
+}, testInfo) => {
+  const stamp = Date.now();
+  await signup(page, `artifacts-text-${stamp}@rakazo.test`, "password12", "Artifacts Text");
+  await completeOnboarding(page);
+  const botId = activeBotId(page);
+
+  await rpc(page, "artifacts/create", {
+    botId,
+    name: "notes/run.log",
+    mimeType: "text/plain",
+    contentBase64: Buffer.from("deploy finished\n").toString("base64"),
+  });
+
+  await page.goto("/app/artifacts");
+  const row = page.getByRole("link", { name: /notes\/run\.log/ });
+  await expect(row).toBeVisible({ timeout: 20_000 });
+  await row.click();
+  await expect(page).toHaveURL(/\/app\/artifacts\/[^/]+$/);
+  await expect(page.getByRole("heading", { name: "notes/run.log" })).toBeVisible();
+
+  // Plain text used to fall through to "Preview isn't available for this file type".
+  await expect(page.getByText("deploy finished", { exact: false })).toBeVisible();
+  await expect(
+    page.getByText("Preview isn't available for this file type — download it to view it."),
+  ).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "text-artifact-in-tab");
+});

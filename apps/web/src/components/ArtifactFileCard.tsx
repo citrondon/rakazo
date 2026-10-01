@@ -1,15 +1,14 @@
 import { i18n } from "@lingui/core";
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web";
 import { Code2, Download, FileText, X } from "lucide-react";
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
-import { PdfViewer } from "./PdfViewer";
-import { SandboxedHtmlViewer } from "./SandboxedHtmlViewer";
+import { artifactPreviewIsText, artifactPreviewKind } from "../lib/artifact-preview";
+import { ArtifactPreviewContent } from "./ArtifactPreviewContent";
 
 type ArtifactFileCardProps = {
   target: ArtifactTarget;
@@ -19,12 +18,9 @@ type ArtifactFileCardProps = {
   size: number;
 };
 
-const PREVIEWABLE_MIME_TYPES = new Set(["text/markdown", "text/html", "application/pdf"]);
-const TEXT_MIME_TYPES = new Set(["text/markdown", "text/html"]);
-
 export function ArtifactFileCard(props: ArtifactFileCardProps) {
   const { t } = useLingui();
-  const previewable = PREVIEWABLE_MIME_TYPES.has(props.mimeType);
+  const previewable = artifactPreviewKind(props.mimeType) !== "none";
   const previewButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -132,7 +128,7 @@ function FilePreview({
     void fetchArtifactBytes(artifactTarget, artifactId)
       .then((bytes) => {
         if (cancelled) return;
-        if (!TEXT_MIME_TYPES.has(mimeType)) {
+        if (!artifactPreviewIsText(artifactPreviewKind(mimeType))) {
           setState({ status: "ready", bytes });
           return;
         }
@@ -205,15 +201,14 @@ function FilePreview({
           <div className="m-5 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-destructive">
             {state.message}
           </div>
-        ) : mimeType === "text/html" && state.text !== undefined ? (
-          <SandboxedHtmlViewer html={state.text} title={name} />
-        ) : mimeType === "application/pdf" ? (
-          <PdfViewer bytes={state.bytes} title={name} />
-        ) : state.text !== undefined ? (
-          <article className="mx-auto w-full max-w-[760px] px-8 py-10 text-[16px] leading-7 text-foreground sm:px-12 sm:py-12">
-            <ChatMarkdown>{state.text}</ChatMarkdown>
-          </article>
-        ) : null}
+        ) : (
+          <ArtifactPreviewContent
+            name={name}
+            mimeType={mimeType}
+            bytes={state.bytes}
+            text={state.text}
+          />
+        )}
       </div>
     </>
   );

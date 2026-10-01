@@ -3185,7 +3185,7 @@ msgstr "POST vers"
 msgid "Preview {0}"
 msgstr "Aperçu de {0}"
 
-#: src/pages/Artifacts.tsx
+#: src/components/ArtifactPreviewContent.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr "L'aperçu n'est pas disponible pour ce type de fichier — téléchargez-le pour le consulter."
 

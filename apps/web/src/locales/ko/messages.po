@@ -3185,7 +3185,7 @@ msgstr "POST 대상"
 msgid "Preview {0}"
 msgstr "{0} 미리보기"
 
-#: src/pages/Artifacts.tsx
+#: src/components/ArtifactPreviewContent.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr ""
 

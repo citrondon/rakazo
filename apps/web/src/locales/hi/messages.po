@@ -3185,7 +3185,7 @@ msgstr ""
 msgid "Preview {0}"
 msgstr "{0} का प्रीव्यू"
 
-#: src/pages/Artifacts.tsx
+#: src/components/ArtifactPreviewContent.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr ""
 
