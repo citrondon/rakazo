@@ -85,6 +85,32 @@ async function main() {
       cwd: path.resolve("packages/db"),
     });
 
+    // The deployed migration history must produce exactly the schema.prisma state.
+    // `migrate diff --from-migrations` replays the migrations into the shadow
+    // database and diffs against the schema. Exit code 2 signals drift.
+    const shadowUrl = new URL(databaseUrl);
+    shadowUrl.pathname = `/${container.getDatabase()}_shadow`;
+    const shadowCreate = await container.exec([
+      "psql",
+      "-U",
+      container.getUsername(),
+      "-d",
+      "postgres",
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-c",
+      `CREATE DATABASE "${shadowUrl.pathname.slice(1)}"`,
+    ]);
+    if (shadowCreate.exitCode !== 0) throw new Error("Shadow database creation failed");
+    execSync(
+      "pnpm --filter @rakazo/db exec prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --exit-code -o /dev/null",
+      {
+        stdio: "inherit",
+        env: { ...process.env, SHADOW_DATABASE_URL: shadowUrl.toString() },
+        cwd: path.resolve("packages/db"),
+      },
+    );
+
     if (integration) {
       const suites = [
         "packages/testkit/src/pi-offline.postgres.test.ts",

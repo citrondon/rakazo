@@ -1,7 +1,7 @@
 ALTER TABLE "computers" ADD COLUMN "maintenanceId" TEXT;
 CREATE TABLE "computer_updates" (
   "id" TEXT NOT NULL PRIMARY KEY,
-  "computerId" TEXT NOT NULL REFERENCES "computers"("id") ON DELETE CASCADE,
+  "computerId" TEXT NOT NULL REFERENCES "computers"("id") ON DELETE CASCADE ON UPDATE CASCADE,
   "botId" TEXT NOT NULL,
   "action" TEXT NOT NULL DEFAULT 'update',
   "status" TEXT NOT NULL DEFAULT 'queued',
