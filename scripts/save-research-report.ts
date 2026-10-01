@@ -1,48 +1,33 @@
 import fs from "node:fs";
 import path from "node:path";
-import { createDb } from "../packages/db/src/index.js";
+import { findGroupByName, latestReply } from "./lib/api.js";
 
+/**
+ * Writes the research group's latest bot reply into the shared workspace as `mcp-trends.md`.
+ * The reply is read through the API; only the file lands on disk.
+ */
 async function main() {
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    console.error("DATABASE_URL is not set.");
+  const spaceId = process.env.RAKAZO_SPACE_ID;
+  if (!spaceId) {
+    console.error("RAKAZO_SPACE_ID is required to locate the shared workspace folder.");
     process.exit(1);
   }
 
-  const { prisma, pool } = createDb(databaseUrl);
-
-  try {
-    const m = await prisma.message.findFirst({
-      where: { threadId: "th_grp_research_intelligence", role: "bot" },
-      orderBy: { createdAt: "desc" },
-    });
-    if (!m || !m.blocks) {
-      console.error("No bot message found");
-      return;
-    }
-    const blocks = m.blocks as Array<{ kind: string; text?: string }>;
-    const textBlock = blocks.find((b) => b.kind === "text" && b.text);
-    if (!textBlock || !textBlock.text) {
-      console.error("No text block found in message");
-      return;
-    }
-
-    const spaceId = process.env.RAKAZO_SPACE_ID;
-    if (!spaceId) {
-      console.error("RAKAZO_SPACE_ID must be set to a local test space.");
-      process.exit(1);
-    }
-    const targetDir = `/data/homes/team-${spaceId}/shared/research`;
-    fs.mkdirSync(targetDir, { recursive: true });
-    const targetFile = path.join(targetDir, "mcp-trends.md");
-    fs.writeFileSync(targetFile, textBlock.text, "utf8");
-    console.log(`Successfully wrote ${targetFile} (${textBlock.text.length} bytes)`);
-  } catch (err) {
-    console.error("Error:", err);
-  } finally {
-    await prisma.$disconnect();
-    await pool.end();
+  const group = await findGroupByName(process.env.RAKAZO_RESEARCH_GROUP ?? "Research Intelligence");
+  const text = await latestReply({ groupId: group.id });
+  if (!text) {
+    console.error(`No text reply found in "${group.name}".`);
+    return;
   }
+
+  const targetDir = `/data/homes/team-${spaceId}/shared/research`;
+  fs.mkdirSync(targetDir, { recursive: true });
+  const targetFile = path.join(targetDir, "mcp-trends.md");
+  fs.writeFileSync(targetFile, text, "utf8");
+  console.log(`Successfully wrote ${targetFile} (${text.length} bytes)`);
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

@@ -20,6 +20,12 @@ importers:
       '@biomejs/biome':
         specifier: 2.5.13
         version: 2.5.13
+      '@rakazo/contracts':
+        specifier: workspace:*
+        version: link:packages/contracts
+      '@rakazo/core':
+        specifier: workspace:*
+        version: link:packages/core
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3
