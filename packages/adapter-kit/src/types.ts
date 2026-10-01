@@ -479,6 +479,8 @@ export interface ScriptedTurn {
 
 export type AgentRuntimeEvent =
   | { type: "text"; text: string }
+  /** Model reasoning, when the provider exposes it. Never merged into `text`. */
+  | { type: "thinking"; text: string }
   | {
       type: "progress";
       text: string;
