@@ -211,7 +211,8 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
             botId,
             assignments: [
               ...existing,
-              { serverId: created.id, allowAllTools: true, allowedTools: [] },
+              // Least privilege: no tool is allowed until the owner names the tools below.
+              { serverId: created.id, allowAllTools: false, allowedTools: [] },
             ],
           });
         }),
@@ -260,7 +261,31 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
     const assigned = current.some((entry) => entry.serverId === server.id);
     const next = assigned
       ? current.filter((entry) => entry.serverId !== server.id)
-      : [...current, { serverId: server.id, allowAllTools: true, allowedTools: [] }];
+      : // Least privilege: a new assignment allows no tool until the owner names the tools.
+        [...current, { serverId: server.id, allowAllTools: false, allowedTools: [] }];
+    try {
+      const updated = await rpc.mcp.assignments.replace({ botId, assignments: next });
+      setBotAssignments((map) => ({ ...map, [botId]: updated }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t`Could not update agent access`);
+    }
+  }
+
+  /** "*" allows every tool; otherwise a comma or space separated list of exact MCP tool names. */
+  async function saveAllowedTools(server: McpServer, botId: string, raw: string) {
+    setError(null);
+    const names = [...new Set(raw.split(/[\s,]+/).filter(Boolean))];
+    const allowAll = names.includes("*");
+    const current = botAssignments[botId] ?? [];
+    const next = current.map((entry) =>
+      entry.serverId === server.id
+        ? {
+            serverId: entry.serverId,
+            allowAllTools: allowAll,
+            allowedTools: allowAll ? [] : names,
+          }
+        : entry,
+    );
     try {
       const updated = await rpc.mcp.assignments.replace({ botId, assignments: next });
       setBotAssignments((map) => ({ ...map, [botId]: updated }));
@@ -653,6 +678,45 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
                               );
                             })}
                           </div>
+                          {bots.map((bot) => {
+                            const entry = (botAssignments[bot.id] ?? []).find(
+                              (item) => item.serverId === server.id,
+                            );
+                            if (!entry) return null;
+                            const value = entry.allowAllTools ? "*" : entry.allowedTools.join(", ");
+                            return (
+                              <div
+                                key={`${server.id}-${bot.id}-${value}`}
+                                className="mt-2 flex flex-col gap-1 text-[11px] text-muted-foreground"
+                              >
+                                <label htmlFor={`mcp-tools-${server.id}-${bot.id}`}>
+                                  <Trans>Erlaubte Tools für {bot.name}</Trans>
+                                  {!entry.allowAllTools && entry.allowedTools.length === 0 ? (
+                                    <span className="text-warning">
+                                      {" "}
+                                      <Trans>
+                                        (noch keine – der Bot sieht diesen Server nicht)
+                                      </Trans>
+                                    </span>
+                                  ) : null}
+                                </label>
+                                <Input
+                                  id={`mcp-tools-${server.id}-${bot.id}`}
+                                  defaultValue={value}
+                                  placeholder={t`Tool-Namen mit Komma, z. B. fetch_markdown – oder * für alle`}
+                                  className="h-7 text-xs"
+                                  onBlur={(event) => {
+                                    if (event.currentTarget.value.trim() !== value)
+                                      void saveAllowedTools(
+                                        server,
+                                        bot.id,
+                                        event.currentTarget.value,
+                                      );
+                                  }}
+                                />
+                              </div>
+                            );
+                          })}
                           <div className="mt-3 flex flex-wrap gap-2">
                             {server.transport !== "stdio" ? (
                               <>

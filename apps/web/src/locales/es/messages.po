@@ -17,6 +17,10 @@ msgstr ""
 msgid " (unread)"
 msgstr " (sin leer)"
 
+#: src/pages/McpServersOverlay.tsx
+msgid "(noch keine – der Bot sieht diesen Server nicht)"
+msgstr ""
+
 #. placeholder {0}: group.entries.length
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "{0, plural, one {# model} other {# models}}"
@@ -2026,6 +2030,11 @@ msgstr "Introduce un número entero del 1 al 1000 para el límite de imágenes."
 
 #: src/components/TrustPolicySettings.tsx
 msgid "Enter a whole number of tool calls"
+msgstr ""
+
+#. placeholder {0}: bot.name
+#: src/pages/McpServersOverlay.tsx
+msgid "Erlaubte Tools für {0}"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -4278,6 +4287,10 @@ msgstr ""
 #: src/pages/PluginsOverlay.tsx
 msgid "Tool sources"
 msgstr "Fuentes de herramientas"
+
+#: src/pages/McpServersOverlay.tsx
+msgid "Tool-Namen mit Komma, z. B. fetch_markdown – oder * für alle"
+msgstr ""
 
 #: src/components/ai/RunReceiptRow.tsx
 #: src/pages/PluginsOverlay.tsx
