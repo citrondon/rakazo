@@ -375,10 +375,10 @@ model Bot {
   modelProvider     String?
   modelId           String?
   thinkingLevel     String?
-  /// Optional monthly spend ceiling for this bot, in total tokens across all usage
-  /// records attributed to the bot in the current UTC calendar month. The counted
-  /// total is input + output + cache-read + cache-write tokens. Null or <= 0 means
-  /// unlimited.
+  /// Optional monthly spend ceiling for this bot, as a billing-equivalent token count
+  /// across all usage records in the current UTC calendar month: input + output +
+  /// cache-write tokens at face value, plus cache-read tokens weighted down (they bill
+  /// far cheaper). Null or <= 0 means unlimited.
   monthlyTokenBudget Int?
   /// When the owner was last warned that this bot crossed its budget warning line, so the
   /// warning fires once a month instead of on every run. Cleared when the ceiling changes,

@@ -11,7 +11,8 @@ const fakeAgentState = vi.hoisted(() => ({
     | "parent-limit"
     | "parent-parallel"
     | "ask-pause"
-    | "nested-ask-pause",
+    | "nested-ask-pause"
+    | "token-budget",
   emitFinalAfterFollowUp: true,
   abortCount: 0,
   tools: [] as Array<{
@@ -67,6 +68,23 @@ vi.mock("@earendil-works/pi-agent-core", () => ({
           await this.prepareNextTurnWithContext?.({ context: { messages: [] } });
         }
         fakeAgentState.preparedMessages = [...fakeAgentState.steeredMessages];
+        return;
+      }
+
+      if (fakeAgentState.mode === "token-budget") {
+        this.emit({
+          type: "message_end",
+          message: {
+            role: "assistant",
+            content: [{ type: "text", text: "Working through the task." }],
+            usage: { input: 100, output: 20 },
+          },
+        });
+        this.emit({
+          type: "turn_end",
+          message: { role: "assistant", content: [] },
+          toolResults: [],
+        });
         return;
       }
 
@@ -1041,6 +1059,43 @@ describe("Pi connector tool dispatch", () => {
     expect(events.at(-1)).toEqual({
       type: "done",
       text: "I stopped after reaching the limit of 80 tool calls in this turn. Send another message to continue.",
+    });
+  });
+
+  it("soft-stops with a budget message when a step passes the monthly ceiling", async () => {
+    fakeAgentState.mode = "token-budget";
+    const runtime = new PiAgentRuntime();
+    const events: unknown[] = [];
+    const executeTool = vi.fn(async () => ({ ok: true }));
+
+    for await (const event of runtime.run(
+      {
+        botId: "b",
+        threadId: "t",
+        runId: "token-budget",
+        prompt: "work the task",
+        instructions: "Work.",
+        history: [],
+        tools: [],
+        model: { provider: "test", id: "dispatch-test-model" },
+        executeTool,
+        remainingTokenBudget: 10,
+      },
+      {
+        operationId: "tb",
+        traceId: "tb",
+        spaceId: "w",
+        userId: "u",
+        signal: new AbortController().signal,
+      },
+    )) {
+      events.push(event);
+    }
+
+    expect(fakeAgentState.abortCount).toBeGreaterThanOrEqual(1);
+    expect(events).toContainEqual({
+      type: "text",
+      text: expect.stringContaining("Monthly token budget exhausted"),
     });
   });
 

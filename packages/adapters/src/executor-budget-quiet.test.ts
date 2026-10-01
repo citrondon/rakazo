@@ -44,12 +44,13 @@ describe("runStopKind", () => {
 });
 
 describe("monthlyTokensUsed", () => {
-  it("counts every token kind inside the current UTC month", async () => {
+  it("counts input, output and cache-write at face value and weights cache reads down", async () => {
     const prisma = prismaStub();
     prisma.usageRecord.aggregate.mockResolvedValue({
       _sum: { inputTokens: 100, outputTokens: 200, cacheReadTokens: 30, cacheWriteTokens: 5 },
     });
-    await expect(monthlyTokensUsed(prisma, "bot-1")).resolves.toBe(335);
+    // 100 + 200 + 5 + round(30 * 0.1) = 308
+    await expect(monthlyTokensUsed(prisma, "bot-1")).resolves.toBe(308);
     const where = prisma.usageRecord.aggregate.mock.calls[0]?.[0]?.where;
     expect(where.botId).toBe("bot-1");
     expect(where.createdAt.gte.getUTCDate()).toBe(1);

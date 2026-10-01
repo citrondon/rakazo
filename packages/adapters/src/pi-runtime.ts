@@ -31,6 +31,7 @@ import type {
   ConnectorTool,
 } from "@rakazo/adapter-kit";
 import { parseToolCallLimit, resolveToolCallLimit, usableModelId } from "@rakazo/contracts";
+import { BUDGET_STOP_PREFIX } from "@rakazo/core";
 import { getLogger } from "@rakazo/logging";
 import { isToolPauseResult } from "./approval-effect.js";
 import { BOT_SAFETY_PREAMBLE } from "./bot-safety-preamble.js";
@@ -338,6 +339,12 @@ export class PiAgentRuntime implements AgentRuntime {
 
         let streamed = "";
         let toolCalls = 0;
+        // Between-steps monthly budget. The executor checks the ceiling before the run;
+        // this stops the turn once a model step pushes it past the ceiling, so one long
+        // turn cannot overshoot the budget by more than a step.
+        const remainingTokenBudget = request.remainingTokenBudget ?? null;
+        let runTokens = 0;
+        let tokenBudgetStopped = false;
         let toolActivityShowing = false;
         let silentToolContinuations = 0;
         let toolWorkPendingFinal = false;
@@ -412,6 +419,17 @@ export class PiAgentRuntime implements AgentRuntime {
             }
             if ("usage" in event.message && event.message.usage) {
               const usage = billedPromptTokens(event.message.usage);
+              if (remainingTokenBudget && remainingTokenBudget > 0 && !tokenBudgetStopped) {
+                runTokens +=
+                  usage.inputTokens +
+                  usage.outputTokens +
+                  usage.cacheReadTokens +
+                  usage.cacheWriteTokens;
+                if (runTokens >= remainingTokenBudget) {
+                  tokenBudgetStopped = true;
+                  agent.abort();
+                }
+              }
               queue.push({
                 type: "usage",
                 ...usage,
@@ -449,11 +467,13 @@ export class PiAgentRuntime implements AgentRuntime {
         // with a durable assistant message instead of a failed run.
         const budgetExceeded = host.toolCallBudget.exceeded;
         const error = agent.state.errorMessage;
-        if (error && !budgetExceeded) {
+        if (error && !budgetExceeded && !tokenBudgetStopped) {
           throw new Error(sanitizeProviderError(model.provider, error));
         }
-        if (budgetExceeded) {
-          const budgetMessage = toolCallBudgetExceededMessage(host.toolCallBudget.limit);
+        if (budgetExceeded || tokenBudgetStopped) {
+          const budgetMessage = tokenBudgetStopped
+            ? monthlyTokenBudgetExceededMessage()
+            : toolCallBudgetExceededMessage(host.toolCallBudget.limit);
           if (streamed.trim()) {
             const suffix = `\n\n${budgetMessage}`;
             queue.push({ type: "text", text: suffix });
@@ -1816,6 +1836,11 @@ interface ToolHost {
 
 function toolCallBudgetExceededMessage(limit: number) {
   return `I stopped after reaching the limit of ${limit} tool calls in this turn. Send another message to continue.`;
+}
+
+/** Shared prefix so {@link runStopKind} classifies a mid-turn budget stop the same way. */
+function monthlyTokenBudgetExceededMessage() {
+  return `${BUDGET_STOP_PREFIX} for this bot. Raise or clear the budget in the bot settings to continue.`;
 }
 
 type ToolCallLimitSource = "space" | "deployment" | "unlimited";

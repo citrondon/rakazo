@@ -439,6 +439,12 @@ export interface AgentRunRequest {
    * (`MAX_TOOL_CALLS_PER_TURN`); 0 means unlimited.
    */
   maxToolCallsPerTurn?: number | null;
+  /**
+   * Tokens the bot may still spend this month before its ceiling. The runtime stops the
+   * turn once a model step pushes the run past it, so a single long turn cannot blow far
+   * past the monthly budget the executor checked before the run. null/0 means no ceiling.
+   */
+  remainingTokenBudget?: number | null;
   resumeFromCheckpoint?: string;
   script?: ScriptedTurn[];
   /**

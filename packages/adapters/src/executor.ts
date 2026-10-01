@@ -1569,6 +1569,12 @@ export function createRunExecutor(deps: ExecutorDeps) {
           await failRunBeforeModel(budgetExceededMessage, "budget");
           return;
         }
+        // How much of the ceiling is left, so the runtime can stop mid-turn when a model
+        // step pushes the bot past it. null = no ceiling.
+        const remainingTokenBudget =
+          bot.monthlyTokenBudget && bot.monthlyTokenBudget > 0
+            ? Math.max(0, bot.monthlyTokenBudget - (await monthlyTokensUsed(deps.prisma, bot.id)))
+            : null;
         // The refusal above is the only pre-model stop that stays off the notification
         // channel; runStopKind decides that from the message itself.
         // An incompatible saved model is a configuration error. Record it on the run.
@@ -4158,6 +4164,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               runId,
               // The space's fuse is resolved per run; the deployment env value stays the runtime fallback.
               maxToolCallsPerTurn: run.space?.maxToolCallsPerTurn ?? null,
+              remainingTokenBudget,
               sourceMessageId: run.sourceMessageId,
               prompt,
               instructions: userTurnInstructions({
@@ -4994,6 +5001,14 @@ export function parseUpdateBotPatch(
  * message starts with the shared prefix, so the notification path can recognize it.
  */
 /** Tokens attributed to a bot in the current UTC calendar month. */
+/**
+ * Cache reads cost roughly a tenth of a fresh input token at the providers that bill
+ * them separately, so counting them at face value stops a bot well before the money
+ * says it should. Weight them down; everything else counts 1:1. The result is a
+ * billing-equivalent token count, not a raw sum of the columns.
+ */
+const CACHE_READ_TOKEN_WEIGHT = 0.1;
+
 export async function monthlyTokensUsed(prisma: PrismaClient, botId: string): Promise<number> {
   const usage = await prisma.usageRecord.aggregate({
     where: { botId, createdAt: { gte: currentMonthStart() } },
@@ -5004,11 +5019,12 @@ export async function monthlyTokensUsed(prisma: PrismaClient, botId: string): Pr
       cacheWriteTokens: true,
     },
   });
-  return (
+  const cacheReads = usage._sum.cacheReadTokens ?? 0;
+  return Math.round(
     (usage._sum.inputTokens ?? 0) +
-    (usage._sum.outputTokens ?? 0) +
-    (usage._sum.cacheReadTokens ?? 0) +
-    (usage._sum.cacheWriteTokens ?? 0)
+      (usage._sum.outputTokens ?? 0) +
+      (usage._sum.cacheWriteTokens ?? 0) +
+      cacheReads * CACHE_READ_TOKEN_WEIGHT,
   );
 }
 
