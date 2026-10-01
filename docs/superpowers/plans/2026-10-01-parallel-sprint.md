@@ -5,6 +5,9 @@
 > Sub-skills: `superpowers:using-git-worktrees` (setup), `superpowers:executing-plans` (per task),
 > `superpowers:verification-before-completion` (before every handoff).
 
+Opening a window? Start at `2026-10-01-parallel-sprint/START-HERE.md` — it carries the current state
+and tells you which brief is yours.
+
 **Goal:** push Rakazo toward GrokBot parity, convenience first (fewer steps, less friction), with
 four agents working at once and no merge conflicts.
 
