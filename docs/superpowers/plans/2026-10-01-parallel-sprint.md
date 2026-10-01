@@ -95,8 +95,9 @@ line before you start.
 5. **B —** make the library docs say what the code does.
    *Open:* `docs/grokbot-features-guide.md:46` still reads "Die Auswahl im UI fehlt noch", but
    `17bed838` shipped `apps/web/src/pages/BotLibraryOverlay.tsx` and its
-   `apps/web/e2e/bot-library.spec.ts`. The same line says "zehn Teams"; `bot-library/teams/` holds
-   nine. The "64 Presets" and the eight identities are accurate.
+   `apps/web/e2e/bot-library.spec.ts`. The "zehn Teams" on the same line was re-checked:
+   `bot-library/teams/` holds ten (it held nine at `15aeceff`), so that count is correct, as are the
+   "64 Presets" and the eight identities.
    *Verify:* read the corrected sentence against `ls bot-library/teams` and the overlay's entry point.
 
 **Resolved:** the old warning that item 4 overlapped in-flight work is obsolete — `/events` landed
