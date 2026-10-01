@@ -3823,6 +3823,14 @@ export function createRouter(deps: RouterDeps) {
           allowedCommands: deps.env.mcpStdioAllowedCommands ?? [],
         })),
         create: authed.mcp.servers.create.handler(async ({ context, input }) => {
+          // A stdio server runs inside the API/worker container, which holds the
+          // database and encryption secrets. Keep that capability to the deployment
+          // owner even when stdio is enabled deployment-wide.
+          if ("command" in input && !context.actor.isDeploymentOwner) {
+            throw new ORPCError("FORBIDDEN", {
+              message: "Only the deployment owner can add a stdio MCP server",
+            });
+          }
           await assertMcpRemoteEndpoint(
             "endpoint" in input ? input.endpoint : null,
             context.actor,

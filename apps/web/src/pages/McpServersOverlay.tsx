@@ -91,7 +91,8 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
         enabled: true,
       });
 
-      // Automatically assign all active bots to this preset connector
+      // Assign this preset connector to the active bots with the least privilege:
+      // a new assignment grants no tools until the user enables them per bot.
       await Promise.all(
         bots.map((bot) => {
           const existing = (botAssignments[bot.id] ?? []).filter(
@@ -101,7 +102,7 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
             botId: bot.id,
             assignments: [
               ...existing,
-              { serverId: created.id, allowAllTools: true, allowedTools: [] },
+              { serverId: created.id, allowAllTools: false, allowedTools: [] },
             ],
           });
         }),

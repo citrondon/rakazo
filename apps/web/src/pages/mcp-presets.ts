@@ -27,7 +27,7 @@ export const MCP_PRESETS: McpPreset[] = [
     iconName: "FolderKanban",
     transport: "stdio",
     command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-filesystem", "{home}"],
+    args: ["-y", "@modelcontextprotocol/server-filesystem@2026.8.31", "{home}"],
   },
   {
     id: "workspace-exec",
@@ -39,7 +39,7 @@ export const MCP_PRESETS: McpPreset[] = [
     iconName: "Terminal",
     transport: "stdio",
     command: "npx",
-    args: ["-y", "mcp-server-commands"],
+    args: ["-y", "mcp-server-commands@0.8.2"],
   },
   {
     id: "web-fetch",
@@ -51,7 +51,7 @@ export const MCP_PRESETS: McpPreset[] = [
     iconName: "Globe",
     transport: "stdio",
     command: "npx",
-    args: ["-y", "mcp-fetch-server"],
+    args: ["-y", "mcp-fetch-server@1.1.2"],
   },
   {
     id: "markdown-notes",
@@ -63,7 +63,7 @@ export const MCP_PRESETS: McpPreset[] = [
     iconName: "BookOpen",
     transport: "stdio",
     command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-filesystem", "{home}/notes"],
+    args: ["-y", "@modelcontextprotocol/server-filesystem@2026.8.31", "{home}/notes"],
   },
   {
     id: "sqlite-explorer",
@@ -75,7 +75,7 @@ export const MCP_PRESETS: McpPreset[] = [
     iconName: "Database",
     transport: "stdio",
     command: "npx",
-    args: ["-y", "mcp-sqlite", "{home}/data.db"],
+    args: ["-y", "mcp-sqlite@1.0.9", "{home}/data.db"],
   },
   {
     id: "github",
@@ -86,7 +86,9 @@ export const MCP_PRESETS: McpPreset[] = [
     iconName: "GitBranch",
     transport: "stdio",
     command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-github"],
+    // Deprecated upstream and archived; kept pinned for compatibility. Prefer a
+    // remote GitHub MCP connector with OAuth when this deployment offers one.
+    args: ["-y", "@modelcontextprotocol/server-github@2025.4.8"],
     requiresSecret: {
       label: "GitHub Personal Access Token",
       placeholder: "ghp_...",
