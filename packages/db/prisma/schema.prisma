@@ -588,6 +588,8 @@ model Run {
   leaseFence           Int              @default(0)
   leaseExpiresAt       DateTime?
   checkpoint           String?
+  /** When a paused run should auto-resume (quiet hours end). */
+  resumeAt             DateTime?
   clientNonce          String?
   sourceMessageId      String?
   sourceMessage        Message?         @relation("RunSourceMessage", fields: [sourceMessageId], references: [id], onDelete: SetNull)
@@ -616,6 +618,7 @@ model Run {
   @@index([sourceMessageId])
   @@index([threadId, status, createdAt])
   @@index([routineId])
+  @@index([status, resumeAt])
   @@map("runs")
 }
 

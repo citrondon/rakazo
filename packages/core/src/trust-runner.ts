@@ -1,5 +1,5 @@
 import type { TrustEffect, TrustPhase, TrustPolicy } from "@rakazo/contracts";
-import { isMutating, planQuietHours, policyRequiresApproval } from "./trust-effects.js";
+import { isMutating, planQuietHours, policyRequiresApproval, quietHoursEndsAt } from "./trust-effects.js";
 
 /**
  * The trust runner's phase machine. A triggered run is planned, previewed against a
@@ -75,7 +75,11 @@ export function planRunTrust(
   effects: readonly TrustEffect[],
   policy: TrustPolicy,
   now: Date,
-): { phase: TrustPhase; paused: boolean } {
+): { phase: TrustPhase; paused: boolean; resumeAt: Date | null } {
   const paused = planQuietHours(effects, policy, now) === "pause";
-  return { phase: paused ? "paused" : "planned", paused };
+  return {
+    phase: paused ? "paused" : "planned",
+    paused,
+    resumeAt: paused ? quietHoursEndsAt(policy, now) : null,
+  };
 }

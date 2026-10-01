@@ -8,6 +8,7 @@ import type { MessageBlock } from "@rakazo/contracts";
 import type { Pool, PrismaClient, ThreadEvents } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import type { PoolClient } from "pg";
+import { autoResumeQuietHoursRun } from "@rakazo/db";
 import { returnBotMessageOutcome } from "./bot-messages.js";
 import { scheduleComputerControlExpiry } from "./computer-control.js";
 import { isUserProgressClientNonce } from "./user-progress.js";
@@ -166,6 +167,27 @@ export function createJobReconciler(
             }
           : { controlLeaseExpiresAt: null, id: { gt: controlCursor.id } }
         : undefined;
+      // Auto-resume runs whose quiet hours have ended
+      const quietHoursRuns = await deps.prisma.run.findMany({
+        where: {
+          trustPhase: "paused",
+          status: "waiting_input",
+          resumeAt: { lte: now },
+        },
+        select: { id: true, botId: true, threadId: true, resumeAt: true },
+      });
+      for (const run of quietHoursRuns) {
+        await autoResumeQuietHoursRun(
+          deps.prisma,
+          run.id,
+          `reconciler-${process.pid}`,
+          "Quiet hours window closed",
+          run.resumeAt!,
+        ).catch((error) => {
+          getLogger().error("auto-resume quiet hours run failed", { runId: run.id, error });
+        });
+      }
+
       const [runs, routines, controls, dueOutbound, unmirroredMessagingRuns] = await Promise.all([
         deps.prisma.run.findMany({
           where: {
