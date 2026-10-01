@@ -144,3 +144,57 @@ export function planQuietHours(
   if (!policyRequiresApproval(effects, policy)) return "run";
   return withinQuietHours(now, policy.quietHours) ? "pause" : "run";
 }
+
+/**
+ * Calculate when the quiet window ends, given a moment inside it.
+ * Returns null if not in quiet hours or no quiet hours configured.
+ */
+export function quietHoursEndsAt(policy: TrustPolicy, now: Date): Date | null {
+  if (!policy.quietHours) return null;
+  if (!withinQuietHours(now, policy.quietHours)) return null;
+  
+  const end = parseClockMinutes(policy.quietHours.end);
+  if (end === null) return null;
+  
+  const timezone = validTimezone(policy.quietHours.timezone);
+  const nowMinutes = minutesOfDay(now, timezone);
+  
+  // Calculate the next occurrence of the end time
+  let daysToAdd = 0;
+  const start = parseClockMinutes(policy.quietHours.start);
+  if (start !== null && start > end) {
+    // Window wraps midnight
+    if (nowMinutes >= start) {
+      // Currently in the first part (before midnight), end is next day
+      daysToAdd = 1;
+    }
+    // else currently in second part (after midnight), end is today
+  } else if (nowMinutes >= end) {
+    // Normal window, already past end time today
+    daysToAdd = 1;
+  }
+  
+  const result = new Date(now);
+  result.setHours(0, 0, 0, 0);
+  result.setDate(result.getDate() + daysToAdd);
+  result.setHours(Math.floor(end / 60), end % 60, 0, 0);
+  
+  // Convert from local timezone to UTC
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(result);
+  
+  const year = Number(parts.find((p) => p.type === "year")?.value ?? "1970");
+  const month = Number(parts.find((p) => p.type === "month")?.value ?? "1") - 1;
+  const day = Number(parts.find((p) => p.type === "day")?.value ?? "1");
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0") % 24;
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  
+  return new Date(Date.UTC(year, month, day, hour, minute, 0, 0));
+}

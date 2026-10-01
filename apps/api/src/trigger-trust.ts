@@ -1,7 +1,7 @@
 import { planRoutineEffects, planRunTrust } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { createRoutineToolRepos, createTrustPolicyRepos } from "@rakazo/db";
-import type { WebhookTrustPlanner } from "./webhook-inbound.js";
+import type { WebhookTrustPlanner, WebhookRunTrust } from "./webhook-inbound.js";
 
 /**
  * Resolve a wake's trust plan from the bot's reachable tools and the space policy. All planning
@@ -12,13 +12,13 @@ import type { WebhookTrustPlanner } from "./webhook-inbound.js";
 export function createWebhookTrustPlanner(prisma: PrismaClient): WebhookTrustPlanner {
   const tools = createRoutineToolRepos(prisma);
   const policies = createTrustPolicyRepos(prisma);
-  return async ({ spaceId, userId, now }) => {
+  return async ({ spaceId, userId, now }): Promise<WebhookRunTrust> => {
     const [descriptors, policy] = await Promise.all([
       tools.listBotToolDescriptors({ spaceId, userId }),
       policies.getTrustPolicy({ spaceId }),
     ]);
     const effects = planRoutineEffects(descriptors);
-    const { phase, paused } = planRunTrust(effects, policy, now ?? new Date());
-    return { phase, paused, effects };
+    const { phase, paused, resumeAt } = planRunTrust(effects, policy, now ?? new Date());
+    return { phase, paused, effects, resumeAt };
   };
 }

@@ -121,20 +121,22 @@ describe("planRunTrust", () => {
     expect(planRunTrust([effect("delete")], defaultPolicy, midnight)).toEqual({
       phase: "planned",
       paused: false,
+      resumeAt: null,
     });
   });
 
   it("pauses a consequential plan inside the window", () => {
-    expect(planRunTrust([effect("update")], night, midnight)).toEqual({
-      phase: "paused",
-      paused: true,
-    });
+    const result = planRunTrust([effect("update")], night, midnight);
+    expect(result.phase).toBe("paused");
+    expect(result.paused).toBe(true);
+    expect(result.resumeAt).not.toBeNull();
   });
 
   it("never holds a read-only plan", () => {
     expect(planRunTrust([effect("read")], night, midnight)).toEqual({
       phase: "planned",
       paused: false,
+      resumeAt: null,
     });
   });
 
@@ -142,6 +144,7 @@ describe("planRunTrust", () => {
     expect(planRunTrust([effect("delete")], night, noon)).toEqual({
       phase: "planned",
       paused: false,
+      resumeAt: null,
     });
   });
 });

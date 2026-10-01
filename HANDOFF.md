@@ -140,6 +140,14 @@ pnpm lint
 - `pnpm lint` is `biome check .` over the working tree, so it reports any window's uncommitted
   edits as errors. Judge it against committed content, not against another window's live files.
   The long-standing `.vscode/settings.json` newline error is fixed (`4d0f4228`).
+- Sprint branch state, integrator support, 2026-10-01 04:47 — `sprint/library` merged to `main`
+  and clean at origin. `sprint/reach` and `sprint/ux` were both aligned with `main`, merge commits
+  `3fd09505` and `e87b2fd1` (revert points `496b25c5` and `8aca4ee1`), each verified green in its own
+  worktree: `sprint/reach` with `pnpm --filter @rakazo/adapters check`, `pnpm lint`, and three
+  adapter test files (35 tests); `sprint/ux` with `pnpm --filter @rakazo/web check`, `pnpm lint`, and
+  three test files (8 tests). Both are now `behind=0`, so neither merge into `main` needs conflict
+  work. Neither is fully pushed: `sprint/reach` sits 12 commits ahead of `origin/sprint/reach`, and
+  `sprint/ux` has no `origin` tracking at all — A and C should push their own branches.
 - Keep providers generic: add a provider by normalizing its webhook to a `TriggerEvent` and
   extending `EVENT_CATALOG`, never with a provider-specific env var.
 - Tests are deterministic and offline by default. The desktop Playwright e2e steals focus on
