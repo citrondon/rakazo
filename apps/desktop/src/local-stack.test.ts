@@ -17,6 +17,7 @@ import {
   STACK_COMPOSE_FILE,
   STACK_ENV_FILE,
   STACK_ENV_TEMPLATE,
+  STACK_NETWORK_RETRIES,
   STACK_OUTPUT_LINES,
   STACK_PROJECT_NAME,
   STACK_TOKEN_FILE,
@@ -258,7 +259,9 @@ describe("stackFailureMessage", () => {
   });
 
   it("points at the ports for a port clash", () => {
-    expect(stackFailureMessage("port-in-use", "starting", "edge")).toContain("local port");
+    const message = stackFailureMessage("port-in-use", "starting", "edge");
+    expect(message).toContain("local port");
+    expect(message).toContain("already using it");
   });
 
   it("explains the docker group for socket permission errors", () => {
@@ -323,6 +326,7 @@ describe("LocalStackController", () => {
       env: { PATH: "/usr/bin", HOME: "/home/me", OPENROUTER_API_KEY: "sk-secret" },
       exists: (file) => file === "/usr/bin/docker",
       allocatePort: async () => 45174,
+      portInUse: async () => false,
       stackDir: path.join(root, "stack"),
       resourceDir: COMPOSE_DIR,
       localWebUrl: "http://127.0.0.1:5173",
@@ -568,6 +572,62 @@ describe("LocalStackController", () => {
     });
   });
 
+  it("retries a transient DNS failure on the pull a bounded number of times, then fails clearly", async () => {
+    let pulls = 0;
+    const stack = controller({}, (args) => {
+      if (args[7] === "pull") {
+        pulls += 1;
+        return { code: 1, stderr: "no such host" };
+      }
+      return ok(args);
+    });
+    const state = await stack.start();
+    expect(pulls).toBe(1 + STACK_NETWORK_RETRIES);
+    expect(state).toMatchObject({ phase: "failed", message: expect.stringContaining("DNS") });
+    expect(phases).not.toContain("waiting-healthy");
+  });
+
+  it("recovers when the second pull succeeds and records the retry in the output", async () => {
+    let pulls = 0;
+    const stack = controller({}, (args) => {
+      if (args[7] === "pull") {
+        pulls += 1;
+        return pulls === 1 ? { code: 1, stderr: "temporary failure in name resolution" } : ok(args);
+      }
+      return ok(args);
+    });
+    const state = await stack.start();
+    expect(state.phase).toBe("ready");
+    expect(pulls).toBe(2);
+    expect(state.output.some((line) => line.includes("Transient network failure"))).toBe(true);
+  });
+
+  it("retries a transient DNS failure during up instead of failing the start", async () => {
+    let ups = 0;
+    const stack = controller({}, (args) => {
+      if (args[7] === "up") {
+        ups += 1;
+        return ups === 1 ? { code: 1, stderr: "Temporary failure in name resolution" } : ok(args);
+      }
+      return ok(args);
+    });
+    expect((await stack.start()).phase).toBe("ready");
+    expect(ups).toBe(2);
+  });
+
+  it("does not retry a permanent pull failure", async () => {
+    let pulls = 0;
+    const stack = controller({}, (args) => {
+      if (args[7] === "pull") {
+        pulls += 1;
+        return { code: 1, stderr: "manifest unknown" };
+      }
+      return ok(args);
+    });
+    expect((await stack.start()).phase).toBe("failed");
+    expect(pulls).toBe(1);
+  });
+
   it("retries port conflicts on a new origin and uses it for auth, health, and saved launches", async () => {
     let starts = 0;
     const probed: string[] = [];
@@ -615,6 +675,44 @@ describe("LocalStackController", () => {
     });
     expect(calls.filter((call) => call.args[7] === "up")).toHaveLength(3);
     expect(phases).not.toContain("waiting-healthy");
+  });
+
+  it("moves off a port another program owns before starting and says so", async () => {
+    const taken = new Set([5173]);
+    const stack = controller({ portInUse: async (port) => taken.has(port) });
+    const state = await stack.start();
+    expect(state.phase).toBe("ready");
+    expect(stack.webUrl()).toBe("http://127.0.0.1:45174");
+    expect(state.output.some((line) => line.includes("already in use"))).toBe(true);
+    expect(
+      calls.filter((call) => call.args[7] === "up").map((call) => call.env.RAKAZO_WEB_PORT),
+    ).toEqual(["45174"]);
+    expect(await readFile(path.join(root, "stack", ".desktop-web-url"), "utf8")).toBe(
+      "http://127.0.0.1:45174",
+    );
+  });
+
+  it("probes the origin once and leaves it alone when the port is free", async () => {
+    const checked: number[] = [];
+    const stack = controller({
+      portInUse: async (port) => {
+        checked.push(port);
+        return false;
+      },
+    });
+    await stack.start();
+    expect(checked).toEqual([5173]);
+    expect(stack.webUrl()).toBe("http://127.0.0.1:5173");
+    expect(calls.filter((call) => call.args[7] === "up")).toHaveLength(1);
+  });
+
+  it("starts anyway when the port probe itself fails", async () => {
+    const stack = controller({
+      portInUse: async () => {
+        throw new Error("EACCES");
+      },
+    });
+    expect((await stack.start()).phase).toBe("ready");
   });
 
   it("collects service logs when up fails", async () => {
@@ -684,7 +782,7 @@ describe("LocalStackController", () => {
     const stack = controller({}, (args) => {
       if (args[7] === "pull") {
         attempts += 1;
-        return attempts === 1 ? { code: 1, stderr: "no such host" } : ok(args);
+        return attempts === 1 ? { code: 1, stderr: "manifest unknown" } : ok(args);
       }
       return ok(args);
     });
@@ -692,7 +790,7 @@ describe("LocalStackController", () => {
     expect(stack.start()).toBe(first);
     const failed = await first;
     expect(failed).toMatchObject({ phase: "failed" });
-    expect(failed.message).toContain("registry");
+    expect(failed.message).toContain("not published");
 
     const second = await stack.start();
     expect(second.phase).toBe("ready");

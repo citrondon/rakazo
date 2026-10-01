@@ -24,6 +24,10 @@ export const STACK_OUTPUT_LINES = 20;
 export const STACK_HEALTH_TIMEOUT_MS = 120_000;
 export const COMPOSE_WAIT_TIMEOUT_S = 300;
 
+/** A DNS/registry blip must not turn one `docker compose` call into a failed attempt (crash loop). */
+export const STACK_NETWORK_RETRIES = 2;
+export const STACK_RETRY_BACKOFF_MS = 2_000;
+
 export async function readStackWebUrl(dir: string, fallback: string): Promise<string> {
   const raw = await readPrivateFile(path.join(dir, STACK_WEB_URL_FILE), 128);
   const match = raw?.match(/^http:\/\/127\.0\.0\.1:(\d{4,5})$/);
@@ -45,6 +49,20 @@ export async function allocateLoopbackPort(): Promise<number> {
         else if (address && typeof address !== "string") resolve(address.port);
         else reject(new Error("No loopback port allocated."));
       });
+    });
+  });
+}
+
+/**
+ * A pre-flight so a host listener is named before Docker fails with a bind error. Best effort:
+ * the caller treats an error as "not taken" and the `up` retry loop stays the safety net.
+ */
+export async function isLoopbackPortTaken(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = createServer();
+    server.once("error", (error: NodeJS.ErrnoException) => resolve(error.code === "EADDRINUSE"));
+    server.listen(port, "127.0.0.1", () => {
+      server.close(() => resolve(false));
     });
   });
 }
@@ -235,6 +253,7 @@ const DOCKER_GROUP_HINT =
   "This user cannot access Docker. Add it to the docker group (sudo usermod -aG docker $USER), sign out and back in, then check again.";
 const STOP_FAILED = "Could not stop the local stack. Check that Docker is running, then try again.";
 const START_INTERRUPTED = "The start was interrupted. Retry to continue.";
+const PORT_TAKEN_NOTICE = "is already in use; Rakazo starts on a free loopback port instead.";
 
 /** Docker output may contain paths and hostnames, so the person only ever sees these. */
 export function stackFailureMessage(
@@ -246,11 +265,11 @@ export function stackFailureMessage(
     case "image-not-found":
       return `Images for ${imageTag} are not published yet. Try again in a few minutes.`;
     case "port-in-use":
-      return "Could not bind a local port after retrying. Retry to choose another port.";
+      return "Could not bind a local port: another program is already using it. Close that program (or stop the other Rakazo stack), then retry.";
     case "address-pool-exhausted":
       return "Docker has no free network address pools. Remove unused Docker networks or expand Docker’s address pools, then retry.";
     case "network":
-      return "Could not reach the image registry. Check the internet connection, then retry.";
+      return "Could not reach the image registry after retrying. Check the internet connection or DNS, then retry.";
     case "daemon-down":
       return "Docker stopped answering. Start Docker, then retry.";
     case "socket-permission":
@@ -282,6 +301,8 @@ export interface LocalStackDeps {
   resourceDir: string;
   localWebUrl: string;
   allocatePort?: () => Promise<number>;
+  /** True when another process owns the host port; injected in tests to stay offline. */
+  portInUse?: (port: number) => Promise<boolean>;
   imageTag: string;
   /** Returns the authenticated running image tag, or null for any other listener. */
   probe: (url: string, signal: AbortSignal, token: string) => Promise<string | null>;
@@ -424,6 +445,29 @@ export class LocalStackController {
     return this.current;
   }
 
+  /**
+   * Docker owns the final bind, so this only moves the decision forward: a person gets one clear
+   * sentence instead of an `unhealthy`/bind error, and the attempt never fails on a stale listener.
+   */
+  private async ensureWebPortFree() {
+    const port = Number(new URL(this.currentWebUrl).port);
+    let taken = false;
+    try {
+      taken = await (this.deps.portInUse ?? isLoopbackPortTaken)(port);
+    } catch {
+      // A probe that cannot answer (permissions, unusual platform) must not fail the start.
+      return;
+    }
+    if (!taken) return;
+    const next = await (this.deps.allocatePort ?? allocateLoopbackPort)();
+    this.currentWebUrl = `http://127.0.0.1:${next}`;
+    await writePrivateFile(path.join(this.deps.stackDir, STACK_WEB_URL_FILE), this.currentWebUrl);
+    this.push({
+      type: "output",
+      line: `Port ${port} ${PORT_TAKEN_NOTICE} (${this.currentWebUrl})`,
+    });
+  }
+
   private async attempt(signal: AbortSignal) {
     this.push({ type: "check-start" });
     await mkdir(this.deps.stackDir, { recursive: true, mode: 0o700 });
@@ -478,7 +522,11 @@ export class LocalStackController {
     this.currentStackToken = stackToken;
 
     this.push({ type: "pull-start" });
-    const pulled = await this.compose(binary, ["pull"], PULL_TIMEOUT_MS, signal);
+    const pulled = await this.transient(
+      () => this.compose(binary, ["pull"], PULL_TIMEOUT_MS, signal),
+      signal,
+      "Transient network failure; retrying the image pull",
+    );
     if (interrupted(signal, pulled))
       return this.push({ type: "failed", message: START_INTERRUPTED });
     if (pulled.code !== 0) {
@@ -489,12 +537,19 @@ export class LocalStackController {
       return;
     }
 
+    await this.ensureWebPortFree();
     this.push({ type: "up-start" });
     const upArgs = composeSupportsWaitTimeout(version.stdout)
       ? ["up", "-d", "--wait", "--wait-timeout", String(COMPOSE_WAIT_TIMEOUT_S)]
       : ["up", "-d"];
     await writePrivateFile(path.join(this.deps.stackDir, STACK_WEB_URL_FILE), this.currentWebUrl);
-    let up = await this.compose(binary, upArgs, UP_TIMEOUT_MS, signal);
+    const upOnce = () =>
+      this.transient(
+        () => this.compose(binary, upArgs, UP_TIMEOUT_MS, signal),
+        signal,
+        "Transient network failure; retrying the start",
+      );
+    let up = await upOnce();
     for (
       let retry = 0;
       retry < 2 && !interrupted(signal, up) && up.code !== 0 && failureKind(up) === "port-in-use";
@@ -504,7 +559,7 @@ export class LocalStackController {
       if (signal.aborted) break;
       this.currentWebUrl = `http://127.0.0.1:${port}`;
       await writePrivateFile(path.join(this.deps.stackDir, STACK_WEB_URL_FILE), this.currentWebUrl);
-      up = await this.compose(binary, upArgs, UP_TIMEOUT_MS, signal);
+      up = await upOnce();
     }
     if (interrupted(signal, up)) return this.push({ type: "failed", message: START_INTERRUPTED });
     if (up.code !== 0) {
@@ -534,6 +589,23 @@ export class LocalStackController {
         ? START_INTERRUPTED
         : "The stack started but the web app did not answer. Retry, and check the output below.",
     });
+  }
+
+  /** Retries only transient `network` failures, only `STACK_NETWORK_RETRIES` times, and only here. */
+  private async transient<T extends RunDockerResult>(
+    run: () => Promise<T>,
+    signal: AbortSignal,
+    note: string,
+  ): Promise<T> {
+    let result = await run();
+    for (let retry = 1; retry <= STACK_NETWORK_RETRIES; retry += 1) {
+      if (interrupted(signal, result) || failureKind(result) !== "network") break;
+      this.push({ type: "output", line: `${note} (${retry}/${STACK_NETWORK_RETRIES})` });
+      await (this.deps.sleep ?? defaultSleep)(STACK_RETRY_BACKOFF_MS, signal);
+      if (signal.aborted) break;
+      result = await run();
+    }
+    return result;
   }
 
   private docker(binary: string, args: string[], timeoutMs: number, signal?: AbortSignal) {

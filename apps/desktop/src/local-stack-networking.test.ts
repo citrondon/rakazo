@@ -1,8 +1,14 @@
 import { mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { allocateLoopbackPort, readStackWebUrl, STACK_WEB_URL_FILE } from "./local-stack.js";
+import {
+  allocateLoopbackPort,
+  isLoopbackPortTaken,
+  readStackWebUrl,
+  STACK_WEB_URL_FILE,
+} from "./local-stack.js";
 import { DEFAULT_LOCAL_WEB_URL } from "./setup-config.js";
 
 let dir: string;
@@ -48,5 +54,16 @@ describe("managed stack address", () => {
     const port = await allocateLoopbackPort();
     expect(port).toBeGreaterThanOrEqual(1024);
     expect(port).toBeLessThanOrEqual(65535);
+  });
+
+  it("reports a loopback port that another process already owns", async () => {
+    const server = createServer();
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const address = server.address();
+    if (address === null || typeof address === "string") throw new Error("no loopback port");
+    const port = address.port;
+    await expect(isLoopbackPortTaken(port)).resolves.toBe(true);
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    await expect(isLoopbackPortTaken(port)).resolves.toBe(false);
   });
 });

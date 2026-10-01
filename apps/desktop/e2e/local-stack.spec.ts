@@ -461,7 +461,7 @@ test("repeated port conflicts stop with a retry action", async () => {
   const setup = await app.firstWindow();
   await setup.getByRole("button", { name: "Continue" }).click();
   await expect(setup.locator("#stack-phase")).toHaveText(
-    "Could not bind a local port after retrying. Retry to choose another port.",
+    "Could not bind a local port: another program is already using it. Close that program (or stop the other Rakazo stack), then retry.",
   );
   await expect(setup.getByRole("button", { name: "Retry" })).toBeEnabled();
   expect((await readLog()).filter((line) => line.includes(" up -d"))).toHaveLength(3);
