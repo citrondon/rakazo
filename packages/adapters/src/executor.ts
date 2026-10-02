@@ -31,6 +31,7 @@ import {
   routineWakeupJob,
   runContinueJob,
 } from "@rakazo/adapter-kit";
+import { CredentialGuard } from "@rakazo/credential-guard";
 import type {
   ComputerCommand,
   MessageBlock,
@@ -1268,6 +1269,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
       heartbeat.unref?.();
 
       const runSecrets = [...deps.secrets];
+      const credentialGuard = new CredentialGuard();
       try {
         const sourceBlocks =
           run.trigger === "messaging" && run.sourceMessageId
@@ -1926,6 +1928,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
           _route?: unknown,
           observer?: AgentToolExecutionObserver,
         ) => {
+          // Credential Guard: sanitize input args before tool execution
+          const argsStr = JSON.stringify(args);
+          const { clean: cleanArgsStr, blocked: inputBlocked, findings: inputFindings } = credentialGuard.sanitizeInput(argsStr);
+          if (inputBlocked) {
+            return { error: `Credential Guard blocked tool ${name}: ${inputFindings.map((f: { pattern: string }) => f.pattern).join(", ")}` };
+          }
+          const sanitizedArgs = JSON.parse(cleanArgsStr);
           context.signal.throwIfAborted();
           if (handedOff) {
             return { error: "This stage was handed off. End the turn without more tool calls." };
@@ -1938,7 +1947,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           }
           let connectorCall: ConnectorCall = {
             tool: name,
-            args,
+            args: sanitizedArgs,
             executionId,
             route: connectorTools.get(name)?.route,
           };
@@ -2485,8 +2494,12 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   result,
                 )
               : Promise.resolve(true);
-          const finish = async (result: unknown) =>
-            (await persistEffectResult(result)) ? result : uncertainEffectResult(name);
+          const finish = async (result: unknown) => {
+            const resultStr = JSON.stringify(result);
+            const sanitizedResultStr = credentialGuard.sanitizeOutput(resultStr);
+            const sanitizedResult = JSON.parse(sanitizedResultStr);
+            return (await persistEffectResult(sanitizedResult)) ? sanitizedResult : uncertainEffectResult(name);
+          };
           const registerRunSecrets = (values: string[]) => {
             const additions = values.filter((value) => !runSecrets.includes(value));
             if (additions.length === 0) return;
