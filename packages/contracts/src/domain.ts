@@ -3,6 +3,7 @@ import { BotAvatarValueSchema } from "./bot-avatar.js";
 import { ThreadMessageSchema } from "./events.js";
 import { Id, MemoryScope, RunStatus, SandboxKind } from "./ids.js";
 import { McpHeadersSchema, McpRemoteEndpointSchema, McpTransportSchema } from "./mcp.js";
+import { CapabilitySchema, ModelProfileSchema, TrustTierSchema } from "./bot-role.js";
 
 export const ComputerModeSchema = z.enum(["team", "dedicated"]);
 export type ComputerMode = z.infer<typeof ComputerModeSchema>;
@@ -73,6 +74,14 @@ export const BotSchema = z.object({
   webhookConfigured: z.boolean(),
   /** Present when created with an idempotency key (e.g. onboarding:first). */
   spawnKey: z.string().nullable(),
+  /** Optional role assignment for multi-bot orchestration. */
+  roleId: Id.nullable().optional(),
+  /** Optional inline capabilities (overrides role capabilities if present). */
+  capabilities: z.array(CapabilitySchema).optional(),
+  /** Optional inline model profile (overrides role model profile if present). */
+  modelProfile: ModelProfileSchema.nullable().optional(),
+  /** Optional trust tier for approval gating. */
+  trustTier: TrustTierSchema.nullable().optional(),
 });
 export type Bot = z.infer<typeof BotSchema>;
 
