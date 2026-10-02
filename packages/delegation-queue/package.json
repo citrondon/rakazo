@@ -1,0 +1,10 @@
+{
+  "name": "@rakazo/delegation-queue",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/queue.ts",
+  "types": "./src/queue.ts",
+  "scripts": { "test": "vitest run" },
+  "dependencies": { "@rakazo/contracts": "workspace:*" },
+  "devDependencies": { "vitest": "4.1.11", "typescript": "7.0.2" }
+}
