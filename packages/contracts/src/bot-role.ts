@@ -11,7 +11,7 @@ export const CapabilitySchema = z.object({
 });
 export type Capability = z.infer<typeof CapabilitySchema>;
 
-export const ModelFamilySchema = z.enum(["Anthropic", "Anthropic", "Anthropic", "google", "router"]);
+export const ModelFamilySchema = z.enum(["Anthropic", "OpenAI", "Anthropic", "google", "router"]);
 export type ModelFamily = z.infer<typeof ModelFamilySchema>;
 
 export const CostTierSchema = z.enum(["low", "medium", "high"]);
