@@ -4,6 +4,7 @@ export * from "./attachments.js";
 export * from "./bot-avatar.js";
 export * from "./bot-role.js";
 export * from "./delegation.js";
+export * from "./merge-gate.js";
 export * from "./bot-secrets.js";
 export * from "./desktop.js";
 export * from "./domain.js";
