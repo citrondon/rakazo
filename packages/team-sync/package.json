@@ -1,0 +1,16 @@
+{
+  "name": "@rakazo/team-sync",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/bootstrap.ts",
+  "types": "./src/bootstrap.ts",
+  "scripts": { "test": "vitest run" },
+  "dependencies": {
+    "@rakazo/contracts": "workspace:*",
+    "yaml": "2.7.0"
+  },
+  "devDependencies": {
+    "vitest": "4.1.11",
+    "typescript": "7.0.2"
+  }
+}
