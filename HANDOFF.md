@@ -83,12 +83,15 @@ Event catalog (data, provider-neutral): `packages/adapters/src/event-catalog.ts`
 
 ## 3. Continue here (in order)
 
-1. **Phase 4 executor wiring (deferred, needs two prerequisites).**
-   Gate the wake path through `planTrustPhases` / `planQuietHours`
-   (`packages/adapters/src/executor.ts`). Prerequisites first:
-   (a) derive a routine's planned `TrustEffect[]` *before* the run (e.g. from its connected
-   tools); (b) persist a `TrustPolicy` (per space or bot). Until then the pure functions stay
-   tested but unconnected — don't wire a half path.
+1. **Phase 4 executor wiring (quiet hours landed, phase machine open).**
+   Quiet hours are connected: the wake path plans through `planRunTrust` → `planQuietHours`
+   (`packages/core/src/trust-runner.ts`), called by `createWebhookTrustPlanner`
+   (`apps/api/src/trigger-trust.ts`) and applied in `apps/api/src/webhook-inbound.ts`; the
+   per-space `TrustPolicy` is persisted through `trust/set`. Answering a held wake releases it
+   — `commitAnswerRunInput` (`packages/db/src/events.ts`) clears the paused phase and leaves the
+   routine's wake instruction on the task, so the resumed run reaches the approval gate instead
+   of treating the release text as the whole request. Open: the phase machine `planTrustPhases`
+   (`packages/core/src/trust-runner.ts`) is tested but has no production caller.
 2. **Phase 5 remaining.**
    - Dry-run effect list with risk tiers before approval; reuse the existing approval card.
    - Per-space `TrustPolicy` settings (approval threshold, quiet hours) + migration.

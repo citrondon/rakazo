@@ -255,6 +255,6 @@ test("configured server owners manage providers from settings", async ({ page },
   await link.click();
   await expect(page.getByRole("heading", { name: "Server integrations" })).toBeVisible();
   await page.getByRole("button", { name: "Composio", exact: true }).click();
-  await expect(page.getByText("Connected", { exact: true })).toBeVisible();
+  await expect(page.getByText("Credentials saved", { exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "server-integrations-configured");
 });

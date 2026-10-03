@@ -474,7 +474,10 @@ code-b
       },
     ];
   }
-  if (/^run\s+/.test(lower)) {
+  // A routine wake always starts with "Run routine" (apps/api/src/webhook-inbound.ts). It is not a
+  // skill invocation, so it must never take the "run <skill>" shortcut below.
+  const routineWake = lower.startsWith("run routine ");
+  if (/^run\s+/.test(lower) && !routineWake) {
     return [
       {
         assistant:
@@ -483,7 +486,12 @@ code-b
       },
     ];
   }
-  if (lower.includes("connector") || lower.includes("crm") || lower.includes("destination")) {
+  // Only the routine's own instruction may ask for a connector write: the header line names the
+  // routine and the appended payload comes from an external sender, so neither may fabricate the
+  // effect.
+  const wakeBody = lower.replace(/^run routine "[^\n]*":\n/, "");
+  const instruction = wakeBody.split("\ninbound ")[0] ?? wakeBody;
+  if (/(connector|crm|destination)/.test(instruction)) {
     return [
       {
         assistant: "writing the record through the connected destination.",

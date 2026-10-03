@@ -191,7 +191,10 @@ test("takeover, routine, plugins, and export are reachable", async ({ page }, te
   await expect(detailAgain.getByLabel("Account label").nth(1)).toHaveValue("Work");
 
   await detailAgain.getByRole("button", { name: "Remove", exact: true }).last().click();
-  await expect(detailAgain.getByLabel("Account label")).toHaveCount(1);
+  // Revoked accounts stay listed on purpose (connectionRowsFor); the row is the evidence.
+  await expect(detailAgain.getByLabel("Account label")).toHaveCount(2);
+  await expect(detailAgain.getByText("OAuth expired", { exact: true })).toBeVisible();
+  await expect(detailAgain.getByRole("button", { name: "Reconnect OAuth" })).toBeVisible();
   await detailAgain.getByRole("button", { name: "Uninstall", exact: true }).click();
   await expect(page.getByTestId("connection-detail")).toHaveCount(0);
   const gmailRowEmpty = page

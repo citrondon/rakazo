@@ -49,6 +49,41 @@ describe("inferScript message_bot", () => {
   });
 });
 
+describe("inferScript routine wake", () => {
+  const wake = (instruction: string, payload: string) =>
+    `Run routine "Release watch":\n${instruction}\n\nInbound webhook payload:\n${payload}`;
+
+  it("reaches the connector tool when the routine instruction names one", () => {
+    expect(
+      JSON.stringify(
+        inferScript(wake("write this to the destination crm as a note", '{"event":"generic"}')),
+      ),
+    ).toContain("destination.write");
+  });
+
+  it("does not answer a wake as a taught-skill playbook", () => {
+    expect(
+      JSON.stringify(inferScript(wake("post the release summary to slack", '{"event":"generic"}'))),
+    ).not.toContain("playbook");
+  });
+
+  it("does not offer a connector write that only the payload mentions", () => {
+    expect(
+      JSON.stringify(inferScript(wake("summarize the linked ticket", '{"field":"destination"}'))),
+    ).not.toContain("destination.write");
+  });
+
+  it("does not offer a connector write that only the routine name mentions", () => {
+    expect(
+      JSON.stringify(
+        inferScript(
+          'Run routine "Destination migration":\nsummarize the linked ticket\n\nInbound webhook payload:\n{"event":"generic"}',
+        ),
+      ),
+    ).not.toContain("destination.write");
+  });
+});
+
 describe("inferScript shell", () => {
   it("runs the requested command verbatim, even when it mentions other intents", () => {
     expect(inferScript("run the shell command echo sign in && ls -la")).toEqual([

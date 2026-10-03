@@ -1,7 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, signup } from "./helpers";
 
-/** Open Integrations → the advanced group → MCP servers. The first user is the owner. */
+/** Open Integrations → the advanced group → MCP servers. */
 async function openMcpServers(page: Page) {
   await page.getByText("Integrations", { exact: true }).click();
   await page.getByTestId("integrations-advanced").evaluate((element) => {
@@ -36,18 +36,31 @@ test("a gated URL fails with a short cause, not a stack trace", async ({ page },
   await captureScreenshot(page, testInfo, "mcp-endpoint-gate-refused");
 });
 
-test("the owner can save a private endpoint without an env flag", async ({ page }, testInfo) => {
+test("a non-owner cannot save a private endpoint", async ({ browser, page }, testInfo) => {
+  // Deployment ownership is claimed by the first admitted signup and never released, so run order
+  // alone cannot make this user a non-owner: filtered to this one test against a fresh database,
+  // this signup would be first. A throwaway session claims the role, and the owner escape stays
+  // covered without that dependency in apps/api/src/router.test.ts.
+  const claimContext = await browser.newContext();
+  await signup(
+    await claimContext.newPage(),
+    `mcp-gate-owner-${Date.now()}@rakazo.test`,
+    "password12",
+    "MCP Owner",
+  );
+  await claimContext.close();
+
   await signup(page, `mcp-gate-private-${Date.now()}@rakazo.test`, "password12", "MCP Private");
   await completeOnboarding(page);
   await openMcpServers(page);
 
-  // The documented escape: the deployment owner reaches a private endpoint with
-  // MCP_ALLOW_PRIVATE_ENDPOINT unset.
   await addServer(page, "Private LAN", "http://10.0.0.8:3927/mcp");
 
-  await expect(page.getByText("Private LAN", { exact: true })).toBeVisible();
-  await expect(page.getByRole("alert")).toHaveCount(0);
-  await captureScreenshot(page, testInfo, "mcp-endpoint-gate-private-owner");
+  const alert = page.getByRole("alert");
+  await expect(alert).toBeVisible();
+  await expect(alert).toContainText(/must use HTTPS|MCP_ALLOW_PRIVATE_ENDPOINT=true/);
+  await expect(page.getByText("Private LAN", { exact: true })).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "mcp-endpoint-gate-private-refused");
 });
 
 test("the add form names the flag before the round trip", async ({ page }, testInfo) => {
