@@ -130,6 +130,27 @@ model ActionApprovalRule {
   @@map("action_approval_rules")
 }
 
+model ActionDecision {
+  id            String   @id @default(cuid())
+  spaceId       String
+  space         Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  botId         String
+  threadId      String?
+  runId         String?
+  toolName      String
+  connectorKind String
+  decision      String
+  source        String
+  enforced      Boolean
+  wouldDeny     Boolean
+  matchingRules Json
+  createdAt     DateTime @default(now())
+
+  @@index([spaceId, createdAt])
+  @@index([runId])
+  @@map("action_decisions")
+}
+
 model ActionAutoReviewPreference {
   id        String   @id @default(cuid())
   spaceId   String
@@ -203,6 +224,7 @@ model Space {
   messagingIdentities         MessagingIdentity[]
   actionApprovalRules         ActionApprovalRule[]
   actionAutoReviewPreferences ActionAutoReviewPreference[]
+  actionDecisions             ActionDecision[]
   memoryConfig                SpaceMemoryConfig?
   secrets                     Secret[]
   chatGroups                  ChatGroup[]
