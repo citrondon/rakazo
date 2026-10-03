@@ -65,7 +65,7 @@ test("local settings open and save integrations without an app session", async (
   await expect(page.getByRole("button", { name: "Direct MCP", exact: true })).toBeHidden();
   await page.getByLabel("API key", { exact: true }).fill("fake-integration-key");
   await page.getByRole("button", { name: "Connect", exact: true }).click();
-  await expect(page.getByText("Connected", { exact: true })).toBeVisible();
+  await expect(page.getByText("Credentials saved", { exact: true })).toBeVisible();
   await expect(page.getByLabel("API key", { exact: true })).toHaveValue("");
   await captureScreenshot(page, testInfo, "local-server-integrations-logged-out");
   await page.getByRole("button", { name: "Models", exact: true }).click();
