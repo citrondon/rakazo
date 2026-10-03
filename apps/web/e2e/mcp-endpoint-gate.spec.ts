@@ -1,7 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, signup } from "./helpers";
 
-/** Open Integrations → the advanced group → MCP servers. The first user is the owner. */
+/** Open Integrations → the advanced group → MCP servers. */
 async function openMcpServers(page: Page) {
   await page.getByText("Integrations", { exact: true }).click();
   await page.getByTestId("integrations-advanced").evaluate((element) => {
@@ -36,18 +36,21 @@ test("a gated URL fails with a short cause, not a stack trace", async ({ page },
   await captureScreenshot(page, testInfo, "mcp-endpoint-gate-refused");
 });
 
-test("the owner can save a private endpoint without an env flag", async ({ page }, testInfo) => {
+test("a non-owner cannot save a private endpoint", async ({ page }, testInfo) => {
   await signup(page, `mcp-gate-private-${Date.now()}@rakazo.test`, "password12", "MCP Private");
   await completeOnboarding(page);
   await openMcpServers(page);
 
-  // The documented escape: the deployment owner reaches a private endpoint with
-  // MCP_ALLOW_PRIVATE_ENDPOINT unset.
+  // Deployment ownership is claimed by the first signup of a deployment and never released,
+  // so no e2e order can assume this user holds it. The owner escape is covered without that
+  // dependency in apps/api/src/router.test.ts.
   await addServer(page, "Private LAN", "http://10.0.0.8:3927/mcp");
 
-  await expect(page.getByText("Private LAN", { exact: true })).toBeVisible();
-  await expect(page.getByRole("alert")).toHaveCount(0);
-  await captureScreenshot(page, testInfo, "mcp-endpoint-gate-private-owner");
+  const alert = page.getByRole("alert");
+  await expect(alert).toBeVisible();
+  await expect(alert).toContainText(/must use HTTPS|MCP_ALLOW_PRIVATE_ENDPOINT=true/);
+  await expect(page.getByText("Private LAN", { exact: true })).toHaveCount(0);
+  await captureScreenshot(page, testInfo, "mcp-endpoint-gate-private-refused");
 });
 
 test("the add form names the flag before the round trip", async ({ page }, testInfo) => {
