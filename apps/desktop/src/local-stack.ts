@@ -300,6 +300,11 @@ export interface LocalStackDeps {
   stackDir: string;
   resourceDir: string;
   localWebUrl: string;
+  /**
+   * True when `localWebUrl` is pinned rather than chosen by the app: something already answers
+   * there, so the port pre-flight must not move the managed origin off it.
+   */
+  webUrlIsPinned?: boolean;
   allocatePort?: () => Promise<number>;
   /** True when another process owns the host port; injected in tests to stay offline. */
   portInUse?: (port: number) => Promise<boolean>;
@@ -450,6 +455,7 @@ export class LocalStackController {
    * sentence instead of an `unhealthy`/bind error, and the attempt never fails on a stale listener.
    */
   private async ensureWebPortFree() {
+    if (this.deps.webUrlIsPinned === true) return;
     const port = Number(new URL(this.currentWebUrl).port);
     let taken = false;
     try {

@@ -66,7 +66,8 @@ import {
 
 const PERFORMANCE_USER_DATA = process.env.RAKAZO_PERFORMANCE_USER_DATA;
 /** Test hook: where the app-managed stack answers. Mode `new` still requires loopback. */
-const LOCAL_WEB_URL = process.env.RAKAZO_LOCAL_WEB_URL?.trim() || DEFAULT_LOCAL_WEB_URL;
+const PINNED_LOCAL_WEB_URL = process.env.RAKAZO_LOCAL_WEB_URL?.trim() ?? "";
+const LOCAL_WEB_URL = PINNED_LOCAL_WEB_URL || DEFAULT_LOCAL_WEB_URL;
 const PROBE_TIMEOUT_MS = 8_000;
 const DESKTOP_STACK_PROBE_PATH = "/.well-known/rakazo-desktop-stack";
 const DESKTOP_STACK_TOKEN_HEADER = "x-rakazo-desktop-stack-token";
@@ -1014,8 +1015,8 @@ app.whenReady().then(async () => {
       appPath: app.getAppPath(),
     }),
     localWebUrl:
-      process.env.RAKAZO_LOCAL_WEB_URL?.trim() ||
-      (await readStackWebUrl(stackDir(userDataDir), LOCAL_WEB_URL)),
+      PINNED_LOCAL_WEB_URL || (await readStackWebUrl(stackDir(userDataDir), LOCAL_WEB_URL)),
+    webUrlIsPinned: PINNED_LOCAL_WEB_URL !== "",
     imageTag: resolveImageTag({
       version: app.getVersion(),
       packaged: app.isPackaged,
