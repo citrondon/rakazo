@@ -341,9 +341,11 @@ metadata addresses stay blocked. Leave the flag unset on public installs.
 | `RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP` | `1` | off | Bot credentials (`request_secret` / website logins) against plain-`http://` private origins. |
 | `MCP_STDIO_ENABLED` | `true` | off | stdio MCP servers, which spawn a process on the API/worker host. |
 | `MCP_STDIO_ALLOWED_COMMANDS` | comma-separated executables, e.g. `npx,node` | empty | The exact executables a stdio server may start; anything else is refused. |
+| `RAKAZO_ACTION_FAIL_CLOSED` | `1`, `true`, `yes` or `on` (trimmed, case-insensitive) | off | Enforcement for the recorded action decisions: a tool that no approval rule covers asks a human instead of being allowed silently. Existing `always_allow` rules still win. Set it on **both** the API and the worker process, because whichever one runs the tool call reads it. |
 
 The `MCP_*` switches are read as the literal `true` and the `RAKAZO_*` escape hatches as the literal
 `1`; any other spelling (`TRUE`, `yes`, `true` for a `RAKAZO_*` gate) leaves the gate off.
+`RAKAZO_ACTION_FAIL_CLOSED` is the one exception, and its row lists the spellings it accepts.
 
 Where the operator sees the refusal: adding an MCP server on web answers
 `MCP endpoint targets a private host (…)` plus the assignment to set, the same sentence carries the
@@ -364,6 +366,21 @@ support. Existing token limits still apply; effort is not a separate reasoning-t
 Do not commit `.env`. Never put `COMPOSIO_API_KEY`, OpenRouter keys, or provider tokens in git, logs, or chat.
 
 Optional messaging platforms (iMessage, Slack, WhatsApp, Telegram, Feishu/Lark) mount when their env credentials are set — see `.env.example`. Point a Feishu/Lark bot event subscription at `/api/v1/messaging/webhook/lark` (webhook/HTTP inbound only; do not enable long connection). Groups stay iMessage-only.
+
+### Reading what a bot was allowed to do
+
+Every tool call that reaches the approval gate is written to `action_decisions` before the tool
+runs, and the database rejects any later update or delete of a row. `wouldDeny` marks a decision
+that was allowed only because no approval rule covered the tool, so counting them is what to look
+at before turning enforcement on:
+
+```sql
+select "toolName", count(*) as silent_allows
+from action_decisions
+where "wouldDeny"
+group by "toolName"
+order by silent_allows desc;
+```
 
 ## Choosing a computer provider
 
