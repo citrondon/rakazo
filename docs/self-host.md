@@ -369,14 +369,16 @@ Optional messaging platforms (iMessage, Slack, WhatsApp, Telegram, Feishu/Lark) 
 
 ### Reading what a bot was allowed to do
 
-Every tool call that reaches the approval gate is written to `action_decisions` before the tool
-runs, and the database rejects any later update or delete of a row. `wouldDeny` marks a decision
-that was allowed only because no approval rule covered the tool, so counting them is what to look
+Every tool action the approval gate lets through is recorded in `action_decisions` before it
+runs, and the database rejects any later update or delete of a row. The gate also records what it
+stopped: a row whose `decision` is `ask` marks a held action. A run cancelled mid-gate is the one
+case with no row, because nothing was allowed and nothing ran. `wouldDeny` marks a decision that
+was allowed only because no approval rule covered the tool, so counting them is what to look
 at before turning enforcement on:
 
 ```sql
 select "toolName", count(*) as silent_allows
-from action_decisions
+from "action_decisions"
 where "wouldDeny"
 group by "toolName"
 order by silent_allows desc;
