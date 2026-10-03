@@ -8,54 +8,53 @@ describe.skipIf(!databaseAvailable)("action_decisions append-only", () => {
     const suffix = `${process.pid}-${Date.now()}`;
     const organizationId = `action-decisions-organization-${suffix}`;
     const spaceId = `action-decisions-space-${suffix}`;
+    // Thrown at the end of the interactive transaction so it never commits; the
+    // fixture rows and the two refused writes leave no trace in the database.
+    const rollback = Symbol("rollback-fixture-transaction");
     const db = createDb(process.env.DATABASE_URL!);
     const prisma = db.prisma;
     try {
-      await prisma.organization.create({
-        data: {
-          id: organizationId,
-          name: "action-decisions-fixture",
-          slug: organizationId,
-          createdAt: new Date(),
-        },
-      });
-      await prisma.space.create({
-        data: { id: spaceId, organizationId, name: "action-decisions-fixture" },
-      });
-      const created = await prisma.actionDecision.create({
-        data: {
-          spaceId,
-          botId: "fixture-bot",
-          toolName: "fixture_tool",
-          connectorKind: "fixture",
-          decision: "ask",
-          source: "default",
-          enforced: false,
-          wouldDeny: true,
-          matchingRules: [],
-        },
-      });
       await expect(
-        prisma.actionDecision.update({ where: { id: created.id }, data: { decision: "allow" } }),
-      ).rejects.toThrow("action_decisions is append-only");
-      await expect(prisma.actionDecision.delete({ where: { id: created.id } })).rejects.toThrow(
-        "action_decisions is append-only",
-      );
+        prisma.$transaction(async (tx) => {
+          await tx.organization.create({
+            data: {
+              id: organizationId,
+              name: "action-decisions-fixture",
+              slug: organizationId,
+              createdAt: new Date(),
+            },
+          });
+          await tx.space.create({
+            data: { id: spaceId, organizationId, name: "action-decisions-fixture" },
+          });
+          const created = await tx.actionDecision.create({
+            data: {
+              spaceId,
+              botId: "fixture-bot",
+              toolName: "fixture_tool",
+              connectorKind: "fixture",
+              decision: "ask",
+              source: "default",
+              enforced: false,
+              wouldDeny: true,
+              matchingRules: [],
+            },
+          });
+          await expect(
+            tx.actionDecision.update({ where: { id: created.id }, data: { decision: "allow" } }),
+          ).rejects.toThrow("action_decisions is append-only");
+          await expect(tx.actionDecision.delete({ where: { id: created.id } })).rejects.toThrow(
+            "action_decisions is append-only",
+          );
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+
+      // The transaction rolled back, so nothing the fixture wrote is left behind.
+      await expect(prisma.organization.count({ where: { id: organizationId } })).resolves.toBe(0);
+      await expect(prisma.space.count({ where: { id: spaceId } })).resolves.toBe(0);
+      await expect(prisma.actionDecision.count({ where: { spaceId } })).resolves.toBe(0);
     } finally {
-      // Verified against Postgres: a cascade delete from the fixture's parent rows
-      // still fires this BEFORE DELETE row trigger, so the append-only guard blocks
-      // ordinary teardown too. Drop the trigger, remove the fixture through the
-      // cascade, and restore it.
-      await prisma.$executeRawUnsafe(
-        `ALTER TABLE "action_decisions" DISABLE TRIGGER "action_decision_append_only"`,
-      );
-      try {
-        await prisma.organization.deleteMany({ where: { id: organizationId } });
-      } finally {
-        await prisma.$executeRawUnsafe(
-          `ALTER TABLE "action_decisions" ENABLE TRIGGER "action_decision_append_only"`,
-        );
-      }
       await prisma.$disconnect();
       await db.pool.end();
     }
