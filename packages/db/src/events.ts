@@ -612,7 +612,7 @@ async function commitAnswerRunInput(
       threadId: input.threadId,
       status: "waiting_input",
     },
-    select: { botId: true, userId: true, checkpoint: true },
+    select: { botId: true, userId: true, checkpoint: true, trustPhase: true },
   });
   if (!run) return null;
   const message = await tx.message.findFirst({
@@ -671,6 +671,7 @@ async function commitAnswerRunInput(
     },
     data: {
       status: "queued",
+      ...(run.trustPhase === "paused" ? { trustPhase: null, resumeAt: null } : {}),
       ...(choiceAsk ? { checkpoint: null } : {}),
     },
   });
@@ -727,6 +728,15 @@ async function commitAnswerRunInput(
         ...(pendingAsk.credential ? { result: { credentialSaved: pendingAsk.credential } } : {}),
       },
     });
+  } else if (selectedChoice && run.trustPhase === "paused") {
+    // Answering a wake held for quiet hours only releases the hold. The task keeps the
+    // instruction that produced the plan, so the resumed run reaches its connector action
+    // instead of answering the release text as if it were the whole request.
+    const heldTask = await tx.task.findFirst({
+      where: { runs: { some: { id: input.runId } } },
+      select: { id: true },
+    });
+    if (!heldTask) throw new Error("Run task was not available to answer");
   } else {
     const resumeLabel = selectedChoice
       ? resumeChoiceLabel(selectedChoice, run.checkpoint)

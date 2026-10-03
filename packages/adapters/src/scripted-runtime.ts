@@ -474,7 +474,12 @@ code-b
       },
     ];
   }
-  if (/^run\s+/.test(lower)) {
+  // Every routine wake prompt starts with "Run routine" (apps/api/src/webhook-inbound.ts), so the
+  // skill shortcut must not swallow a wake that names a connector — it has to reach the tool call
+  // below, where the approval gate can hold it.
+  const routineWakeNamingConnector =
+    lower.startsWith("run routine ") && /(connector|crm|destination)/.test(lower);
+  if (/^run\s+/.test(lower) && !routineWakeNamingConnector) {
     return [
       {
         assistant:
