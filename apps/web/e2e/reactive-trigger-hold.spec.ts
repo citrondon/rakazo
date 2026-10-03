@@ -98,25 +98,28 @@ test("a reactive webhook trigger holds a consequential wake for quiet hours and 
 
   await expect.poll(() => heldRunStatus(page, botId), { timeout: 30_000 }).toBe("waiting_input");
 
-  const held = page.getByText("Routine paused for quiet hours", { exact: true });
+  // The held card belongs to the conversation; the thread-list preview in the sidebar repeats
+  // the same last message, so an unscoped text match would resolve to both surfaces.
+  const transcript = page.getByTestId("transcript");
+  const held = transcript.getByText("Routine paused for quiet hours", { exact: true });
   // The realtime feed can lag the durable run status; reload so the card paints before asserting.
   if ((await held.count()) === 0) {
     await page.reload({ waitUntil: "domcontentloaded" });
   }
   await expect(held).toBeVisible({ timeout: 20_000 });
   // The dry-run plan is one multi-line block, so match it as text rather than by line.
-  await expect(page.getByText("Planned effects:", { exact: false })).toBeVisible();
-  await expect(page.getByText("medium: gmail · update", { exact: false })).toBeVisible();
-  const runNow = page.getByRole("button", { name: "Run now", exact: true });
+  await expect(transcript.getByText("Planned effects:", { exact: false })).toBeVisible();
+  await expect(transcript.getByText("medium: gmail · update", { exact: false })).toBeVisible();
+  const runNow = transcript.getByRole("button", { name: "Run now", exact: true });
   await expect(runNow).toBeVisible();
   await captureScreenshot(page, testInfo, "held-dry-run-card");
 
   // Answering the held card resumes the run through the ordinary answer path.
   await runNow.click();
-  await expect(page.getByText("Answered: Run now", { exact: true })).toBeVisible({
+  await expect(transcript.getByText("Answered: Run now", { exact: true })).toBeVisible({
     timeout: 15_000,
   });
-  await expect(page.getByRole("button", { name: "Run now", exact: true })).toHaveCount(0);
+  await expect(transcript.getByRole("button", { name: "Run now", exact: true })).toHaveCount(0);
   await expect.poll(() => heldRunStatus(page, botId), { timeout: 30_000 }).toBe("waiting_input");
 
   // Resuming the routine reaches the concrete connector action; it must pause again before
