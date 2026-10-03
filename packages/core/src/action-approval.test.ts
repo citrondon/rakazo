@@ -287,9 +287,9 @@ describe("resolveActionApproval", () => {
   });
 
   it("allows by default while the deployment runs fail-open", () => {
-    expect(
-      resolveActionApprovalDetail({ toolName: "some_unruled_tool", rules: [] }).decision,
-    ).toBe("allow");
+    expect(resolveActionApprovalDetail({ toolName: "some_unruled_tool", rules: [] }).decision).toBe(
+      "allow",
+    );
   });
 
   it("asks instead of silently allowing when the deployment runs fail-closed", () => {
