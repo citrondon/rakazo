@@ -1,5 +1,10 @@
-import { describe, it, expect } from "vitest";
-import { GateRequirementSchema, GateResultSchema, MergeGateInputSchema, MergeGateOutputSchema } from "./merge-gate.js";
+import { describe, expect, it } from "vitest";
+import {
+  GateRequirementSchema,
+  GateResultSchema,
+  MergeGateInputSchema,
+  MergeGateOutputSchema,
+} from "./merge-gate.js";
 
 describe("GateRequirement", () => {
   it("validates required gate with name", () => {
@@ -9,7 +14,11 @@ describe("GateRequirement", () => {
   });
 
   it("accepts optional timeoutMs", () => {
-    const gate = GateRequirementSchema.parse({ name: "jev-decision", required: true, timeoutMs: 60000 });
+    const gate = GateRequirementSchema.parse({
+      name: "jev-decision",
+      required: true,
+      timeoutMs: 60000,
+    });
     expect(gate.timeoutMs).toBe(60000);
   });
 
@@ -67,9 +76,14 @@ describe("MergeGateInput", () => {
   });
 
   it("rejects empty requiredGates", () => {
-    expect(() => MergeGateInputSchema.parse({
-      prNumber: 1, headSha: "a", baseSha: "b", requiredGates: []
-    })).toThrow();
+    expect(() =>
+      MergeGateInputSchema.parse({
+        prNumber: 1,
+        headSha: "a",
+        baseSha: "b",
+        requiredGates: [],
+      }),
+    ).toThrow();
   });
 });
 

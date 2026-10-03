@@ -1,10 +1,12 @@
-import { DelegationRequest, QueueEntry, DelegationResult } from "@rakazo/contracts";
+import type { DelegationRequest, DelegationResult, QueueEntry } from "@rakazo/contracts";
 
 export class DelegationQueue {
   private entries = new Map<string, QueueEntry>();
   private persister?: QueuePersister;
 
-  constructor(persister?: QueuePersister) { this.persister = persister; }
+  constructor(persister?: QueuePersister) {
+    this.persister = persister;
+  }
 
   async enqueue(request: DelegationRequest): Promise<QueueEntry> {
     const entry: QueueEntry = {
@@ -58,16 +60,21 @@ export class DelegationQueue {
     return entry;
   }
 
-  get(entryId: string) { return this.entries.get(entryId); }
+  get(entryId: string) {
+    return this.entries.get(entryId);
+  }
 
   list(filter?: Partial<Pick<QueueEntry, "status" | "assignedBotId">>) {
-    return [...this.entries.values()].filter(e => 
-      (!filter?.status || e.status === filter.status) &&
-      (!filter?.assignedBotId || e.assignedBotId === filter.assignedBotId)
+    return [...this.entries.values()].filter(
+      (e) =>
+        (!filter?.status || e.status === filter.status) &&
+        (!filter?.assignedBotId || e.assignedBotId === filter.assignedBotId),
     );
   }
 
-  private async persist() { if (this.persister) await this.persister.save([...this.entries.values()]); }
+  private async persist() {
+    if (this.persister) await this.persister.save([...this.entries.values()]);
+  }
 }
 
 export interface QueuePersister {

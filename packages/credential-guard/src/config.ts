@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import * as yaml from "yaml";
-import { SecretPattern } from "./guard.js";
+import type { SecretPattern } from "./guard.js";
 
 const CONFIG_PATH = join(homedir(), ".rakazo", "credential-guard.yaml");
 

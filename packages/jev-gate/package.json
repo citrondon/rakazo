@@ -4,7 +4,9 @@
   "type": "module",
   "main": "./src/merge-gate.ts",
   "types": "./src/merge-gate.ts",
-  "scripts": { "test": "vitest run" },
+  "scripts": {
+    "test": "vitest run"
+  },
   "dependencies": {
     "@rakazo/contracts": "workspace:*",
     "@rakazo/adapters": "workspace:*"

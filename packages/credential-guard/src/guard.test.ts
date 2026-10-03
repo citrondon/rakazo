@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { CredentialGuard } from "./guard.js";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CredentialGuard } from "./guard.js";
 
 describe("CredentialGuard", () => {
   let tempDir: string;
@@ -24,13 +24,13 @@ describe("CredentialGuard", () => {
 
   it("redacts AWS keys", () => {
     const guard = new CredentialGuard();
-    const { clean } = guard.sanitizeInput('AKIA1234567890ABCDEF');
+    const { clean } = guard.sanitizeInput("AKIA1234567890ABCDEF");
     expect(clean).toBe("[REDACTED:AWS_KEY]");
   });
 
   it("redacts GitHub tokens", () => {
     const guard = new CredentialGuard();
-    const { clean } = guard.sanitizeInput('ghp_abcdefghijklmnopqrstuvwxyz1234567890');
+    const { clean } = guard.sanitizeInput("ghp_abcdefghijklmnopqrstuvwxyz1234567890");
     expect(clean).toBe("[REDACTED:GH_TOKEN]");
   });
 
@@ -41,7 +41,9 @@ describe("CredentialGuard", () => {
   });
 
   it("loads custom patterns from constructor", () => {
-    const guard = new CredentialGuard([{ name: "custom", regex: /SECRET_\w+/g, replacement: "[CUSTOM]", severity: "block" }]);
+    const guard = new CredentialGuard([
+      { name: "custom", regex: /SECRET_\w+/g, replacement: "[CUSTOM]", severity: "block" },
+    ]);
     const { clean, blocked } = guard.sanitizeInput("SECRET_API_KEY=xyz");
     // Both default env-var and custom pattern match - custom replacement wins
     expect(clean).toBe("[REDACTED:[CUSTOM]]");
@@ -49,7 +51,9 @@ describe("CredentialGuard", () => {
   });
 
   it("warn severity does not block", () => {
-    const guard = new CredentialGuard([{ name: "warn-test", regex: /WARN_\w+/g, replacement: "[WARNED]", severity: "warn" }]);
+    const guard = new CredentialGuard([
+      { name: "warn-test", regex: /WARN_\w+/g, replacement: "[WARNED]", severity: "warn" },
+    ]);
     const { clean, blocked } = guard.sanitizeInput("WARN_SOMETHING=value");
     // Custom pattern replaces first, then default env-var pattern doesn't match modified text
     expect(clean).toBe("[WARNED]=value");

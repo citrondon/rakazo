@@ -4,7 +4,9 @@
   "type": "module",
   "main": "./src/guard.ts",
   "types": "./src/guard.ts",
-  "scripts": { "test": "vitest run" },
+  "scripts": {
+    "test": "vitest run"
+  },
   "dependencies": {
     "@rakazo/contracts": "workspace:*",
     "yaml": "2.7.0"

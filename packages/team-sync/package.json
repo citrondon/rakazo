@@ -4,7 +4,9 @@
   "type": "module",
   "main": "./src/bootstrap.ts",
   "types": "./src/bootstrap.ts",
-  "scripts": { "test": "vitest run" },
+  "scripts": {
+    "test": "vitest run"
+  },
   "dependencies": {
     "@rakazo/contracts": "workspace:*",
     "yaml": "2.7.0"

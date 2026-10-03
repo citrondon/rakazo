@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { TeamBootstrapper } from "./bootstrap.js";
-import { BotRoleRegistry } from "@rakazo/contracts";
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { BotRoleRegistry } from "@rakazo/contracts";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { TeamBootstrapper } from "./bootstrap.js";
 
 describe("TeamBootstrapper", () => {
   let tempDir: string;
@@ -15,7 +15,7 @@ describe("TeamBootstrapper", () => {
     tempDir = mkdtempSync(join(tmpdir(), "team-sync-test-"));
     repoDir = join(tempDir, "template-repo");
     mkdirSync(repoDir, { recursive: true });
-    
+
     roleRegistry = new BotRoleRegistry();
     bootstrapper = new TeamBootstrapper(roleRegistry);
   });
@@ -129,7 +129,8 @@ roles: []
 `;
     writeFileSync(join(repoDir, "template.yaml"), invalidTemplate);
 
-    await expect(bootstrapper.bootstrap(repoDir, "test-team", join(tempDir, "target")))
-      .rejects.toThrow();
+    await expect(
+      bootstrapper.bootstrap(repoDir, "test-team", join(tempDir, "target")),
+    ).rejects.toThrow();
   });
 });

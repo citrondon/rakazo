@@ -1,6 +1,6 @@
 import * as z from "zod";
-import { Id } from "./ids.js";
 import { ModelProfileSchema } from "./bot-role.js";
+import { Id } from "./ids.js";
 
 export const DelegationRequestSchema = z.object({
   missionId: z.string().min(1),
@@ -23,7 +23,14 @@ export const DelegationResultSchema = z.object({
 });
 export type DelegationResult = z.infer<typeof DelegationResultSchema>;
 
-export const QueueEntryStatusSchema = z.enum(["pending", "assigned", "running", "done", "failed", "blocked"]);
+export const QueueEntryStatusSchema = z.enum([
+  "pending",
+  "assigned",
+  "running",
+  "done",
+  "failed",
+  "blocked",
+]);
 export type QueueEntryStatus = z.infer<typeof QueueEntryStatusSchema>;
 
 export const QueueEntrySchema = z.object({

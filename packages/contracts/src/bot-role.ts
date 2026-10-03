@@ -53,8 +53,8 @@ export class BotRoleRegistry {
   }
 
   listByCapability(capabilityName: string): BotRole[] {
-    return [...this.roles.values()].filter(role =>
-      role.capabilities.some(cap => cap.name === capabilityName)
+    return [...this.roles.values()].filter((role) =>
+      role.capabilities.some((cap) => cap.name === capabilityName),
     );
   }
 
