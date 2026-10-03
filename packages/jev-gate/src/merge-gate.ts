@@ -1,6 +1,12 @@
-import { MergeGateInput, MergeGateOutput, GateResult, GateRequirement, GateName } from "@rakazo/contracts";
+import type { AdapterContext, AutoReviewRequest } from "@rakazo/adapter-kit";
 import { JevAutoReviewProvider } from "@rakazo/adapters";
-import type { AutoReviewRequest, AdapterContext } from "@rakazo/adapter-kit";
+import type {
+  GateName,
+  GateRequirement,
+  GateResult,
+  MergeGateInput,
+  MergeGateOutput,
+} from "@rakazo/contracts";
 
 export class JevMergeGate {
   private jevProvider?: JevAutoReviewProvider;
@@ -12,25 +18,39 @@ export class JevMergeGate {
   }
 
   async evaluate(input: MergeGateInput): Promise<MergeGateOutput> {
-    const results = await Promise.all(
-      input.requiredGates.map(gate => this.runGate(gate, input))
-    );
+    const results = await Promise.all(input.requiredGates.map((gate) => this.runGate(gate, input)));
     const allRequiredPass = results
       .filter((_, i) => input.requiredGates[i].required)
-      .every(r => r.status === "pass");
+      .every((r) => r.status === "pass");
     return { allowed: allRequiredPass, results };
   }
 
   private async runGate(gate: GateRequirement, input: MergeGateInput): Promise<GateResult> {
-    const base = { name: gate.name, status: "pending" as const, evidence: {} as Record<string, unknown> };
-    
+    const base = {
+      name: gate.name,
+      status: "pending" as const,
+      evidence: {} as Record<string, unknown>,
+    };
+
     switch (gate.name) {
       case "ci":
-        return { ...base, status: await this.checkCI(input.headSha) ? "pass" : "fail", evidence: { sha: input.headSha } };
+        return {
+          ...base,
+          status: (await this.checkCI(input.headSha)) ? "pass" : "fail",
+          evidence: { sha: input.headSha },
+        };
       case "two-family-review":
-        return { ...base, status: await this.checkTwoFamilyReview(input.prNumber) ? "pass" : "fail", evidence: { pr: input.prNumber } };
+        return {
+          ...base,
+          status: (await this.checkTwoFamilyReview(input.prNumber)) ? "pass" : "fail",
+          evidence: { pr: input.prNumber },
+        };
       case "qa-verdict":
-        return { ...base, status: await this.checkQAVerdict(input.headSha) ? "pass" : "fail", evidence: { sha: input.headSha } };
+        return {
+          ...base,
+          status: (await this.checkQAVerdict(input.headSha)) ? "pass" : "fail",
+          evidence: { sha: input.headSha },
+        };
       case "jev-decision":
         return await this.runJevDecision(input);
       default:
@@ -56,8 +76,12 @@ export class JevMergeGate {
   }
 
   private async runJevDecision(input: MergeGateInput): Promise<GateResult> {
-    const base = { name: "jev-decision" as GateName, status: "pending" as const, evidence: {} as Record<string, unknown> };
-    
+    const base = {
+      name: "jev-decision" as GateName,
+      status: "pending" as const,
+      evidence: {} as Record<string, unknown>,
+    };
+
     if (!this.jevProvider) {
       return { ...base, status: "skipped", evidence: { reason: "Jev API key not configured" } };
     }
@@ -82,13 +106,14 @@ export class JevMergeGate {
       };
 
       const result = await this.jevProvider.review(reviewRequest, mockContext);
-      
-      const status = result.decision === "pass" ? "pass" : result.decision === "ask" ? "fail" : "fail";
-      
+
+      const status =
+        result.decision === "pass" ? "pass" : result.decision === "ask" ? "fail" : "fail";
+
       return {
         ...base,
         status,
-        evidence: { 
+        evidence: {
           decision: result.decision,
           reason: result.reason,
           model: result.model,

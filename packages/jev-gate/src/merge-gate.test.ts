@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { JevMergeGate, createJevMergeGate } from "./merge-gate.js";
-import { MergeGateInputSchema, GateRequirementSchema } from "@rakazo/contracts";
+import { GateRequirementSchema, MergeGateInputSchema } from "@rakazo/contracts";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createJevMergeGate, JevMergeGate } from "./merge-gate.js";
 
 describe("JevMergeGate", () => {
   let gate: JevMergeGate;
@@ -24,7 +24,7 @@ describe("JevMergeGate", () => {
     const result = await gate.evaluate(input);
     expect(result.allowed).toBe(true);
     expect(result.results).toHaveLength(3);
-    expect(result.results.every(r => r.status === "pass")).toBe(true);
+    expect(result.results.every((r) => r.status === "pass")).toBe(true);
   });
 
   it("rejects merge when any required gate fails", async () => {
@@ -45,7 +45,7 @@ describe("JevMergeGate", () => {
 
     const result = await failingGate.evaluate(input);
     expect(result.allowed).toBe(false);
-    expect(result.results.find(r => r.name === "ci")?.status).toBe("fail");
+    expect(result.results.find((r) => r.name === "ci")?.status).toBe("fail");
   });
 
   it("skips optional gates that fail", async () => {
@@ -65,7 +65,7 @@ describe("JevMergeGate", () => {
     const result = await failingGate.evaluate(input);
     // Optional gate fails but required passes -> allowed
     expect(result.allowed).toBe(true);
-    expect(result.results.find(r => r.name === "ci")?.status).toBe("fail");
+    expect(result.results.find((r) => r.name === "ci")?.status).toBe("fail");
   });
 
   it("skips jev-decision when no API key configured", async () => {
@@ -80,7 +80,7 @@ describe("JevMergeGate", () => {
     });
 
     const result = await gate.evaluate(input);
-    const jevResult = result.results.find(r => r.name === "jev-decision");
+    const jevResult = result.results.find((r) => r.name === "jev-decision");
     expect(jevResult?.status).toBe("skipped");
     expect(jevResult?.evidence.reason).toBe("Jev API key not configured");
     // Required gate skipped -> fail (conservative)
@@ -92,9 +92,7 @@ describe("JevMergeGate", () => {
       prNumber: 42,
       headSha: "abc123",
       baseSha: "def456",
-      requiredGates: [
-        { name: "jev-decision", required: true },
-      ],
+      requiredGates: [{ name: "jev-decision", required: true }],
     });
 
     const result = await gate.evaluate(input);
@@ -107,9 +105,7 @@ describe("JevMergeGate", () => {
       prNumber: 42,
       headSha: "abc123",
       baseSha: "def456",
-      requiredGates: [
-        { name: "ci", required: true },
-      ],
+      requiredGates: [{ name: "ci", required: true }],
     });
 
     // Override checkCI to pass, then test that unknown gates are skipped in runGate
@@ -117,6 +113,6 @@ describe("JevMergeGate", () => {
     // by checking that all known gates are handled correctly
     const result = await gate.evaluate(input);
     expect(result.allowed).toBe(true);
-    expect(result.results.every(r => r.status === "pass")).toBe(true);
+    expect(result.results.every((r) => r.status === "pass")).toBe(true);
   });
 });

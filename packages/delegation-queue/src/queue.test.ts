@@ -1,11 +1,16 @@
-import { describe, it, expect } from "vitest";
-import { DelegationQueue } from "./queue.js";
 import { DelegationRequestSchema } from "@rakazo/contracts";
+import { describe, expect, it } from "vitest";
+import { DelegationQueue } from "./queue.js";
 
 describe("DelegationQueue", () => {
   it("enqueues and assigns", async () => {
     const q = new DelegationQueue();
-    const req = DelegationRequestSchema.parse({ missionId: "m", sliceId: "s", roleId: "r", acceptanceCriteria: ["ok"] });
+    const req = DelegationRequestSchema.parse({
+      missionId: "m",
+      sliceId: "s",
+      roleId: "r",
+      acceptanceCriteria: ["ok"],
+    });
     const entry = await q.enqueue(req);
     expect(entry.status).toBe("pending");
     const assigned = await q.assign(entry.id, "bot-123", "/tmp/worktree");
@@ -16,7 +21,12 @@ describe("DelegationQueue", () => {
 
   it("starts assigned entry", async () => {
     const q = new DelegationQueue();
-    const req = DelegationRequestSchema.parse({ missionId: "m", sliceId: "s", roleId: "r", acceptanceCriteria: ["ok"] });
+    const req = DelegationRequestSchema.parse({
+      missionId: "m",
+      sliceId: "s",
+      roleId: "r",
+      acceptanceCriteria: ["ok"],
+    });
     const entry = await q.enqueue(req);
     await q.assign(entry.id, "bot-123", "/tmp/wt");
     const started = await q.start(entry.id);
@@ -25,7 +35,12 @@ describe("DelegationQueue", () => {
 
   it("completes with success result", async () => {
     const q = new DelegationQueue();
-    const req = DelegationRequestSchema.parse({ missionId: "m", sliceId: "s", roleId: "r", acceptanceCriteria: ["ok"] });
+    const req = DelegationRequestSchema.parse({
+      missionId: "m",
+      sliceId: "s",
+      roleId: "r",
+      acceptanceCriteria: ["ok"],
+    });
     const entry = await q.enqueue(req);
     await q.assign(entry.id, "bot-123", "/tmp/wt");
     await q.start(entry.id);
@@ -37,11 +52,21 @@ describe("DelegationQueue", () => {
 
   it("completes with failure result", async () => {
     const q = new DelegationQueue();
-    const req = DelegationRequestSchema.parse({ missionId: "m", sliceId: "s", roleId: "r", acceptanceCriteria: ["ok"] });
+    const req = DelegationRequestSchema.parse({
+      missionId: "m",
+      sliceId: "s",
+      roleId: "r",
+      acceptanceCriteria: ["ok"],
+    });
     const entry = await q.enqueue(req);
     await q.assign(entry.id, "bot-123", "/tmp/wt");
     await q.start(entry.id);
-    const failed = await q.complete(entry.id, { success: false, artifacts: [], logs: ["error"], error: "TypeError" });
+    const failed = await q.complete(entry.id, {
+      success: false,
+      artifacts: [],
+      logs: ["error"],
+      error: "TypeError",
+    });
     expect(failed.status).toBe("failed");
     expect(failed.result?.success).toBe(false);
     expect(failed.result?.error).toBe("TypeError");
@@ -49,7 +74,12 @@ describe("DelegationQueue", () => {
 
   it("blocks entry with reason", async () => {
     const q = new DelegationQueue();
-    const req = DelegationRequestSchema.parse({ missionId: "m", sliceId: "s", roleId: "r", acceptanceCriteria: ["ok"] });
+    const req = DelegationRequestSchema.parse({
+      missionId: "m",
+      sliceId: "s",
+      roleId: "r",
+      acceptanceCriteria: ["ok"],
+    });
     const entry = await q.enqueue(req);
     const blocked = await q.block(entry.id, "waiting for dependency");
     expect(blocked.status).toBe("blocked");
@@ -58,7 +88,12 @@ describe("DelegationQueue", () => {
 
   it("filters list by status and botId", async () => {
     const q = new DelegationQueue();
-    const req = DelegationRequestSchema.parse({ missionId: "m", sliceId: "s", roleId: "r", acceptanceCriteria: ["ok"] });
+    const req = DelegationRequestSchema.parse({
+      missionId: "m",
+      sliceId: "s",
+      roleId: "r",
+      acceptanceCriteria: ["ok"],
+    });
     const e1 = await q.enqueue(req);
     const e2 = await q.enqueue(req);
     await q.assign(e1.id, "bot-1", "/wt1");

@@ -1,14 +1,19 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { DelegationQueue } from "@rakazo/delegation-queue";
-import { JevMergeGate, createJevMergeGate } from "@rakazo/jev-gate";
-import { TeamBootstrapper } from "@rakazo/team-sync";
-import { CredentialGuard } from "@rakazo/credential-guard";
-import { BotRoleRegistry } from "@rakazo/contracts";
-import { DelegationRequestSchema } from "@rakazo/contracts";
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdirSync as mkdirSyncSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+  writeFileSync as writeFileSyncSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { writeFileSync as writeFileSyncSync, mkdirSync as mkdirSyncSync } from "node:fs";
+import { BotRoleRegistry, DelegationRequestSchema } from "@rakazo/contracts";
+import { CredentialGuard } from "@rakazo/credential-guard";
+import { DelegationQueue } from "@rakazo/delegation-queue";
+import { createJevMergeGate, JevMergeGate } from "@rakazo/jev-gate";
+import { TeamBootstrapper } from "@rakazo/team-sync";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 /**
  * E2E: Multi-Bot Orchestration Flow
@@ -114,7 +119,11 @@ computerDefaults:
     const entry = await queue.enqueue(delegationRequest);
     expect(entry.status).toBe("pending");
 
-    const assigned = await queue.assign(entry.id, "impl-bot-1", join(targetDir, "worktrees", "checkout-impl"));
+    const assigned = await queue.assign(
+      entry.id,
+      "impl-bot-1",
+      join(targetDir, "worktrees", "checkout-impl"),
+    );
     expect(assigned.status).toBe("assigned");
     expect(assigned.assignedBotId).toBe("impl-bot-1");
 
@@ -153,7 +162,7 @@ computerDefaults:
     const gateResult = await gate.evaluate(gateInput);
     expect(gateResult.allowed).toBe(true); // CI, review, QA all pass (placeholders return true)
     expect(gateResult.results.length).toBe(3);
-    expect(gateResult.results.every(r => r.status === "pass")).toBe(true);
+    expect(gateResult.results.every((r) => r.status === "pass")).toBe(true);
 
     // Verify the complete flow state
     const finalEntry = queue.get(entry.id);
@@ -166,7 +175,7 @@ computerDefaults:
     const credentialGuard = new CredentialGuard();
     const dangerousInput = 'shell("export PASSWORD=hunter2 && run-script.sh")';
     const { clean, blocked } = credentialGuard.sanitizeInput(dangerousInput);
-    
+
     expect(blocked).toBe(true);
     expect(clean).toContain("[REDACTED:PASSWORD]");
     expect(clean).not.toContain("hunter2");
@@ -174,7 +183,7 @@ computerDefaults:
 
   it("orchestration blocks merge when required gate fails", async () => {
     const gate = createJevMergeGate();
-    
+
     // Override CI to fail
     (gate as any).checkCI = (() => Promise.resolve(false)) as any;
 
@@ -189,7 +198,7 @@ computerDefaults:
     });
 
     expect(gateResult.allowed).toBe(false);
-    const ciResult = gateResult.results.find(r => r.name === "ci");
+    const ciResult = gateResult.results.find((r) => r.name === "ci");
     expect(ciResult?.status).toBe("fail");
   });
 });

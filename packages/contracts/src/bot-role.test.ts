@@ -1,5 +1,10 @@
-import { describe, it, expect } from "vitest";
-import { BotRoleSchema, CapabilitySchema, ModelProfileSchema, BotRoleRegistry } from "./bot-role.js";
+import { describe, expect, it } from "vitest";
+import {
+  BotRoleRegistry,
+  BotRoleSchema,
+  CapabilitySchema,
+  ModelProfileSchema,
+} from "./bot-role.js";
 
 describe("BotRole", () => {
   it("validates a complete role with capabilities and model profile", () => {
@@ -27,18 +32,54 @@ describe("BotRole", () => {
   });
 
   it("rejects unknown capability level", () => {
-    expect(() => BotRoleSchema.parse({
-      id: "test", displayName: "T", description: "D",
-      capabilities: [{ name: "terminal", level: "invalid", constraints: [] }],
-      modelProfile: { family: "Anthropic", model: "claude", temperature: 0, maxTokens: 100, costTier: "low" },
-      trustTier: "low",
-    })).toThrow();
+    expect(() =>
+      BotRoleSchema.parse({
+        id: "test",
+        displayName: "T",
+        description: "D",
+        capabilities: [{ name: "terminal", level: "invalid", constraints: [] }],
+        modelProfile: {
+          family: "Anthropic",
+          model: "claude",
+          temperature: 0,
+          maxTokens: 100,
+          costTier: "low",
+        },
+        trustTier: "low",
+      }),
+    ).toThrow();
   });
 
   it("registry lists roles by capability", () => {
     const reg = new BotRoleRegistry();
-    reg.register({ id: "r1", displayName: "R1", description: "D", capabilities: [{ name: "terminal", level: "write", constraints: [] }], modelProfile: { family: "Anthropic", model: "c", temperature: 0, maxTokens: 100, costTier: "low" }, trustTier: "low" });
-    reg.register({ id: "r2", displayName: "R2", description: "D", capabilities: [{ name: "browser", level: "read", constraints: [] }], modelProfile: { family: "Anthropic", model: "c", temperature: 0, maxTokens: 100, costTier: "low" }, trustTier: "low" });
+    reg.register({
+      id: "r1",
+      displayName: "R1",
+      description: "D",
+      capabilities: [{ name: "terminal", level: "write", constraints: [] }],
+      modelProfile: {
+        family: "Anthropic",
+        model: "c",
+        temperature: 0,
+        maxTokens: 100,
+        costTier: "low",
+      },
+      trustTier: "low",
+    });
+    reg.register({
+      id: "r2",
+      displayName: "R2",
+      description: "D",
+      capabilities: [{ name: "browser", level: "read", constraints: [] }],
+      modelProfile: {
+        family: "Anthropic",
+        model: "c",
+        temperature: 0,
+        maxTokens: 100,
+        costTier: "low",
+      },
+      trustTier: "low",
+    });
     expect(reg.listByCapability("terminal")).toHaveLength(1);
     expect(reg.listByCapability("browser")).toHaveLength(1);
   });

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { DelegationRequestSchema, DelegationResultSchema, QueueEntrySchema } from "./delegation.js";
 
 describe("DelegationRequest", () => {
@@ -14,17 +14,30 @@ describe("DelegationRequest", () => {
   });
 
   it("rejects missing acceptanceCriteria", () => {
-    expect(() => DelegationRequestSchema.parse({
-      missionId: "m01", sliceId: "s1", roleId: "r1", acceptanceCriteria: []
-    })).toThrow();
+    expect(() =>
+      DelegationRequestSchema.parse({
+        missionId: "m01",
+        sliceId: "s1",
+        roleId: "r1",
+        acceptanceCriteria: [],
+      }),
+    ).toThrow();
   });
 
   it("accepts optional fields", () => {
     const req = DelegationRequestSchema.parse({
-      missionId: "m01", sliceId: "s1", roleId: "r1",
+      missionId: "m01",
+      sliceId: "s1",
+      roleId: "r1",
       acceptanceCriteria: ["tests pass"],
       parentSeatId: "seat-123",
-      modelOverride: { family: "Anthropic", model: "claude-sonnet-4", temperature: 0.3, maxTokens: 16384, costTier: "medium" },
+      modelOverride: {
+        family: "Anthropic",
+        model: "claude-sonnet-4",
+        temperature: 0.3,
+        maxTokens: 16384,
+        costTier: "medium",
+      },
       timeoutMs: 1800000,
       artifacts: ["src/checkout.tsx", "tests/checkout.test.tsx"],
       dependencies: ["02-auth-flow"],

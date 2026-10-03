@@ -31,7 +31,6 @@ import {
   routineWakeupJob,
   runContinueJob,
 } from "@rakazo/adapter-kit";
-import { CredentialGuard } from "@rakazo/credential-guard";
 import type {
   ComputerCommand,
   MessageBlock,
@@ -105,6 +104,7 @@ import {
   stableJsonValue,
   toolEffectIdempotencyKey,
 } from "@rakazo/core/node/approval-effect-key";
+import { CredentialGuard } from "@rakazo/credential-guard";
 import {
   appendEventInTransaction,
   createSpaceForMember,
@@ -1930,9 +1930,15 @@ export function createRunExecutor(deps: ExecutorDeps) {
         ) => {
           // Credential Guard: sanitize input args before tool execution
           const argsStr = JSON.stringify(args);
-          const { clean: cleanArgsStr, blocked: inputBlocked, findings: inputFindings } = credentialGuard.sanitizeInput(argsStr);
+          const {
+            clean: cleanArgsStr,
+            blocked: inputBlocked,
+            findings: inputFindings,
+          } = credentialGuard.sanitizeInput(argsStr);
           if (inputBlocked) {
-            return { error: `Credential Guard blocked tool ${name}: ${inputFindings.map((f: { pattern: string }) => f.pattern).join(", ")}` };
+            return {
+              error: `Credential Guard blocked tool ${name}: ${inputFindings.map((f: { pattern: string }) => f.pattern).join(", ")}`,
+            };
           }
           const sanitizedArgs = JSON.parse(cleanArgsStr);
           context.signal.throwIfAborted();
@@ -2498,7 +2504,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
             const resultStr = JSON.stringify(result);
             const sanitizedResultStr = credentialGuard.sanitizeOutput(resultStr);
             const sanitizedResult = JSON.parse(sanitizedResultStr);
-            return (await persistEffectResult(sanitizedResult)) ? sanitizedResult : uncertainEffectResult(name);
+            return (await persistEffectResult(sanitizedResult))
+              ? sanitizedResult
+              : uncertainEffectResult(name);
           };
           const registerRunSecrets = (values: string[]) => {
             const additions = values.filter((value) => !runSecrets.includes(value));

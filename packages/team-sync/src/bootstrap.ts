@@ -1,9 +1,9 @@
-import { TeamTemplate } from "./template.js";
-import { BotRoleRegistry } from "@rakazo/contracts";
 import { promises as fs } from "node:fs";
-import { join, dirname } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { BotRoleRegistry } from "@rakazo/contracts";
 import * as yaml from "yaml";
+import type { TeamTemplate } from "./template.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -82,8 +82,8 @@ export class TeamBootstrapper {
     const lockContent = {
       version: template.version,
       teamName: "", // Will be filled by caller
-      skills: template.skills.map(s => ({ name: s.name, version: s.version, source: s.source })),
-      roles: template.roles.map(r => r.id),
+      skills: template.skills.map((s) => ({ name: s.name, version: s.version, source: s.source })),
+      roles: template.roles.map((r) => r.id),
       mcpServers: template.mcpServers.length,
       routines: template.routines.length,
       computerDefaults: template.computerDefaults,
@@ -97,7 +97,7 @@ export class TeamBootstrapper {
   private async initQueueWorktrees(targetDir: string): Promise<void> {
     const queueDir = join(targetDir, ".rakazo", "queue");
     await fs.mkdir(queueDir, { recursive: true });
-    
+
     // Create worktrees subdirectory
     const worktreesDir = join(queueDir, "worktrees");
     await fs.mkdir(worktreesDir, { recursive: true });
