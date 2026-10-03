@@ -72,6 +72,16 @@ describe("inferScript routine wake", () => {
       JSON.stringify(inferScript(wake("summarize the linked ticket", '{"field":"destination"}'))),
     ).not.toContain("destination.write");
   });
+
+  it("does not offer a connector write that only the routine name mentions", () => {
+    expect(
+      JSON.stringify(
+        inferScript(
+          'Run routine "Destination migration":\nsummarize the linked ticket\n\nInbound webhook payload:\n{"event":"generic"}',
+        ),
+      ),
+    ).not.toContain("destination.write");
+  });
 });
 
 describe("inferScript shell", () => {

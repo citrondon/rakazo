@@ -486,9 +486,11 @@ code-b
       },
     ];
   }
-  // The wake appends the inbound payload; only the routine's own instruction may ask for a
-  // connector write, so a payload that happens to name one cannot fabricate the effect.
-  const instruction = lower.split("\ninbound ")[0] ?? lower;
+  // Only the routine's own instruction may ask for a connector write: the header line names the
+  // routine and the appended payload comes from an external sender, so neither may fabricate the
+  // effect.
+  const wakeBody = lower.replace(/^run routine "[^\n]*":\n/, "");
+  const instruction = wakeBody.split("\ninbound ")[0] ?? wakeBody;
   if (/(connector|crm|destination)/.test(instruction)) {
     return [
       {
