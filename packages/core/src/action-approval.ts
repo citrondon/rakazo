@@ -184,13 +184,19 @@ export function resolveActionApprovalDetail(input: {
   connectorKind?: string;
   readOnly?: boolean;
   rules: ActionApprovalRule[];
+  /** Fail-closed deployments never allow a tool that no rule covers. */
+  failClosed?: boolean;
 }): ActionApprovalResolved {
   const connectorKind = input.connectorKind ?? connectorKindFromToolName(input.toolName);
   const matchingRules = input.rules.filter((rule) =>
     ruleMatches(rule, input.toolName, connectorKind, input.readOnly),
   );
   if (matchingRules.length === 0) {
-    return { decision: "allow", source: "default", matchingRules };
+    return {
+      decision: input.failClosed ? "ask" : "allow",
+      source: "default",
+      matchingRules,
+    };
   }
 
   const highestSpecificity = Math.max(...matchingRules.map(ruleSpecificity));
@@ -211,6 +217,14 @@ export function resolveActionApproval(input: {
 }
 
 export type AutoReviewJudgeDecision = "pass" | "ask" | "error";
+
+/**
+ * Deployment-wide rollout switch. Recorded decisions do not depend on it; only enforcement does.
+ */
+export function deploymentActionFailClosed(env: NodeJS.ProcessEnv = process.env): boolean {
+  const value = env.RAKAZO_ACTION_FAIL_CLOSED?.trim().toLowerCase();
+  return value === "1" || value === "true" || value === "yes" || value === "on";
+}
 
 /**
  * Pure combiner for Auto Review after rule resolution.
