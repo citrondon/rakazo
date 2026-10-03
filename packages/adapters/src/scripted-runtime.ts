@@ -474,12 +474,10 @@ code-b
       },
     ];
   }
-  // Every routine wake prompt starts with "Run routine" (apps/api/src/webhook-inbound.ts), so the
-  // skill shortcut must not swallow a wake that names a connector — it has to reach the tool call
-  // below, where the approval gate can hold it.
-  const routineWakeNamingConnector =
-    lower.startsWith("run routine ") && /(connector|crm|destination)/.test(lower);
-  if (/^run\s+/.test(lower) && !routineWakeNamingConnector) {
+  // A routine wake always starts with "Run routine" (apps/api/src/webhook-inbound.ts). It is not a
+  // skill invocation, so it must never take the "run <skill>" shortcut below.
+  const routineWake = lower.startsWith("run routine ");
+  if (/^run\s+/.test(lower) && !routineWake) {
     return [
       {
         assistant:
@@ -488,7 +486,10 @@ code-b
       },
     ];
   }
-  if (lower.includes("connector") || lower.includes("crm") || lower.includes("destination")) {
+  // The wake appends the inbound payload; only the routine's own instruction may ask for a
+  // connector write, so a payload that happens to name one cannot fabricate the effect.
+  const instruction = lower.split("\ninbound ")[0] ?? lower;
+  if (/(connector|crm|destination)/.test(instruction)) {
     return [
       {
         assistant: "writing the record through the connected destination.",
