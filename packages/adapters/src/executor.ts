@@ -64,6 +64,7 @@ import {
   containsSecret,
   createStreamingRedactor,
   currentMonthStart,
+  deploymentActionFailClosed,
   effectRisk,
   endsSentence,
   expandSkillReferencesInPrompt,
@@ -126,6 +127,7 @@ import {
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { parse as parseShellCommand } from "shell-quote";
+import { buildActionDecisionRow } from "./action-decision-row.js";
 import {
   connectAgent,
   messageConnectedAgent,
@@ -1721,6 +1723,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
             .then((rules) => rules as ActionApprovalRule[]);
           return approvalRulesPromise;
         };
+        // Read once per run: one run must not mix fail-closed and fail-open decisions.
+        const failClosedActions = deploymentActionFailClosed();
         let autoReviewPreferencePromise: Promise<boolean> | undefined;
         const loadAutoReviewPreference = () => {
           autoReviewPreferencePromise ??= deps.prisma.actionAutoReviewPreference
@@ -2163,6 +2167,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 connectorKind,
                 readOnly: declaredReadOnly,
                 rules: await loadApprovalRules(),
+                failClosed: failClosedActions,
               });
           const autoReviewPref = requiresMandatoryApproval
             ? false
@@ -2360,6 +2365,21 @@ export function createRunExecutor(deps: ExecutorDeps) {
             gateDecision = "ask";
           }
           if (context.signal.aborted) return pauseForApproval();
+          // Record the final gate outcome before anything acts. No catch: an action that
+          // was not recorded did not happen.
+          await deps.prisma.actionDecision.create({
+            data: buildActionDecisionRow({
+              spaceId: run.spaceId,
+              botId: run.botId,
+              threadId: run.threadId,
+              runId: run.id,
+              toolName: name,
+              connectorKind,
+              resolved: approvalResolved,
+              gateDecision,
+              failClosed: failClosedActions,
+            }),
+          });
 
           const needsApproval = gateDecision === "ask";
           const bypassApproval = gateDecision === "allow" && requiresApprovalByDefault;

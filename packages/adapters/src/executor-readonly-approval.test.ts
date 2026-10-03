@@ -175,6 +175,7 @@ function fixture({
     agentSkill: { findMany: vi.fn(async () => []) },
     scratchpadItem: { findMany: vi.fn(async () => []) },
     actionApprovalRule: { findMany: vi.fn(async () => rules) },
+    actionDecision: { create: vi.fn(async () => undefined) },
     actionAutoReviewPreference: { findUnique: vi.fn(async () => ({ enabled: autoReview })) },
     trustPolicy: { findUnique: vi.fn(async () => trustPolicy) },
     // The trust-policy read loads the space row (it carries the per-turn tool-call fuse).
