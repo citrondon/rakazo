@@ -36,14 +36,24 @@ test("a gated URL fails with a short cause, not a stack trace", async ({ page },
   await captureScreenshot(page, testInfo, "mcp-endpoint-gate-refused");
 });
 
-test("a non-owner cannot save a private endpoint", async ({ page }, testInfo) => {
+test("a non-owner cannot save a private endpoint", async ({ browser, page }, testInfo) => {
+  // Deployment ownership is claimed by the first admitted signup and never released, so run order
+  // alone cannot make this user a non-owner: filtered to this one test against a fresh database,
+  // this signup would be first. A throwaway session claims the role, and the owner escape stays
+  // covered without that dependency in apps/api/src/router.test.ts.
+  const claimContext = await browser.newContext();
+  await signup(
+    await claimContext.newPage(),
+    `mcp-gate-owner-${Date.now()}@rakazo.test`,
+    "password12",
+    "MCP Owner",
+  );
+  await claimContext.close();
+
   await signup(page, `mcp-gate-private-${Date.now()}@rakazo.test`, "password12", "MCP Private");
   await completeOnboarding(page);
   await openMcpServers(page);
 
-  // Deployment ownership is claimed by the first signup of a deployment and never released,
-  // so no e2e order can assume this user holds it. The owner escape is covered without that
-  // dependency in apps/api/src/router.test.ts.
   await addServer(page, "Private LAN", "http://10.0.0.8:3927/mcp");
 
   const alert = page.getByRole("alert");
