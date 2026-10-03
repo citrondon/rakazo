@@ -3,57 +3,82 @@ import { createDb } from "./client.js";
 
 const databaseAvailable = process.env.VERIFY_DATABASE === "1" && Boolean(process.env.DATABASE_URL);
 
+// Prisma echoes the source lines around the failed invocation into its error
+// message. Asserting the trigger text through this constant, never inline near
+// a refused call, means a matching message can only have come from the database.
+const appendOnly = "action_decisions is append-only";
+
+function decisionData(spaceId: string) {
+  return {
+    spaceId,
+    botId: "fixture-bot",
+    toolName: "fixture_tool",
+    connectorKind: "fixture",
+    decision: "ask",
+    source: "default",
+    enforced: false,
+    wouldDeny: true,
+    matchingRules: [],
+  };
+}
+
 describe.skipIf(!databaseAvailable)("action_decisions append-only", () => {
-  it("accepts a decision row and refuses to change one", async () => {
-    const suffix = `${process.pid}-${Date.now()}`;
-    const organizationId = `action-decisions-organization-${suffix}`;
-    const spaceId = `action-decisions-space-${suffix}`;
-    // Thrown at the end of the interactive transaction so it never commits; the
-    // fixture rows and the two refused writes leave no trace in the database.
-    const rollback = Symbol("rollback-fixture-transaction");
+  it("refuses update and delete, each in its own rolled-back transaction", async () => {
     const db = createDb(process.env.DATABASE_URL!);
     const prisma = db.prisma;
+    const stamp = `${process.pid}-${Date.now()}`;
+    const orgA = `action-decisions-organization-update-${stamp}`;
+    const spaceA = `action-decisions-space-update-${stamp}`;
+    const orgB = `action-decisions-organization-delete-${stamp}`;
+    const spaceB = `action-decisions-space-delete-${stamp}`;
+    // Thrown at the end of each interactive transaction so neither ever commits.
+    const rollback = Symbol("rollback-fixture-transaction");
     try {
+      // A refused write aborts the whole PostgreSQL transaction, so update and
+      // delete cannot share one: each refusal gets its own transaction and its
+      // own fixture rows, and each transaction is rolled back.
       await expect(
         prisma.$transaction(async (tx) => {
           await tx.organization.create({
-            data: {
-              id: organizationId,
-              name: "action-decisions-fixture",
-              slug: organizationId,
-              createdAt: new Date(),
-            },
+            data: { id: orgA, name: "action-decisions-fixture", slug: orgA, createdAt: new Date() },
           });
           await tx.space.create({
-            data: { id: spaceId, organizationId, name: "action-decisions-fixture" },
+            data: { id: spaceA, organizationId: orgA, name: "action-decisions-fixture" },
           });
-          const created = await tx.actionDecision.create({
-            data: {
-              spaceId,
-              botId: "fixture-bot",
-              toolName: "fixture_tool",
-              connectorKind: "fixture",
-              decision: "ask",
-              source: "default",
-              enforced: false,
-              wouldDeny: true,
-              matchingRules: [],
-            },
-          });
+          const created = await tx.actionDecision.create({ data: decisionData(spaceA) });
           await expect(
             tx.actionDecision.update({ where: { id: created.id }, data: { decision: "allow" } }),
-          ).rejects.toThrow("action_decisions is append-only");
+          ).rejects.toThrow(appendOnly);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+
+      await expect(
+        prisma.$transaction(async (tx) => {
+          await tx.organization.create({
+            data: { id: orgB, name: "action-decisions-fixture", slug: orgB, createdAt: new Date() },
+          });
+          await tx.space.create({
+            data: { id: spaceB, organizationId: orgB, name: "action-decisions-fixture" },
+          });
+          const created = await tx.actionDecision.create({ data: decisionData(spaceB) });
           await expect(tx.actionDecision.delete({ where: { id: created.id } })).rejects.toThrow(
-            "action_decisions is append-only",
+            appendOnly,
           );
           throw rollback;
         }),
       ).rejects.toBe(rollback);
 
-      // The transaction rolled back, so nothing the fixture wrote is left behind.
-      await expect(prisma.organization.count({ where: { id: organizationId } })).resolves.toBe(0);
-      await expect(prisma.space.count({ where: { id: spaceId } })).resolves.toBe(0);
-      await expect(prisma.actionDecision.count({ where: { spaceId } })).resolves.toBe(0);
+      // Read outside any transaction. Counting the synthetic ids proves that this
+      // fixture left nothing behind; it says nothing about rows of other writers.
+      for (const [organizationId, spaceId] of [
+        [orgA, spaceA],
+        [orgB, spaceB],
+      ]) {
+        await expect(prisma.organization.count({ where: { id: organizationId } })).resolves.toBe(0);
+        await expect(prisma.space.count({ where: { id: spaceId } })).resolves.toBe(0);
+        await expect(prisma.actionDecision.count({ where: { spaceId } })).resolves.toBe(0);
+      }
     } finally {
       await prisma.$disconnect();
       await db.pool.end();
