@@ -706,6 +706,17 @@ describe("LocalStackController", () => {
     expect(calls.filter((call) => call.args[7] === "up")).toHaveLength(1);
   });
 
+  it("keeps answering on a pinned web url whose port is taken", async () => {
+    const stack = controller({ webUrlIsPinned: true, portInUse: async () => true });
+    const state = await stack.start();
+    expect(state.phase).toBe("ready");
+    expect(stack.webUrl()).toBe("http://127.0.0.1:5173");
+    expect(state.output.some((line) => line.includes("already in use"))).toBe(false);
+    expect(await readFile(path.join(root, "stack", ".desktop-web-url"), "utf8")).toBe(
+      "http://127.0.0.1:5173",
+    );
+  });
+
   it("starts anyway when the port probe itself fails", async () => {
     const stack = controller({
       portInUse: async () => {
