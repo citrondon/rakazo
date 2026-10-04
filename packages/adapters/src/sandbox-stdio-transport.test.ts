@@ -18,7 +18,7 @@ describe("sandbox stdio transport", () => {
     await flush();
     fake.emitStdout("x".repeat(64));
 
-    expect(fake.handle.kill).toHaveBeenCalledTimes(1);
+    expect(fake.handle.killCalls).toBe(1);
     expect(fake.errors[0]?.message).toContain("buffer");
     expect(messages).toHaveLength(0); // kein halbes Frame wurde zugestellt
     expect(MCP_STDIO_MAX_BUFFERED_BYTES).toBe(4 * 1024 * 1024);
@@ -95,7 +95,7 @@ describe("sandbox stdio transport", () => {
     fake.emitStdout("this is not json\n");
     await flush();
     expect(fake.errors[0]?.message).toContain("JSON");
-    expect(fake.handle.kill).toHaveBeenCalledTimes(1);
+    expect(fake.handle.killCalls).toBe(1);
     expect(messages).toHaveLength(0);
   });
 
@@ -131,7 +131,7 @@ describe("sandbox stdio transport", () => {
     expect(fake.errors[0]?.message).toContain("3");
     expect(closes).toBe(1);
     await transport.close(); // the process already ended — nothing to kill a second time
-    expect(fake.handle.kill).not.toHaveBeenCalled();
+    expect(fake.handle.killCalls).toBe(0);
   });
 
   it("a zero exit closes with onclose only", async () => {
@@ -163,7 +163,7 @@ describe("sandbox stdio transport", () => {
 
     await transport.close();
     await transport.close();
-    expect(fake.handle.kill).toHaveBeenCalledTimes(1);
+    expect(fake.handle.killCalls).toBe(1);
 
     fake.emitStdout('{"jsonrpc":"2.0","id":2,"result":{}}\n');
     await flush();

@@ -1,14 +1,14 @@
 import type { ProcessEvent, SandboxProcess } from "@rakazo/adapter-kit";
-import { vi } from "vitest";
 
 type Queued = { event: ProcessEvent } | { end: true };
 /** Das Handle plus die Buchführung, die der Vertrag nicht hergibt. */
-export type FakeProcess = SandboxProcess & { writes: string[] };
+export type FakeProcess = SandboxProcess & { killCalls: number; writes: string[] };
 
 export function fakeSandboxProcess() {
   const queue: Queued[] = [];
   const writes: string[] = [];
   const errors: Error[] = [];
+  const killState = { calls: 0 };
   let notify: (() => void) | undefined;
   const wake = () => {
     const fn = notify;
@@ -23,6 +23,9 @@ export function fakeSandboxProcess() {
   const handle: FakeProcess = {
     id: "proc-fake",
     writes,
+    get killCalls() {
+      return killState.calls;
+    },
     write: async (line: string) => {
       writes.push(line);
     },
@@ -34,7 +37,10 @@ export function fakeSandboxProcess() {
         yield next.event;
       }
     },
-    kill: vi.fn(async () => push({ end: true })),
+    kill: async () => {
+      killState.calls += 1;
+      push({ end: true });
+    },
   };
 
   return {
