@@ -4540,6 +4540,10 @@ msgstr "Cuándo usar"
 msgid "Where should bots run?"
 msgstr "¿Dónde deben ejecutarse los bots?"
 
+#: src/components/PresetBoundaries.tsx
+msgid "Won't do"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Working…"
 msgstr "Trabajando…"

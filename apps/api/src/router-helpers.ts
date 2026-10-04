@@ -1,17 +1,14 @@
 /**
  * Router Helper Functions
- * 
+ *
  * Extracted from router.ts to improve maintainability.
  * These are the most commonly used helper functions.
  */
 
 import { ORPCError } from "@orpc/server";
-import type { Actor, Bot, McpServer } from "@rakazo/contracts";
 import type { AdapterContext } from "@rakazo/adapter-kit";
-import {
-  SpaceDeletionInProgressError,
-  ComputerLimitError,
-} from "@rakazo/db";
+import type { Actor, McpServer } from "@rakazo/contracts";
+import { ComputerLimitError, SpaceDeletionInProgressError } from "@rakazo/db";
 
 // ============================================================================
 // SIMPLE HELPERS (No dependencies)
@@ -31,11 +28,7 @@ export function duplicateBotName(name: string): string {
 /**
  * Create an adapter context for computer operations
  */
-export function computerContext(
-  actor: Actor,
-  botId: string,
-  operationId: string
-): AdapterContext {
+export function computerContext(actor: Actor, botId: string, operationId: string): AdapterContext {
   return {
     operationId,
     traceId: operationId,
@@ -52,7 +45,7 @@ export function computerContext(
 export function connectionContext(
   actor: Actor,
   operationId: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): AdapterContext {
   return {
     operationId,
@@ -106,15 +99,13 @@ export function mcpServerDto(
     createdAt: Date;
     updatedAt: Date;
   },
-  oauthStatus: McpServer["oauthStatus"] = "none"
+  oauthStatus: McpServer["oauthStatus"] = "none",
 ): McpServer {
   const args = Array.isArray(row.args)
     ? row.args.filter((item): item is string => typeof item === "string")
     : [];
   const envKeys =
-    row.env && typeof row.env === "object" && !Array.isArray(row.env)
-      ? Object.keys(row.env)
-      : [];
+    row.env && typeof row.env === "object" && !Array.isArray(row.env) ? Object.keys(row.env) : [];
   const headerKeys =
     row.headers && typeof row.headers === "object" && !Array.isArray(row.headers)
       ? Object.keys(row.headers)
@@ -146,19 +137,9 @@ export function mcpServerDto(
 // ============================================================================
 
 export function isUniqueViolation(error: unknown): boolean {
-  return Boolean(
-    error &&
-      typeof error === "object" &&
-      "code" in error &&
-      (error as any).code === "P2002"
-  );
+  return Boolean(error && typeof error === "object" && "code" in error && error.code === "P2002");
 }
 
 export function isRecordNotFound(error: unknown): boolean {
-  return Boolean(
-    error &&
-      typeof error === "object" &&
-      "code" in error &&
-      (error as any).code === "P2025"
-  );
+  return Boolean(error && typeof error === "object" && "code" in error && error.code === "P2025");
 }

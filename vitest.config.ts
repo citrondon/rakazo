@@ -40,6 +40,7 @@ export default defineConfig({
     include: [
       ".agents/skills/pr-watch/*.test.ts",
       "packages/*/src/**/*.test.{ts,tsx}",
+      "packages/core/tests/**/*.test.{ts,tsx}",
       "infra/sandboxes/supervisor/src/**/*.test.ts",
       "infra/updater/src/**/*.test.ts",
       "apps/desktop/src/**/*.test.ts",

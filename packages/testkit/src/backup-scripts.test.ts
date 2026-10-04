@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  statSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -151,6 +152,28 @@ function contents(archive: string) {
 }
 
 describe("development backup failures", () => {
+  it("creates owner-only snapshots and never overwrites an existing snapshot", () => {
+    const f = fixture();
+    write(path.join(f.checkout, "data/home.txt"), "private synthetic home");
+    expect(f.run("scripts/backup.sh", ["private"]).status).toBe(0);
+    const output = path.join(f.checkout, "backups/private");
+    expect(statSync(output).mode & 0o777).toBe(0o700);
+    for (const name of ["rakazo.sql", "homes.tgz"]) {
+      expect(statSync(path.join(output, name)).mode & 0o777).toBe(0o600);
+    }
+    const original = readFileSync(path.join(output, "rakazo.sql"));
+    expect(f.run("scripts/backup.sh", ["private"]).status).not.toBe(0);
+    expect(readFileSync(path.join(output, "rakazo.sql"))).toEqual(original);
+  });
+
+  it.each(["../escape", "/absolute", "nested/name", "."])(
+    "rejects unsafe snapshot names before invoking Docker: %j",
+    (stamp) => {
+      const f = fixture();
+      expect(f.run("scripts/backup.sh", [stamp]).status).not.toBe(0);
+      expect(f.commands()).toEqual([]);
+    },
+  );
   it.each([false, true])("archives data with a root env file present: %s", (hasEnv) => {
     const f = fixture();
     if (!hasEnv) rmSync(path.join(f.checkout, ".env"));
@@ -244,7 +267,16 @@ describe("development restore failures", () => {
     const result = f.run("scripts/restore.sh", [path.join(f.checkout, "backups/example")]);
     expect(result.status).not.toBe(0);
     expect(result.stdout).not.toContain("Restore complete");
+    expect(f.commands().some((args) => args.includes("psql"))).toBe(false);
     expect(f.commands().some((args) => args.slice(-2).join(" ") === "up -d")).toBe(false);
+  });
+
+  it("rejects a missing SQL backup before changing the stack", () => {
+    const f = fixture();
+    const result = f.run("scripts/restore.sh", [path.join(f.root, "missing")]);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("Missing SQL backup");
+    expect(f.commands()).toEqual([]);
   });
 });
 

@@ -1313,6 +1313,13 @@ export type AppBootstrap = z.infer<typeof AppBootstrapSchema>;
 export const BOT_INTEGRATIONS_MAX_COUNT = 12;
 export const BOT_INTEGRATION_NAME_MAX_LENGTH = 64;
 
+/** What a preset's bot will not do, one short line each. Read-only preset metadata: it is
+ * shown before the import so the limits are known before the bot exists, and the same rules
+ * live in the instructions the import carries, so an export of an imported bot does not repeat
+ * them. Defaulted so a v1 export written before the field existed stays importable. */
+export const BOT_BOUNDARIES_MAX_COUNT = 12;
+export const BOT_BOUNDARY_MAX_LENGTH = 160;
+
 /** A skill pack travels as SKILL.md text: an imported bot's `@Skill` mentions only resolve
  * again if the skills themselves come along. Capped by the same numbers as the edit inputs. */
 export const BOT_EXPORT_SKILLS_MAX_COUNT = 32;
@@ -1326,6 +1333,10 @@ export const ExportManifestSchema = z.object({
   version: z.literal(1),
   exportedAt: z.string(),
   bot: BotSchema.pick({ name: true, title: true, description: true, instructions: true }),
+  boundaries: z
+    .array(z.string().trim().min(1).max(BOT_BOUNDARY_MAX_LENGTH))
+    .max(BOT_BOUNDARIES_MAX_COUNT)
+    .default([]),
   // Defaulted so a v1 export written before this field stays importable.
   integrations: z
     .array(z.string().trim().min(1).max(BOT_INTEGRATION_NAME_MAX_LENGTH))
@@ -1410,6 +1421,7 @@ export const ImportPreviewSchema = z.object({
   title: z.string(),
   description: z.string(),
   instructionsPreview: z.string(),
+  boundaries: z.array(z.string()),
   memoryCount: z.number().int().nonnegative(),
   routineNames: z.array(z.string()),
   skillNames: z.array(z.string()),

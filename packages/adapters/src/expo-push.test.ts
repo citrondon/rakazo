@@ -3,11 +3,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  deleteDevicePushToken,
   deletePushToken,
   ExpoPushProvider,
   expoPushErrorMessage,
   loadPushToken,
+  loadPushTokens,
   MAX_EXPO_PUSH_RESPONSE_BYTES,
+  saveDevicePushToken,
   savePushToken,
 } from "./expo-push.js";
 
@@ -291,5 +294,77 @@ describe("expo push", () => {
       ),
     ).rejects.toThrow("DeviceNotRegistered");
     await expect(loadPushToken(dataDir, "user-1")).resolves.toBe("ExponentPushToken[new]");
+  });
+
+  it("keeps one token per installation and delivers to every registered device", async () => {
+    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-push-"));
+    dirs.push(dataDir);
+    await saveDevicePushToken(dataDir, "user-1", "phone", "ExponentPushToken[phone]");
+    await saveDevicePushToken(dataDir, "user-1", "tablet", "ExponentPushToken[tablet]");
+
+    await expect(loadPushTokens(dataDir, "user-1")).resolves.toEqual([
+      "ExponentPushToken[phone]",
+      "ExponentPushToken[tablet]",
+    ]);
+
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
+      jsonResponse({ data: { status: "ok", id: "ticket" } }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await new ExpoPushProvider(dataDir).send(
+      { kind: "completion", title: "done", body: "ok", botId: "b", threadId: "t" },
+      notifyContext,
+    );
+    const delivered = fetchMock.mock.calls.map(([, init]) => {
+      const body = JSON.parse(String(init?.body)) as { to: string };
+      return body.to;
+    });
+    expect(delivered.sort()).toEqual(["ExponentPushToken[phone]", "ExponentPushToken[tablet]"]);
+  });
+
+  it("drops only the signed-out installation and keeps the others registered", async () => {
+    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-push-"));
+    dirs.push(dataDir);
+    await saveDevicePushToken(dataDir, "user-1", "phone", "ExponentPushToken[phone]");
+    await saveDevicePushToken(dataDir, "user-1", "tablet", "ExponentPushToken[tablet]");
+
+    await deleteDevicePushToken(dataDir, "user-1", "phone");
+
+    await expect(loadPushTokens(dataDir, "user-1")).resolves.toEqual(["ExponentPushToken[tablet]"]);
+  });
+
+  it("replaces a refreshed token for the same installation without duplicating it", async () => {
+    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-push-"));
+    dirs.push(dataDir);
+    await saveDevicePushToken(dataDir, "user-1", "phone", "ExponentPushToken[old]");
+    await saveDevicePushToken(dataDir, "user-1", "phone", "ExponentPushToken[new]");
+
+    await expect(loadPushTokens(dataDir, "user-1")).resolves.toEqual(["ExponentPushToken[new]"]);
+  });
+
+  it("reads a legacy token alongside device tokens and keeps devices on legacy unregister", async () => {
+    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-push-"));
+    dirs.push(dataDir);
+    await savePushToken(dataDir, "user-1", "ExponentPushToken[legacy]");
+    await saveDevicePushToken(dataDir, "user-1", "phone", "ExponentPushToken[phone]");
+
+    await expect(loadPushTokens(dataDir, "user-1")).resolves.toEqual([
+      "ExponentPushToken[phone]",
+      "ExponentPushToken[legacy]",
+    ]);
+
+    await deletePushToken(dataDir, "user-1");
+    await expect(loadPushTokens(dataDir, "user-1")).resolves.toEqual(["ExponentPushToken[phone]"]);
+  });
+
+  it("refuses a device id that could escape the token directory", async () => {
+    const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-push-"));
+    dirs.push(dataDir);
+    await expect(
+      saveDevicePushToken(dataDir, "user-1", "../escape", "ExponentPushToken[bad]"),
+    ).rejects.toThrow("Invalid push device id.");
+    await expect(deleteDevicePushToken(dataDir, "user-1", "a/b")).rejects.toThrow(
+      "Invalid push device id.",
+    );
   });
 });

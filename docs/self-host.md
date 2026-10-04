@@ -524,10 +524,31 @@ then run `systemctl daemon-reload`.
 
 To deploy from CI, install `infra/compose/deploy-main.sh` as `/usr/local/sbin/rakazo-deploy-main`
 and give CI a key restricted to it in the deploy user's `authorized_keys`
-(`restrict,command="/usr/local/sbin/rakazo-deploy-main" ssh-ed25519 …`). It builds `origin/main`,
-restarts the stack, waits for `https://$RAKAZO_HOST/health`, and rolls back on failure. Build and
-start are time-limited so a stuck build fails the deploy instead of holding its lock; a deploy that
-finds the lock held exits non-zero. For a checkout outside `/srv/rakazo`, put
+(`restrict,command="/usr/local/sbin/rakazo-deploy-main" ssh-ed25519 …`). CI waits for the checks on
+`github.sha` and passes that full commit as the requested SSH command (`ssh … <sha>`); the script
+deploys exactly that revision and refuses a branch name, a short SHA, or a commit that is not on
+`origin/main`, so a `main` that moved after the checks cannot change what ships. It resets the
+checkout to the revision, builds with `GIT_SHA` set to it, runs `up --wait`, then confirms the new
+API revision on `/internal/health`, a ready worker, and the public `/health` before recording
+success; any failure rolls back to the previous revision. Build and start are time-limited so a
+stuck build fails the deploy instead of holding its lock; a deploy that finds the lock held exits
+non-zero.
+
+Because the API's start command runs `prisma migrate deploy`, a rollback returns the code but not
+the schema. Before every real update the script therefore snapshots the live database with
+`pg_dump` (custom format, `pg_restore --list` and checksum verified, mode `0600`) into
+`<checkout>/.pre-deploy/<timestamp>-<revision>/`, keeping the newest three, and **refuses the whole
+update** when a running database cannot be snapshotted. If the rollback itself never becomes ready
+— the usual cause being that the new version migrated the schema past what the old code accepts —
+the deploy does not claim recovery: it prints the snapshot path and the `restore-prod.sh` step from
+[Restore](#restore) instead. Restore that snapshot, or restore the whole stack from your off-host
+backup, before serving traffic again. On a first install with no running Postgres the snapshot is
+skipped and the deploy says so.
+
+By default it deploys `infra/compose/docker-compose.prod.yml`. To deploy an overlay stack, set
+`RAKAZO_DEPLOY_COMPOSE_FILES` to the same space-separated `-f` list you run by hand (for example
+the base file followed by `infra/compose/docker-compose.prod.docker.yml`); each path must be a
+relative `.yml`/`.yaml` inside the checkout. For a checkout outside `/srv/rakazo`, put
 `RAKAZO_DEPLOY_DIR=/absolute/path` in a root-owned `/etc/rakazo/deploy.env` readable by the
 deploy user.
 
@@ -588,12 +609,53 @@ docker compose --env-file .env \
 For backups created by `scripts/backup.sh`, use an empty `rakazo` database in the development
 Compose stack, with application services stopped. The SQL import runs in one transaction and
 stops on the first error, including conflicts with existing tables. Files are restored and
-application services started only after the import succeeds. This script does not consume the
-production snapshot's custom-format `rakazo.dump` or `appdata.tgz`.
+application services started only after the import succeeds.
 
 ```bash
 ./scripts/restore.sh backups/<stamp>
 ```
+
+For backups created by `infra/compose/backup-prod.sh` (custom-format `rakazo.dump` plus
+`appdata.tgz` plus `SHA256SUMS`), use `infra/compose/restore-prod.sh` on the production layout:
+
+```bash
+sudo RAKAZO_RESTORE_DIR=/srv/rakazo \
+  infra/compose/restore-prod.sh /var/backups/rakazo/<stamp>
+```
+
+The production restore verifies the dump with `pg_restore --list`, the archive with `tar -tzf`, and
+`SHA256SUMS` before touching anything, refuses a dirty target checkout, and refuses to overwrite a
+database it can reach unless you pass `RAKAZO_RESTORE_FORCE=1`. It then restores the database in a
+single transaction, replaces the files inside the API container's `/data`, and starts the stack. It
+never writes a new `ENCRYPTION_KEY`: the key that was active when the snapshot was taken must
+already be in the target `.env`, and the restore refuses to start the application without it.
+Restoring into an installation that used a different key silently produces undecryptable
+credentials, so copy the original `.env` first and diff it.
+
+For a fresh host, the order is: install the checkout and a production `.env` copied from the source
+installation (same `ENCRYPTION_KEY`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`,
+`SCREEN_PROXY_SECRET`), start Postgres, then run `restore-prod.sh` and let it bring up the rest.
+
+### Off-host copies and key recovery
+
+Snapshots under `/var/backups/rakazo` die with the host, so copy them somewhere else on a schedule
+you actually test. `restic` or `borg` over an SSH target gives encrypted, deduplicated copies
+without a hosted vendor; `gpg` plus any object store works too. Encrypt before they leave the host,
+limit the copy credentials to append-only where the target supports it, and keep the **recovery
+path** with the copy, not on the host it protects:
+
+1. The snapshot archive itself (`rakazo.dump`, `appdata.tgz`, `SHA256SUMS`).
+2. The production `.env` (`ENCRYPTION_KEY`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`,
+   `SCREEN_PROXY_SECRET`) — without it the restored data cannot be decrypted or served. Store it
+   encrypted (a password manager, an encrypted note, a sealed printout), never beside the
+   unencrypted snapshot, and never in the repository.
+3. The Compose file list and image tag the stack ran with, plus the checkout revision
+   (`.last-deployed-revision`), so the restored stack matches what produced the data.
+
+Rehearse the full path on a scratch host or a scratch directory — restore the snapshot, then log in
+and confirm a chat, a file artifact, and a connected model credential still decrypt. A backup you
+have never restored from is a hypothesis, not a backup. Detect silent breakage by alerting on the
+backup job's non-zero exit and on snapshot age (`find /var/backups/rakazo -maxdepth 1 -mtime +1`).
 
 ## Upgrade
 

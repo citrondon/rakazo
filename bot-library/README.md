@@ -14,6 +14,17 @@ Der Import läuft über `bots.import` und akzeptiert genau das Export-Schema v1 
 der Bot-Export in der Web-UI erzeugt. Der manuelle Weg (Instruktionen aus der Datei kopieren) bleibt
 möglich, ist aber nicht mehr nötig.
 
+## Grenzen im Preset
+
+`boundaries` ist ein optionales Feld im Export-Format: kurze Zeilen, was der Bot **nicht** tut
+(zum Beispiel „Mergt nichts selbst“). Die Import-Vorschau zeigt sie, damit die Grenzen vor dem
+Anlegen sichtbar sind. Der Bot muss sie trotzdem kennen, also stehen dieselben Regeln im
+`instructions`-Text – die Vorschau liest nur, was der Bot ohnehin befolgt. Ein Export eines
+importierten Bots wiederholt sie deshalb nicht.
+
+Die acht eigenen Presets führen das Feld; die 56 Profile aus `awesome-grokbot` nicht, weil ihr
+Text wortgetreu übernommen wird.
+
 ## Modell verbinden
 
 Die Presets sind providerneutral; sie brauchen nur irgendein verbundenes Modell. In **Settings →

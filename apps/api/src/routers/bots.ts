@@ -1,53 +1,44 @@
 /**
  * Bots Router Module
- * 
+ *
  * Extracted from router.ts (originally lines 1307-1783, ~477 lines)
  * This module contains the complete bots domain router configuration.
  */
 
 import { randomBytes } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import { getLogger } from "@rakazo/logging";
-
-// Types
-import type { Actor, Bot, McpServer, Me } from "@rakazo/contracts";
-import type { Prisma, PrismaClient } from "@rakazo/db";
-import type { JobPublisher, AdapterContext } from "@rakazo/adapter-kit";
-import type { RouterDeps } from "../router.js";
-
-// Import from contracts
-import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo/contracts";
-
+import type { CodexLiveCatalog } from "@rakazo/adapters";
 // Import from adapters
 import {
-  listPiCatalog,
-  scriptedCatalogEntry,
-  validateModelAuthAvailability,
-  validateStoredModelAuth,
-  toComputerRef,
+  archiveBot,
   checkpointAndRecordComputerWorkspace,
+  destroyBot,
   hasActiveComputerControl,
+  listPiCatalog,
   modelCredentialDto,
-  ComputerBusyError,
+  scriptedCatalogEntry,
+  toComputerRef,
+  validateStoredModelAuth,
 } from "@rakazo/adapters";
+// Types
+import type { Actor, Bot, Me } from "@rakazo/contracts";
+// Import from contracts
+import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo/contracts";
 import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
-import { mapSpaceLifecycleError } from "../router-helpers.js";
-
+import type { createRepos, Prisma } from "@rakazo/db";
 // Import from db
-import {
-  createRepos,
-  createGroupRepos,
-  IsolationError,
-  findModelCredential,
-} from "@rakazo/db";
+import { findModelCredential, IsolationError, restoreBotUnderComputerQuota } from "@rakazo/db";
+import { getLogger } from "@rakazo/logging";
+import type { AgentSkillsService } from "../agent-skills.js";
+import type { PreparedBotImport } from "../bot-import.js";
+import { prepareBotImport } from "../bot-import.js";
+import { listBotPresets, readBotPreset } from "../bot-library.js";
 
 // Import from local files
 import { botProfileLabelsChanged, commitBotUpdate } from "../bot-update.js";
-import { listBotPresets, readBotPreset } from "../bot-library.js";
-import { prepareBotImport, applyPreparedImport } from "../bot-import.js";
-
+import type { createAuthenticatedRouter, RouterDeps } from "../router.js";
 // Import from router-helpers
-import { duplicateBotName } from "../router-helpers.js";
+import { computerContext, duplicateBotName, mapSpaceLifecycleError } from "../router-helpers.js";
 
 // Re-export types for use in this module
 export type { RouterDeps } from "../router.js";
@@ -56,72 +47,6 @@ export type { RouterDeps } from "../router.js";
 // LOCAL HELPERS (moved from router.ts)
 // ============================================================================
 
-function computerContext(actor: Actor, botId: string, operationId: string): AdapterContext {
-  return {
-    operationId,
-    traceId: operationId,
-    spaceId: actor.spaceId,
-    userId: actor.userId,
-    botId,
-    signal: new AbortController().signal,
-  };
-}
-
-/**
- * Enqueue a bot intro run - moved from router.ts
- */
-async function enqueueBotIntroRunLocal(
-  deps: RouterDeps,
-  actor: Actor,
-  bot: Bot
-): Promise<void> {
-  const threadId = bot.threadId;
-  if (!threadId) return;
-  if (deps.env.agentRuntime === "scripted") return;
-  
-  // Check if model setup is needed
-  const modelCheck = await modelSetupLocal(deps, actor);
-  if (modelCheck.needsModel) return;
-
-  const run = await deps.prisma.$transaction(async (tx) => {
-    const task = await tx.task.create({
-      data: {
-        spaceId: actor.spaceId,
-        botId: bot.id,
-        threadId,
-        userId: actor.userId,
-        prompt: BOT_INTRO_PROMPT,
-        status: "queued",
-      },
-    });
-    return tx.run.create({
-      data: {
-        spaceId: actor.spaceId,
-        botId: bot.id,
-        threadId,
-        taskId: task.id,
-        userId: actor.userId,
-        status: "queued",
-        trigger: "created",
-      },
-      select: { id: true },
-    });
-  });
-
-  await deps.jobs.enqueue("run:continue", run.id);
-}
-
-/**
- * Model setup check - moved from router.ts
- */
-async function modelSetupLocal(deps: RouterDeps, actor: Actor): Promise<{ needsModel: boolean }> {
-  // Implementation placeholder - will be filled from router.ts
-  return { needsModel: false };
-}
-
-const BOT_INTRO_PROMPT =
-  "You were just created. In one reply, say what you understood your role to be from your title, description and instructions, and ask for anything you need to get started.";
-
 // ============================================================================
 // ROUTER DEPENDENCIES TYPE
 // ============================================================================
@@ -129,17 +54,27 @@ const BOT_INTRO_PROMPT =
 interface BotsRouterContext {
   deps: RouterDeps;
   repos: ReturnType<typeof createRepos>;
-  groupRepos: ReturnType<typeof createGroupRepos>;
-  authed: any;
-  agentSkills: any;
-  codexCatalog: any;
+  authed: ReturnType<typeof createAuthenticatedRouter>;
+  agentSkills: AgentSkillsService;
+  codexCatalog: CodexLiveCatalog;
   refreshExpiredCredential: (
     scope: { userId: string; spaceId: string },
     secretId: string,
-    provider: string
+    provider: string,
   ) => void;
   meDto: (deps: RouterDeps, actor: Actor) => Promise<Me>;
+  enqueueBotIntroRun: (deps: RouterDeps, actor: Actor, bot: Bot) => Promise<void>;
+  applyPreparedImport: (
+    tx: Prisma.TransactionClient,
+    actor: Actor,
+    botId: string,
+    prepared: PreparedBotImport,
+  ) => Promise<void>;
 }
+
+// ============================================================================
+// LOCAL HELPERS
+// ============================================================================
 
 // ============================================================================
 // CREATE BOTS ROUTER
@@ -150,13 +85,23 @@ interface BotsRouterContext {
  * This is extracted from router.ts and can be spread into os.router({ ... })
  */
 export function createBotsRouter(ctx: BotsRouterContext) {
-  const { deps, repos, groupRepos, authed, agentSkills, codexCatalog, refreshExpiredCredential } = ctx;
+  const {
+    deps,
+    repos,
+    authed,
+    agentSkills,
+    codexCatalog,
+    refreshExpiredCredential,
+    meDto,
+    enqueueBotIntroRun,
+    applyPreparedImport,
+  } = ctx;
 
   return {
     // ==========================================================================
     // PRESETS
     // ==========================================================================
-    
+
     /** The shipped presets, so a client can offer what the library actually has. */
     presets: authed.bots.presets.handler(async () => listBotPresets()),
 
@@ -175,13 +120,11 @@ export function createBotsRouter(ctx: BotsRouterContext) {
     list: authed.bots.list.handler(async ({ context }) => repos.listBots(context.actor)),
 
     listArchived: authed.bots.listArchived.handler(async ({ context }) =>
-      repos.listBots(context.actor, { archived: true })
+      repos.listBots(context.actor, { archived: true }),
     ),
 
     get: authed.bots.get.handler(async ({ context, input }) => {
-      const found = (await repos.listBots(context.actor)).find(
-        (bot) => bot.id === input.botId
-      );
+      const found = (await repos.listBots(context.actor)).find((bot) => bot.id === input.botId);
       if (!found) throw new IsolationError();
       return found;
     }),
@@ -193,7 +136,7 @@ export function createBotsRouter(ctx: BotsRouterContext) {
       } catch (error) {
         throw mapSpaceLifecycleError(error);
       }
-      await enqueueBotIntroRunLocal(deps, context.actor, bot).catch((error) => {
+      await enqueueBotIntroRun(deps, context.actor, bot).catch((error) => {
         getLogger().error("bot intro run enqueue", error);
       });
       return bot;
@@ -267,15 +210,14 @@ export function createBotsRouter(ctx: BotsRouterContext) {
       const settingModel =
         input.modelProvider !== undefined &&
         input.modelId !== undefined &&
-        (input.modelProvider !== existing.modelProvider ||
-          input.modelId !== existing.modelId);
+        (input.modelProvider !== existing.modelProvider || input.modelId !== existing.modelId);
 
       if (settingModel && input.modelProvider && input.modelId) {
         const credential = await findModelCredential(
           deps.prisma,
           context.actor,
           input.modelProvider,
-          input.modelId
+          input.modelId,
         );
         if (!credential) {
           throw new ORPCError("BAD_REQUEST", {
@@ -284,9 +226,7 @@ export function createBotsRouter(ctx: BotsRouterContext) {
         }
         const knownModels = [...listPiCatalog(), scriptedCatalogEntry];
         const inCatalog = knownModels.some(
-          (item) =>
-            item.provider === input.modelProvider &&
-            item.id === input.modelId
+          (item) => item.provider === input.modelProvider && item.id === input.modelId,
         );
         if (!inCatalog && credential.defaultModel !== input.modelId) {
           throw new ORPCError("BAD_REQUEST", {
@@ -304,12 +244,8 @@ export function createBotsRouter(ctx: BotsRouterContext) {
             codexCatalog,
             {
               onExpiredToken: () =>
-                refreshExpiredCredential(
-                  context.actor,
-                  credential.secretId,
-                  input.modelProvider!
-                ),
-            }
+                refreshExpiredCredential(context.actor, credential.secretId, input.modelProvider!),
+            },
           );
           if (authError) {
             throw new ORPCError("BAD_REQUEST", { message: authError });
@@ -320,20 +256,15 @@ export function createBotsRouter(ctx: BotsRouterContext) {
       const thinkingLevel = input.thinkingLevel;
       if (input.thinkingLevel) {
         const provider =
-          input.modelProvider !== undefined
-            ? input.modelProvider
-            : existing.modelProvider;
-        const modelId =
-          input.modelId !== undefined ? input.modelId : existing.modelId;
+          input.modelProvider !== undefined ? input.modelProvider : existing.modelProvider;
+        const modelId = input.modelId !== undefined ? input.modelId : existing.modelId;
         const me = await meDto(deps, context.actor);
         const effectiveProvider = provider ?? me.defaultProvider;
         const effectiveModelId = modelId ?? me.defaultModel;
 
         if (effectiveProvider && effectiveModelId) {
           const entry = listPiCatalog().find(
-            (item) =>
-              item.provider === effectiveProvider &&
-              item.id === effectiveModelId
+            (item) => item.provider === effectiveProvider && item.id === effectiveModelId,
           );
           let allowed: string[] | undefined = entry?.thinkingLevels;
 
@@ -342,7 +273,7 @@ export function createBotsRouter(ctx: BotsRouterContext) {
             const credential = await findModelCredential(
               deps.prisma,
               context.actor,
-              effectiveProvider
+              effectiveProvider,
             );
             if (credential && credential.defaultModel === effectiveModelId) {
               const secret = await deps.prisma.secret.findFirst({
@@ -358,10 +289,7 @@ export function createBotsRouter(ctx: BotsRouterContext) {
                   allowed =
                     modelCredentialDto(
                       credential,
-                      deps.secrets.load(
-                        secret.ciphertext,
-                        credential.secretId
-                      )
+                      deps.secrets.load(secret.ciphertext, credential.secretId),
                     ).thinkingLevels ?? allowed;
                 } catch {
                   // Unreadable connections must not advertise reasoning support.
@@ -390,10 +318,9 @@ export function createBotsRouter(ctx: BotsRouterContext) {
                 : { budgetWarnedAt: null }),
             };
 
-      const result = await commitBotUpdate({
+      await commitBotUpdate({
         prisma: deps.prisma,
-        notify: (threadId: string, seq: number) =>
-          deps.events.notify(threadId, seq),
+        notify: (threadId: string, seq: number) => deps.events.notify(threadId, seq),
         spaceId: context.actor.spaceId,
         threadId: existing.thread.id,
         botId: input.botId,
@@ -421,9 +348,7 @@ export function createBotsRouter(ctx: BotsRouterContext) {
           ...(input.teamChatAmbientEnabled !== undefined
             ? { teamChatAmbientEnabled: input.teamChatAmbientEnabled }
             : {}),
-          ...(input.teamChatRules !== undefined
-            ? { teamChatRules: input.teamChatRules }
-            : {}),
+          ...(input.teamChatRules !== undefined ? { teamChatRules: input.teamChatRules } : {}),
         },
       });
 
@@ -441,8 +366,7 @@ export function createBotsRouter(ctx: BotsRouterContext) {
       const bot = await repos.getBot(context.actor, input.botId);
       if (!bot.computer) throw new IsolationError();
 
-      const currentMode =
-        bot.computer.scope === "dedicated" ? "dedicated" : "team";
+      const currentMode = bot.computer.scope === "dedicated" ? "dedicated" : "team";
       if (currentMode === input.mode) {
         try {
           return await repos.setBotComputer(context.actor, bot.id, input.mode);
@@ -479,10 +403,7 @@ export function createBotsRouter(ctx: BotsRouterContext) {
           });
         }
 
-        if (
-          bot.computer.controlBotId === bot.id &&
-          hasActiveComputerControl(bot.computer)
-        ) {
+        if (bot.computer.controlBotId === bot.id && hasActiveComputerControl(bot.computer)) {
           throw new ORPCError("BAD_REQUEST", {
             message: "Release the computer first",
           });
@@ -492,12 +413,7 @@ export function createBotsRouter(ctx: BotsRouterContext) {
           const ctx = computerContext(context.actor, bot.id, "computer.switch");
           const ref = toComputerRef(bot.computer);
           if (bot.computer.state === "running") {
-            await checkpointAndRecordComputerWorkspace(
-              deps,
-              bot.computer,
-              ref,
-              ctx
-            );
+            await checkpointAndRecordComputerWorkspace(deps, bot.computer, ref, ctx);
             await deps.sandbox.stop(ref, ctx);
           }
           await deps.prisma.computerExecutionLease.deleteMany({
@@ -540,8 +456,7 @@ export function createBotsRouter(ctx: BotsRouterContext) {
       const bot = await repos.getBot(context.actor, input.botId, {
         includeArchived: true,
       });
-      // TODO: Implement archiveBot from adapters
-      // await archiveBot(deps, bot, computerContext(context.actor, bot.id, "archive"));
+      await archiveBot(deps, bot, computerContext(context.actor, bot.id, "archive"));
       return { ok: true as const };
     }),
 
@@ -550,7 +465,16 @@ export function createBotsRouter(ctx: BotsRouterContext) {
         includeArchived: true,
       });
       if (!bot.archivedAt) return { ok: true as const };
-      // TODO: Implement restore logic
+      if (!bot.computerId) throw new IsolationError("Bot is missing its computer");
+      try {
+        await restoreBotUnderComputerQuota(deps.prisma, {
+          userId: context.actor.userId,
+          botId: bot.id,
+          computerId: bot.computerId,
+        });
+      } catch (error) {
+        throw mapSpaceLifecycleError(error);
+      }
       return { ok: true as const };
     }),
 
@@ -558,8 +482,9 @@ export function createBotsRouter(ctx: BotsRouterContext) {
       const bot = await repos.getBot(context.actor, input.botId, {
         includeArchived: true,
       });
-      // TODO: Implement destroyBot from adapters
-      // await destroyBot(deps, bot, computerContext(context.actor, bot.id, "destroy"));
+      await destroyBot(deps, bot, computerContext(context.actor, bot.id, "destroy"), {
+        deleteMemories: input.deleteMemories,
+      });
       return { ok: true as const };
     }),
 
@@ -596,27 +521,14 @@ export function createBotsRouter(ctx: BotsRouterContext) {
         signal: context.signal ?? new AbortController().signal,
       };
 
-      for (const skill of prepared.skills) {
-        try {
-          await agentSkills.create(context.actor, { content: skill.content });
-        } catch (error) {
-          if (
-            !(error instanceof ORPCError) ||
-            (error as ORPCError).code !== "CONFLICT"
-          ) {
-            throw error;
-          }
-          warnings.push(`Skill not added (name taken): ${skill.name}`);
-        }
-      }
-
       const created = await deps.prisma.$transaction(async (tx) => {
         const bot = await repos.createBot(
           context.actor,
           {
             ...prepared.profile,
             notifyOnFinish: true,
-            computerMode: "team",
+            // Files belong to a new private home, never an existing team's workspace.
+            computerMode: prepared.files.length > 0 ? "dedicated" : "team",
             initialMessage: {
               role: "system",
               blocks: [
@@ -624,96 +536,126 @@ export function createBotsRouter(ctx: BotsRouterContext) {
                   kind: "meta",
                   text:
                     warnings.length > 0
-                      ? `Imported preset with warnings: ${warnings.join(
-                          " "
-                        )}`
+                      ? `Imported preset with warnings: ${warnings.join(" ")}`
                       : "Imported from preset.",
                 },
               ],
             },
           },
-          { tx }
+          { tx },
         );
         await applyPreparedImport(tx, context.actor, bot.id, prepared);
         return bot;
       });
 
-      if (prepared.files.length > 0) {
-        const computer = await deps.prisma.computer.findFirst({
-          where: { bots: { some: { id: created.id } } },
-          select: { homeKey: true },
-        });
-        if (computer) {
-          try {
-            for (const file of prepared.files) {
-              await deps.home.writeFile(
-                computer.homeKey,
-                file.path,
-                file.content,
-                homeContext
-              );
-            }
-          } catch (error) {
-            getLogger().error("bots.import home file write failed", error);
+      const importedSkillIds: string[] = [];
+      try {
+        if (prepared.files.length > 0) {
+          const computer = await deps.prisma.computer.findFirst({
+            where: {
+              spaceId: context.actor.spaceId,
+              userId: context.actor.userId,
+              scope: "dedicated",
+              bots: { some: { id: created.id } },
+            },
+            select: { homeKey: true },
+          });
+          if (!computer) throw new IsolationError("Imported bot is missing its private computer");
+          for (const file of prepared.files) {
+            await deps.home.writeFile(computer.homeKey, file.path, file.content, homeContext);
           }
         }
-      }
 
-      const bots = await repos.listBots(context.actor);
-      const dto = bots.find((b) => b.id === created.id);
-      if (!dto) throw new IsolationError();
-      return dto;
+        for (const skill of prepared.skills) {
+          try {
+            const importedSkill = await agentSkills.create(context.actor, {
+              content: skill.content,
+            });
+            importedSkillIds.push(importedSkill.id);
+          } catch (error) {
+            if (!(error instanceof ORPCError) || error.code !== "CONFLICT") throw error;
+            warnings.push(`Skill not added (name taken): ${skill.name}`);
+          }
+        }
+
+        const bots = await repos.listBots(context.actor);
+        const dto = bots.find((b) => b.id === created.id);
+        if (!dto) throw new IsolationError();
+        return dto;
+      } catch (error) {
+        // Compensate only skills this import created; never remove a pre-existing conflict.
+        const skillCleanup = await Promise.allSettled(
+          importedSkillIds.map((skillId) => agentSkills.remove(context.actor, skillId)),
+        );
+        const bot = await repos.getBot(context.actor, created.id, { includeArchived: true });
+        await destroyBot(
+          deps,
+          bot,
+          {
+            ...homeContext,
+            botId: bot.id,
+            // Cancellation must not leave a half-imported private home behind.
+            signal: AbortSignal.timeout(120_000),
+          },
+          { deleteMemories: true },
+        );
+        const cleanupErrors = skillCleanup.flatMap((result) =>
+          result.status === "rejected" ? [result.reason] : [],
+        );
+        if (cleanupErrors.length) {
+          throw new AggregateError([error, ...cleanupErrors], "Bot import cleanup failed");
+        }
+        throw error;
+      }
     }),
 
     // ==========================================================================
     // WEBHOOK
     // ==========================================================================
 
-    rotateWebhookSecret: authed.bots.rotateWebhookSecret.handler(
-      async ({ context, input }) => {
-        const bot = await repos.getBot(context.actor, input.botId);
-        const plaintext = randomBytes(32).toString("base64url");
-        const stored = await deps.secrets.put(plaintext, {
-          operationId: "bots.rotateWebhookSecret",
-          traceId: "bots.rotateWebhookSecret",
-          spaceId: context.actor.spaceId,
-          userId: context.actor.userId,
-          signal: context.signal ?? new AbortController().signal,
-        });
+    rotateWebhookSecret: authed.bots.rotateWebhookSecret.handler(async ({ context, input }) => {
+      const bot = await repos.getBot(context.actor, input.botId);
+      const plaintext = randomBytes(32).toString("base64url");
+      const stored = await deps.secrets.put(plaintext, {
+        operationId: "bots.rotateWebhookSecret",
+        traceId: "bots.rotateWebhookSecret",
+        spaceId: context.actor.spaceId,
+        userId: context.actor.userId,
+        signal: context.signal ?? new AbortController().signal,
+      });
 
-        await deps.prisma.$transaction(async (tx) => {
-          const previousSecretId = bot.webhookSecretId;
-          await tx.secret.create({
-            data: {
-              id: stored.id,
-              userId: context.actor.userId,
+      await deps.prisma.$transaction(async (tx) => {
+        const previousSecretId = bot.webhookSecretId;
+        await tx.secret.create({
+          data: {
+            id: stored.id,
+            userId: context.actor.userId,
+            spaceId: context.actor.spaceId,
+            kind: "webhook",
+            ciphertext: stored.ciphertext,
+          },
+        });
+        await tx.bot.update({
+          where: { id: bot.id },
+          data: { webhookSecretId: stored.id },
+        });
+        if (previousSecretId) {
+          await tx.secret.deleteMany({
+            where: {
+              id: previousSecretId,
               spaceId: context.actor.spaceId,
+              userId: context.actor.userId,
               kind: "webhook",
-              ciphertext: stored.ciphertext,
             },
           });
-          await tx.bot.update({
-            where: { id: bot.id },
-            data: { webhookSecretId: stored.id },
-          });
-          if (previousSecretId) {
-            await tx.secret.deleteMany({
-              where: {
-                id: previousSecretId,
-                spaceId: context.actor.spaceId,
-                userId: context.actor.userId,
-                kind: "webhook",
-              },
-            });
-          }
-        });
+        }
+      });
 
-        return {
-          secret: plaintext,
-          path: `/api/v1/bots/${bot.id}/webhook`,
-          webhookConfigured: true as const,
-        };
-      }
-    ),
+      return {
+        secret: plaintext,
+        path: `/api/v1/bots/${bot.id}/webhook`,
+        webhookConfigured: true as const,
+      };
+    }),
   };
 }

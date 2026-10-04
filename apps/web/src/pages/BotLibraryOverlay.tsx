@@ -14,6 +14,7 @@ import {
 } from "@rakazo/ui-web";
 import { Library, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { PresetBoundaries } from "../components/PresetBoundaries";
 import { rpc } from "../lib/rpc";
 
 type PresetCategory =
@@ -430,6 +431,7 @@ export function BotLibraryOverlay({ onClose }: { onClose: () => void }) {
                   ) : null}
                   <div className="text-[13px] text-muted-foreground">{preview.description}</div>
                 </div>
+                <PresetBoundaries boundaries={preview.boundaries} />
                 <div className="text-[13px] text-muted-foreground">
                   <Plural
                     value={preview.memoryCount}

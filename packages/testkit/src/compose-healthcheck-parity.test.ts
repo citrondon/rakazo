@@ -78,6 +78,14 @@ function dependencies(block: string): Array<{ name: string; condition?: string }
 }
 
 describe("compose healthchecks", () => {
+  it("passes the egress policy to the production Docker supervisor", () => {
+    const supervisor = serviceBlock(
+      read("infra/compose/docker-compose.prod.docker.yml"),
+      "supervisor",
+    );
+    expect(supervisor).toContain("SANDBOX_COMPUTER_EGRESS: ${SANDBOX_COMPUTER_EGRESS:-open}");
+    expect(supervisor).not.toMatch(/^ {4}env_file:/m);
+  });
   for (const composePath of COMPOSE_FILES) {
     it(`declares a healthcheck for every healthcheck-gated dependency in ${composePath}`, () => {
       const compose = read(composePath);

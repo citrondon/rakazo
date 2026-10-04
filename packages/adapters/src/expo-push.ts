@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { mkdir, open, unlink } from "node:fs/promises";
+import { lstat, mkdir, open, readdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import type {
   AdapterContext,
@@ -14,13 +14,30 @@ const O_NOFOLLOW = constants.O_NOFOLLOW ?? 0;
 const EXPO_PUSH_TIMEOUT_MS = 15_000;
 export const MAX_EXPO_PUSH_RESPONSE_BYTES = 64 * 1024;
 
+/** A device/installation id becomes a file name, so it must not escape its directory. */
+const DEVICE_ID_PATTERN = /^[a-zA-Z0-9_-]{1,128}$/;
+
+function assertDeviceId(deviceId: string) {
+  if (!DEVICE_ID_PATTERN.test(deviceId)) throw new Error("Invalid push device id.");
+}
+
+/** Legacy single-token path for accounts registered before per-installation tokens. */
 export function pushTokenPath(dataDir: string, userId: string) {
   return path.join(dataDir, "push-tokens", `${userId}.txt`);
 }
 
-export async function loadPushToken(dataDir: string, userId: string): Promise<string | undefined> {
+function pushDeviceDir(dataDir: string, userId: string) {
+  return path.join(dataDir, "push-tokens", userId);
+}
+
+export function pushDeviceTokenPath(dataDir: string, userId: string, deviceId: string) {
+  assertDeviceId(deviceId);
+  return path.join(pushDeviceDir(dataDir, userId), `${deviceId}.txt`);
+}
+
+async function readTokenFile(file: string): Promise<string | undefined> {
   try {
-    const handle = await open(pushTokenPath(dataDir, userId), constants.O_RDONLY | O_NOFOLLOW);
+    const handle = await open(file, constants.O_RDONLY | O_NOFOLLOW);
     try {
       const token = (await handle.readFile("utf8")).trim();
       return token || undefined;
@@ -32,8 +49,7 @@ export async function loadPushToken(dataDir: string, userId: string): Promise<st
   }
 }
 
-export async function savePushToken(dataDir: string, userId: string, token: string): Promise<void> {
-  const file = pushTokenPath(dataDir, userId);
+async function writeTokenFile(file: string, token: string): Promise<void> {
   await mkdir(path.dirname(file), { recursive: true });
   const handle = await open(
     file,
@@ -48,10 +64,62 @@ export async function savePushToken(dataDir: string, userId: string, token: stri
   }
 }
 
-export async function deletePushToken(dataDir: string, userId: string): Promise<void> {
-  await unlink(pushTokenPath(dataDir, userId)).catch((error: NodeJS.ErrnoException) => {
+async function deleteTokenFile(file: string): Promise<void> {
+  await unlink(file).catch((error: NodeJS.ErrnoException) => {
     if (error.code !== "ENOENT") throw error;
   });
+}
+
+export async function loadPushToken(dataDir: string, userId: string): Promise<string | undefined> {
+  return readTokenFile(pushTokenPath(dataDir, userId));
+}
+
+export async function savePushToken(dataDir: string, userId: string, token: string): Promise<void> {
+  await writeTokenFile(pushTokenPath(dataDir, userId), token);
+}
+
+export async function deletePushToken(dataDir: string, userId: string): Promise<void> {
+  await deleteTokenFile(pushTokenPath(dataDir, userId));
+}
+
+export async function saveDevicePushToken(
+  dataDir: string,
+  userId: string,
+  deviceId: string,
+  token: string,
+): Promise<void> {
+  await writeTokenFile(pushDeviceTokenPath(dataDir, userId, deviceId), token);
+}
+
+export async function deleteDevicePushToken(
+  dataDir: string,
+  userId: string,
+  deviceId: string,
+): Promise<void> {
+  await deleteTokenFile(pushDeviceTokenPath(dataDir, userId, deviceId));
+}
+
+/**
+ * Every token that should receive a push: each registered installation plus the legacy
+ * single token, deduplicated. Reads are symlink-safe and silently skip unreadable entries.
+ */
+export async function loadPushTokens(dataDir: string, userId: string): Promise<string[]> {
+  const tokens: string[] = [];
+  const dir = pushDeviceDir(dataDir, userId);
+  let entries: string[] = [];
+  try {
+    if ((await lstat(dir)).isDirectory()) entries = await readdir(dir);
+  } catch {
+    entries = [];
+  }
+  for (const name of entries.sort()) {
+    if (!name.endsWith(".txt")) continue;
+    const token = await readTokenFile(path.join(dir, name));
+    if (token && !tokens.includes(token)) tokens.push(token);
+  }
+  const legacy = await loadPushToken(dataDir, userId);
+  if (legacy && !tokens.includes(legacy)) tokens.push(legacy);
+  return tokens;
 }
 
 export type ExpoPushTicket = {
@@ -100,8 +168,25 @@ export class ExpoPushProvider implements NotificationProvider {
   }
 
   async send(message: NotificationMessage, context: AdapterContext): Promise<void> {
-    const token = await loadPushToken(this.dataDir, context.userId);
-    if (!token) return;
+    const tokens = await loadPushTokens(this.dataDir, context.userId);
+    if (tokens.length === 0) return;
+    let firstError: unknown;
+    for (const token of tokens) {
+      try {
+        await this.sendToToken(token, message, context);
+      } catch (error) {
+        // One stale token must not stop delivery to the account's other devices.
+        firstError ??= error;
+      }
+    }
+    if (firstError) throw firstError;
+  }
+
+  private async sendToToken(
+    token: string,
+    message: NotificationMessage,
+    context: AdapterContext,
+  ): Promise<void> {
     const signal = combineSignals(context.signal, AbortSignal.timeout(EXPO_PUSH_TIMEOUT_MS));
     let response: Response;
     try {

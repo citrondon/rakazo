@@ -33,6 +33,7 @@ import { promptAiConsent } from "./ai-consent";
 import type { EndpointResult } from "./endpoint";
 import { defaultApiBase, normalizeApiBase } from "./endpoint";
 import { t } from "./i18n";
+import { installationId } from "./installation";
 import { resumeLiveNotifications } from "./live-notifications";
 import {
   clearSessionToken,
@@ -516,7 +517,9 @@ async function fetchMobileJson<T>(
 }
 
 export async function signOut() {
-  await rpc("notifications/unregisterPush").catch(() => undefined);
+  await rpc("notifications/unregisterPush", { deviceId: await installationId() }).catch(
+    () => undefined,
+  );
   const headers = await authHeaders();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), RPC_TIMEOUT_MS);
@@ -556,7 +559,9 @@ function withAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
 }
 
 export async function deleteAccount(password: string) {
-  await rpc("notifications/unregisterPush").catch(() => undefined);
+  await rpc("notifications/unregisterPush", { deviceId: await installationId() }).catch(
+    () => undefined,
+  );
   const { response, body } = await fetchMobileJson<unknown>(
     `${currentApiBase()}/api/auth/delete-user`,
     {

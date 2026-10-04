@@ -66,6 +66,7 @@ const manifest = {
     instructions: "Du recherchierst und belegst jede Aussage.",
   },
   integrations: ["web-search"],
+  boundaries: ["Sendet nie ohne Freigabe.", "Mergt nichts selbst."],
   skills: [],
   memory: [],
   routines: [],
@@ -78,6 +79,7 @@ const preview = {
   title: "Wissenschafts- & Paper-Rechercheur",
   description: "Recherchiert Quellen und schreibt sie zusammen.",
   instructionsPreview: "Du recherchierst und belegst jede Aussage.",
+  boundaries: ["Sendet nie ohne Freigabe.", "Mergt nichts selbst."],
   memoryCount: 2,
   routineNames: [],
   skillNames: [],
@@ -175,6 +177,10 @@ it("lists the summaries and pulls a preset body only once one is picked", async 
         expect(overlay.container.textContent).toContain("2 memories");
       });
     });
+    // What the bot will not do, before it exists.
+    expect(overlay.container.textContent).toContain("Won't do");
+    expect(overlay.container.textContent).toContain("Sendet nie ohne Freigabe.");
+    expect(overlay.container.textContent).toContain("Mergt nichts selbst.");
     expect(importButton(overlay.container)?.disabled).toBe(false);
     expect(bots.importPreview).toHaveBeenCalledWith(
       expect.objectContaining({ includeMemory: true, includeFiles: false }),
@@ -237,10 +243,38 @@ it("imports the picked preset through the shared import path", async () => {
     const input = call[0];
     expect(input.manifest.bot.name).toBe("OpenResearch");
     expect(input.manifest.integrations).toEqual(["web-search"]);
+    expect(input.manifest.boundaries).toEqual([
+      "Sendet nie ohne Freigabe.",
+      "Mergt nichts selbst.",
+    ]);
     expect(input.includeMemory).toBe(true);
     expect(input.includeRoutines).toBe(true);
     expect(input.includeSkills).toBe(true);
     expect(input.includeFiles).toBe(false);
+  } finally {
+    await overlay.cleanup();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("states no limits for a preset that ships none", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const { boundaries: _omitted, ...manifestWithoutBoundaries } = manifest;
+  bots.preset.mockResolvedValue(manifestWithoutBoundaries);
+  bots.importPreview.mockResolvedValue({ ...preview, boundaries: [] });
+  const overlay = await renderOverlay();
+  try {
+    await act(async () => {
+      overlay.container
+        .querySelector<HTMLButtonElement>("[data-testid='preset-openresearch']")
+        ?.click();
+    });
+    await act(async () => {
+      await vi.waitFor(() => {
+        expect(overlay.container.textContent).toContain("2 memories");
+      });
+    });
+    expect(overlay.container.textContent).not.toContain("Won't do");
   } finally {
     await overlay.cleanup();
     vi.unstubAllGlobals();

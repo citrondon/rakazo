@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { implement, ORPCError } from "@orpc/server";
 import type {
   AdapterContext,
@@ -33,7 +33,6 @@ import {
   acquireComputerExecutionLease,
   applyCodexLiveCatalog,
   applyTeachingDesktopInput,
-  archiveBot,
   assertSafeRemoteUrl,
   buildMcpCredentialBlob,
   buildModelConnectPlaintext,
@@ -50,11 +49,11 @@ import {
   computerUpdateView,
   createVoiceProvider,
   defaultCatalogModelId,
+  deleteDevicePushToken,
   deletePushToken,
   deploymentAutoReviewDefault,
   describeCredentialCheckFailure,
   describeMcpFailure,
-  destroyBot,
   displayBotWorkspacePath,
   enqueueTakeoverContinuation,
   expireComputerControl,
@@ -88,6 +87,7 @@ import {
   resolveBotWorkspacePath,
   revokeScreenControl,
   sanitizeComposioError,
+  saveDevicePushToken,
   savePushToken,
   scheduleComputerControlExpiry,
   scheduleComputerSleep,
@@ -100,7 +100,6 @@ import {
   touchRunningComputer,
   UNAVAILABLE_MODEL_FOR_AUTH_MESSAGE,
   validateModelAuthAvailability,
-  validateStoredModelAuth,
   verifyMcpInstall,
 } from "@rakazo/adapters";
 import type { Auth } from "@rakazo/auth";
@@ -169,7 +168,6 @@ import {
   parseComputerMode,
   releaseSpaceDeletionClaim,
   renewSpaceDeletionClaim,
-  restoreBotUnderComputerQuota,
   SPACE_DELETION_CLAIM_TIMEOUT_MS,
   SpaceDeletionInProgressError,
   SpaceLimitError,
@@ -194,16 +192,12 @@ import {
   listSpaceArtifacts,
 } from "./artifacts.js";
 import type { PreparedBotImport } from "./bot-import.js";
-import { prepareBotImport } from "./bot-import.js";
 import {
-  listBotPresets,
   listIdentities,
   listTeamTemplates,
   prepareTeamStart,
-  readBotPreset,
   resolveStartTeam,
 } from "./bot-library.js";
-import { botProfileLabelsChanged, commitBotUpdate } from "./bot-update.js";
 import {
   executionBlocksUserTakeover,
   resolveBusyBotName,
@@ -230,6 +224,7 @@ import {
   promptTeamTemplate,
   startOnboarding,
 } from "./onboarding.js";
+import { createBotsRouter } from "./routers/bots.js";
 import { loadRunReceipt } from "./run-receipt.js";
 import { listSpaceRuns } from "./runs.js";
 import { addScreenProxyCapability } from "./screen-proxy.js";
@@ -280,7 +275,6 @@ import {
   updateVoiceSpeechModel,
   voiceContext,
 } from "./voice.js";
-import { createBotsRouter } from "./routers/bots.js";
 
 const MAX_COMPUTER_TEXT_FILE_BYTES = 2 * 1024 * 1024;
 /** Each command writes a running and a done event, so this keeps about 100 commands. */
@@ -723,6 +717,14 @@ async function applyPreparedImport(
   }
 }
 
+export function createAuthenticatedRouter() {
+  const os = implement(appContract).$context<{ actor: Actor | null; signal?: AbortSignal }>();
+  return os.use(async ({ context, next }) => {
+    if (!context.actor) throw new ORPCError("UNAUTHORIZED");
+    return next({ context: { ...context, actor: context.actor } });
+  });
+}
+
 export function createRouter(deps: RouterDeps) {
   const os = implement(appContract).$context<{ actor: Actor | null; signal?: AbortSignal }>();
   const repos = createRepos(deps.prisma);
@@ -744,10 +746,7 @@ export function createRouter(deps: RouterDeps) {
   });
   const agentSkills = createAgentSkillsService(deps.prisma);
 
-  const authed = os.use(async ({ context, next }) => {
-    if (!context.actor) throw new ORPCError("UNAUTHORIZED");
-    return next({ context: { ...context, actor: context.actor } });
-  });
+  const authed = createAuthenticatedRouter();
 
   return os.router({
     aiConsent: {
@@ -1380,7 +1379,17 @@ export function createRouter(deps: RouterDeps) {
         return { ok: true as const };
       }),
     },
-    bots: createBotsRouter({ deps, repos, groupRepos, authed, agentSkills, codexCatalog, refreshExpiredCredential }),
+    bots: createBotsRouter({
+      deps,
+      repos,
+      authed,
+      agentSkills,
+      codexCatalog,
+      refreshExpiredCredential,
+      meDto,
+      enqueueBotIntroRun,
+      applyPreparedImport,
+    }),
     groups: {
       create: authed.groups.create.handler(async ({ context, input }) => {
         try {
@@ -5175,11 +5184,24 @@ export function createRouter(deps: RouterDeps) {
     },
     notifications: {
       registerPush: authed.notifications.registerPush.handler(async ({ context, input }) => {
-        await savePushToken(deps.dataDir, context.actor.userId, input.token);
+        if (input.deviceId) {
+          await saveDevicePushToken(
+            deps.dataDir,
+            context.actor.userId,
+            input.deviceId,
+            input.token,
+          );
+        } else {
+          await savePushToken(deps.dataDir, context.actor.userId, input.token);
+        }
         return { ok: true as const };
       }),
-      unregisterPush: authed.notifications.unregisterPush.handler(async ({ context }) => {
-        await deletePushToken(deps.dataDir, context.actor.userId);
+      unregisterPush: authed.notifications.unregisterPush.handler(async ({ context, input }) => {
+        if (input.deviceId) {
+          await deleteDevicePushToken(deps.dataDir, context.actor.userId, input.deviceId);
+        } else {
+          await deletePushToken(deps.dataDir, context.actor.userId);
+        }
         return { ok: true as const };
       }),
     },

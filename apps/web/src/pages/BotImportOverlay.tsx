@@ -12,6 +12,7 @@ import {
 } from "@rakazo/ui-web";
 import { Upload, X } from "lucide-react";
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
+import { PresetBoundaries } from "../components/PresetBoundaries";
 import { rpc } from "../lib/rpc";
 
 const PRESET_ACCEPT = "application/json,.json";
@@ -188,6 +189,7 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
                     <div className="text-[13px] text-muted-foreground">{preview.title}</div>
                   ) : null}
                 </div>
+                <PresetBoundaries boundaries={preview.boundaries} />
                 <Plural
                   value={preview.memoryCount}
                   zero="No memories"

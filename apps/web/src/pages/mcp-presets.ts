@@ -73,6 +73,18 @@ export const MCP_PRESETS: McpPreset[] = [
       envVar: "NOTION_TOKEN",
     },
   },
+  {
+    id: "context-mode",
+    slug: "context-mode",
+    name: "Context Mode",
+    description:
+      "Sandboxed Tool-Outputs & FTS5-Indexierung zur Reduzierung des Kontext-Verbrauchs um bis zu 98%.",
+    badge: "Kontext",
+    iconName: "Terminal",
+    transport: "stdio",
+    command: "npx",
+    args: ["-y", "context-mode@1.0.169"],
+  },
 ];
 
 /** Why this preset cannot start yet. Null when it would run, and while the deployment

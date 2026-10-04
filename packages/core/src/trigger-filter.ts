@@ -98,6 +98,14 @@ export function evaluatePredicate(predicate: TriggerPredicate, event: TriggerEve
         return false;
       }
     }
+    case "gt":
+      return typeof actual === "number" && typeof predicate.value === "number" && actual > predicate.value;
+    case "lt":
+      return typeof actual === "number" && typeof predicate.value === "number" && actual < predicate.value;
+    case "gte":
+      return typeof actual === "number" && typeof predicate.value === "number" && actual >= predicate.value;
+    case "lte":
+      return typeof actual === "number" && typeof predicate.value === "number" && actual <= predicate.value;
     default:
       return false;
   }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   appContract,
+  BOT_BOUNDARIES_MAX_COUNT,
+  BOT_BOUNDARY_MAX_LENGTH,
   BOT_DESCRIPTION_MAX_LENGTH,
   BOT_INSTRUCTIONS_MAX_LENGTH,
   BOT_INTEGRATION_NAME_MAX_LENGTH,
@@ -437,6 +439,38 @@ describe("bot import manifest", () => {
     expect(
       BotImportInputSchema.parse({ manifest, includeMemory: true }).manifest.integrations,
     ).toEqual([]);
+  });
+
+  it("defaults boundaries for a manifest written before the field existed", () => {
+    expect(ExportManifestSchema.parse(manifest).boundaries).toEqual([]);
+  });
+
+  it("keeps the limits a preset states", () => {
+    expect(
+      ExportManifestSchema.parse({
+        ...manifest,
+        boundaries: [" Sendet nie ohne Freigabe.", "Mergt nichts selbst."],
+      }).boundaries,
+    ).toEqual(["Sendet nie ohne Freigabe.", "Mergt nichts selbst."]);
+  });
+
+  it("rejects boundary lists a preview cannot show", () => {
+    expect(ExportManifestSchema.safeParse({ ...manifest, boundaries: [" "] }).success).toBe(false);
+    expect(
+      ExportManifestSchema.safeParse({
+        ...manifest,
+        boundaries: Array.from(
+          { length: BOT_BOUNDARIES_MAX_COUNT + 1 },
+          (_, index) => `line-${index}`,
+        ),
+      }).success,
+    ).toBe(false);
+    expect(
+      ExportManifestSchema.safeParse({
+        ...manifest,
+        boundaries: ["a".repeat(BOT_BOUNDARY_MAX_LENGTH + 1)],
+      }).success,
+    ).toBe(false);
   });
 
   it("keeps the connectors a preset expects", () => {

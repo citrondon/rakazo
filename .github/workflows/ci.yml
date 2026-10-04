@@ -299,9 +299,11 @@ jobs:
         env:
           SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
           SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
           test -n "$SSH_HOST"
           test -n "$SSH_USER"
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
           ssh -F /dev/null \
             -i "$HOME/.ssh/rakazo-production" \
             -o BatchMode=yes \
@@ -309,4 +311,4 @@ jobs:
             -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-            "$SSH_USER@$SSH_HOST" deploy-main
+            "$SSH_USER@$SSH_HOST" "$GITHUB_SHA"

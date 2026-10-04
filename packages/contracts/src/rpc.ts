@@ -868,10 +868,33 @@ export const appContract = {
     bot: oc.input(botId).output(ExportManifestSchema),
   },
   notifications: {
+    // deviceId identifies one installation so multiple devices on an account keep separate
+    // tokens; older clients omit it and use the legacy single-token slot.
     registerPush: oc
-      .input(z.object({ token: z.string().min(8).max(512) }))
+      .input(
+        z.object({
+          token: z.string().min(8).max(512),
+          deviceId: z
+            .string()
+            .min(1)
+            .max(128)
+            .regex(/^[a-zA-Z0-9_-]+$/)
+            .optional(),
+        }),
+      )
       .output(z.object({ ok: z.literal(true) })),
-    unregisterPush: oc.output(z.object({ ok: z.literal(true) })),
+    unregisterPush: oc
+      .input(
+        z.object({
+          deviceId: z
+            .string()
+            .min(1)
+            .max(128)
+            .regex(/^[a-zA-Z0-9_-]+$/)
+            .optional(),
+        }),
+      )
+      .output(z.object({ ok: z.literal(true) })),
   },
   search: {
     query: oc.input(z.object({ q: z.string().max(200) })).output(SearchQueryOutputSchema),
