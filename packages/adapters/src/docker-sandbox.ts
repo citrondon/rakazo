@@ -667,7 +667,7 @@ async function* readNdjsonProcessEvents(
       const { done, value } = await reader.read();
       if (done) break;
       bytes += value.byteLength;
-      if (bytes > MAX_SANDBOX_SUCCESS_RESPONSE_BYTES) {
+      if (bytes > maxBytes) {
         yield { type: "stderr", data: "exec failed: response too large\n" };
         yield { type: "exit", code: 1 };
         await reader.cancel().catch(() => undefined);

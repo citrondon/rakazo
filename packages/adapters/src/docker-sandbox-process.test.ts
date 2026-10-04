@@ -83,6 +83,77 @@ describe("Docker sandbox process channel", () => {
     expect(MAX_SANDBOX_PROCESS_STREAM_BYTES).toBe(64 * 1024 * 1024);
   });
 
+  it("carries a stream past the one-shot exec cap: a long-lived channel is not cut at 16 MiB", async () => {
+    // 17 frames of ~1 MiB total ~17 MiB: over MAX_SANDBOX_SUCCESS_RESPONSE_BYTES, below the
+    // channel cap. If the reader still honored the exec constant, frame 16 would end the
+    // channel with "response too large" and this loop would never see the exit event.
+    const frame = new TextEncoder().encode(
+      `${JSON.stringify({ type: "stdout", data: "x".repeat(1024 * 1024) })}\n`,
+    );
+    const exitFrame = new TextEncoder().encode(`${JSON.stringify({ type: "exit", code: 0 })}\n`);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (String(url).endsWith("/processes")) return Response.json({ processId: "p-1" });
+        if (String(url).endsWith("/events"))
+          return new Response(
+            new ReadableStream({
+              start(controller) {
+                for (let index = 0; index < 17; index += 1) controller.enqueue(frame);
+                controller.enqueue(exitFrame);
+                controller.close();
+              },
+            }),
+            { headers: { "content-type": "application/x-ndjson" } },
+          );
+        return Response.json({ ok: true });
+      }),
+    );
+    const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
+    const handle = await provider.openProcess!(computer, { argv: ["node", "s.js"] }, context);
+    const seen: ProcessEvent[] = [];
+    for await (const event of handle.events()) seen.push(event);
+
+    expect(seen.filter((event) => event.type === "stdout")).toHaveLength(17);
+    expect(seen.some((event) => event.type === "stderr" && event.data.includes("too large"))).toBe(
+      false,
+    );
+    expect(seen.at(-1)).toEqual({ type: "exit", code: 0 });
+  });
+
+  it("still closes a one-shot exec stream at the 16 MiB cap", async () => {
+    // The counter-case: raising the channel cap must not raise the exec cap with it.
+    const frame = new TextEncoder().encode(
+      `${JSON.stringify({ type: "stdout", data: "x".repeat(1024 * 1024) })}\n`,
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                for (let index = 0; index < 17; index += 1) controller.enqueue(frame);
+                controller.close();
+              },
+            }),
+            { headers: { "content-type": "application/x-ndjson" } },
+          ),
+      ),
+    );
+    const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");
+    const seen: ProcessEvent[] = [];
+    for await (const event of provider.execute(computer, { argv: ["node", "s.js"] }, context))
+      seen.push(event);
+
+    // Cut before the last frame: overflow stderr, then exit 1, not 17 delivered frames.
+    expect(seen.filter((event) => event.type === "stdout").length).toBeLessThan(17);
+    expect(
+      seen.some((event) => event.type === "stderr" && event.data.includes("response too large")),
+    ).toBe(true);
+    expect(seen.at(-1)).toEqual({ type: "exit", code: 1 });
+  });
+
   it("fails a stdin write loudly with the process named when the supervisor answers 409", async () => {
     // A transport that trusts a silent write would wait forever on a dead pipe.
     vi.stubGlobal(

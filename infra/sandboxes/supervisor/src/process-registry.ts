@@ -39,9 +39,11 @@ export interface ReservedProcess {
 export interface ProcessRegistry {
   reserve(input: { id: string; computerId: string; botId: string }): ReservedProcess;
   /**
-   * The channel's identity check: an entry answers only to the computer and bot that own it,
-   * so a processId can never open a window into another computer's process. A process that
-   * has ended answers `undefined` here — the reader distinguishes it from unknown via `wasEnded`.
+   * Ownership as declared at reservation time: an entry answers only when the request carries the
+   * same computer and bot id. That scopes the channel inside one supervisor; it authenticates
+   * nothing between callers, because the bot header is self-asserted and the supervisor token is
+   * deployment-wide. A process that has ended answers `undefined` here — the reader distinguishes
+   * it from unknown via `wasEnded`.
    */
   get(id: string, computerId: string, botId: string): RegisteredProcess | undefined;
   /**

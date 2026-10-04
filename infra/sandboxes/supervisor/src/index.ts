@@ -509,8 +509,10 @@ app.get("/computers/:id/processes/:pid/events", (c) => {
   const id = c.req.param("id");
   const pid = c.req.param("pid");
   const botId = c.req.header("x-rakazo-bot-id") ?? "";
-  // The stored owner is the channel's identity check: no route addressed to a different
-  // computer or bot may see this process, so a leaked processId opens nothing.
+  // The stored owner must match the request's declared computer and bot id: a processId from
+  // another computer's table opens nothing here. This scopes the channel within one supervisor;
+  // it authenticates nothing between callers — the bot header is self-asserted and the
+  // supervisor token is deployment-wide.
   const process = sandboxProcesses.get(pid, id, botId);
   if (!process) {
     // An ended process answers its reader before the stream is ever opened: 410 with the

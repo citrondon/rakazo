@@ -54,6 +54,15 @@ function finishedStream() {
   });
 }
 
+/** One Docker multiplexed frame: [type, 0, 0, 0, size BE][payload]. Type 1 is stdout. */
+function dockerStdoutFrame(payload: string) {
+  const data = Buffer.from(payload, "utf8");
+  const header = Buffer.alloc(8);
+  header.writeUInt8(1, 0);
+  header.writeUInt32BE(data.length, 4);
+  return Buffer.concat([header, data]);
+}
+
 beforeEach(() => {
   mock.exec.mockReset();
   mock.inspect.mockReset();
@@ -92,6 +101,47 @@ describe("sandbox process routes", () => {
     expect(events.status).toBe(200);
     expect(events.headers.get("content-type")).toBe("application/x-ndjson; charset=utf-8");
     expect(events.headers.get("x-accel-buffering")).toBe("no");
+
+    // The data path over the real route: a demuxed container stdout frame written onto the
+    // hijacked exec stream must arrive at the reader as one NDJSON {type:"stdout"} event.
+    const line = '{"jsonrpc":"2.0","id":1,"result":"pong"}\n';
+    mock.liveStreams.at(-1)!.write(dockerStdoutFrame(line));
+    const reader = events.body!.getReader();
+    const decoder = new TextDecoder();
+    let text = "";
+    while (!text.endsWith("\n")) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      text += decoder.decode(chunk.value, { stream: true });
+    }
+    expect(JSON.parse(text)).toEqual({ type: "stdout", data: line });
+    await reader.cancel().catch(() => undefined);
+  });
+
+  it("kills the process when the event reader goes away, as spec 4.1 orders", async () => {
+    // Reader gone ⇒ process gone. Only the route couples the reader end to the registry
+    // release; the registry tests prove release kills, nothing proves the route calls it.
+    const started = await startProcess(["node", "server.js"]);
+    const { processId } = (await started.json()) as { processId: string };
+    const events = await supervisorApp.request(`/computers/${ID}/processes/${processId}/events`, {
+      headers: identityHeaders(),
+    });
+    expect(events.status).toBe(200);
+
+    await events.body!.cancel();
+
+    // The release runs fire-and-forget after the cancel, so the kill lands asynchronously.
+    await vi.waitFor(() => {
+      expect(mock.exec.mock.calls.at(-1)?.[0].Cmd.join(" ")).toContain("kill -TERM");
+      expect(mock.liveStreams.at(-1)?.destroyed).toBe(true);
+    });
+    // The channel is really closed: the same pid now answers 409 on stdin, not 200.
+    const stdin = await supervisorApp.request(`/computers/${ID}/processes/${processId}/stdin`, {
+      method: "POST",
+      headers: identityHeaders(),
+      body: JSON.stringify({ data: "{}\n" }),
+    });
+    expect(stdin.status).toBe(409);
   });
 
   it("refuses a stdin frame for a process that is gone", async () => {
