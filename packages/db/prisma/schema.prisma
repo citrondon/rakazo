@@ -136,6 +136,7 @@ model ActionDecision {
   botId         String
   threadId      String?
   runId         String?
+  effectId      String?
   toolName      String
   connectorKind String
   decision      String

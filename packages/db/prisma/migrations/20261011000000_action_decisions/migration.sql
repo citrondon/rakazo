@@ -5,6 +5,7 @@ CREATE TABLE "action_decisions" (
     "botId" TEXT NOT NULL,
     "threadId" TEXT,
     "runId" TEXT,
+    "effectId" TEXT,
     "toolName" TEXT NOT NULL,
     "connectorKind" TEXT NOT NULL,
     "decision" TEXT NOT NULL,

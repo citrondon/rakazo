@@ -122,7 +122,7 @@ describe("buildActionDecisionRow", () => {
     expect(row.runId).toBe("run-1");
   });
 
-  it("keeps a missing thread and run as null, not empty string", () => {
+  it("keeps a missing thread, run and effect as null, not empty string", () => {
     const row = buildActionDecisionRow({
       spaceId: "space-1",
       botId: "bot-1",
@@ -134,5 +134,20 @@ describe("buildActionDecisionRow", () => {
     });
     expect(row.threadId).toBeNull();
     expect(row.runId).toBeNull();
+    expect(row.effectId).toBeNull();
+  });
+
+  it("passes a provided effect id through unchanged", () => {
+    const row = buildActionDecisionRow({
+      spaceId: "space-1",
+      botId: "bot-1",
+      toolName: "some_tool",
+      connectorKind: "some",
+      effectId: "effect-1",
+      resolved,
+      gateDecision: "allow",
+      failClosed: false,
+    });
+    expect(row.effectId).toBe("effect-1");
   });
 });

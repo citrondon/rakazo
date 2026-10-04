@@ -5,6 +5,8 @@ export interface ActionGateOutcome {
   botId: string;
   threadId?: string;
   runId?: string;
+  /** The external effect this attempt belongs to, when one was recorded. */
+  effectId?: string;
   toolName: string;
   connectorKind: string;
   resolved: ActionApprovalResolved;
@@ -17,6 +19,7 @@ export interface ActionDecisionRow {
   botId: string;
   threadId: string | null;
   runId: string | null;
+  effectId: string | null;
   toolName: string;
   connectorKind: string;
   decision: "ask" | "allow";
@@ -36,6 +39,7 @@ export function buildActionDecisionRow(outcome: ActionGateOutcome): ActionDecisi
     botId: outcome.botId,
     threadId: outcome.threadId ?? null,
     runId: outcome.runId ?? null,
+    effectId: outcome.effectId ?? null,
     toolName: outcome.toolName,
     connectorKind: outcome.connectorKind,
     decision: outcome.gateDecision,

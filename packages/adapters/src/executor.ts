@@ -1723,7 +1723,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             .then((rules) => rules as ActionApprovalRule[]);
           return approvalRulesPromise;
         };
-        // Read once per run: one run must not mix fail-closed and fail-open decisions.
+        // Read once per attempt: one attempt must not mix fail-closed and fail-open decisions.
         const failClosedActions = deploymentActionFailClosed();
         let autoReviewPreferencePromise: Promise<boolean> | undefined;
         const loadAutoReviewPreference = () => {
@@ -2373,6 +2373,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               botId: run.botId,
               threadId: run.threadId,
               runId: run.id,
+              effectId: applied?.effect.id,
               toolName: name,
               connectorKind,
               resolved: approvalResolved,
