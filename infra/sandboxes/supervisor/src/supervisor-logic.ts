@@ -404,6 +404,16 @@ export function sandboxTimeoutCommand(argv: string[], timeoutMs: number, complet
   ];
 }
 
+/** Wraps a long-lived process so its pid survives the shell that starts it (exec replaces it). */
+export function sandboxProcessWrapper(argv: string[], pidFile: string): string[] {
+  return ["sh", "-c", 'echo $$ > "$0"; exec "$@"', pidFile, ...argv];
+}
+
+/** Kills the process recorded in the pid file; tolerates one that already exited. */
+export function sandboxProcessKillCommand(pidFile: string): string[] {
+  return ["sh", "-c", 'kill -TERM "$(cat "$0")" 2>/dev/null || true', pidFile];
+}
+
 export function sandboxCommandTimedOut(exitCode: number, completedWithExit124: boolean) {
   return exitCode === 124 && !completedWithExit124;
 }
