@@ -5,6 +5,7 @@ import {
 } from "@rakazo/adapters";
 import { parseToolCallLimit } from "@rakazo/contracts";
 import {
+  deploymentMcpStdioInSandbox,
   resolveAuthSecret,
   resolveEncryptionKey,
   resolveScreenProxySecret,
@@ -86,6 +87,8 @@ export interface AppEnv {
   wakeupDriver: string;
   mcpStdioEnabled: boolean;
   mcpStdioAllowedCommands: string[];
+  /** Run stdio MCP servers inside the bot's own computer; off keeps the host process path. */
+  mcpStdioInSandbox: boolean;
   /** Deployment-owner escape for remote MCP on RFC1918 / Docker-network hosts. */
   mcpAllowPrivateEndpoint: boolean;
   port: number;
@@ -175,6 +178,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     defaultModel: deploymentModel.model,
     wakeupDriver: source.WAKEUP_DRIVER ?? "graphile",
     mcpStdioEnabled: source.MCP_STDIO_ENABLED === "true",
+    mcpStdioInSandbox: deploymentMcpStdioInSandbox(source),
     mcpStdioAllowedCommands: (source.MCP_STDIO_ALLOWED_COMMANDS ?? "")
       .split(",")
       .map((value) => value.trim())

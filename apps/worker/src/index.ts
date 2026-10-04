@@ -39,6 +39,7 @@ import {
   PipedreamConnector,
   PostgresRealtimeFanout,
   pipedreamConfigFromEnv,
+  provisionComputer,
   reconcileCloudAgents,
   reconcileComputerUpdates,
   resolveDeploymentModel,
@@ -48,7 +49,11 @@ import {
   SpaceMemoryProviderResolver,
   sandboxProviderOptionsFromEnv,
 } from "@rakazo/adapters";
-import { resolveEncryptionKey, resolveSupervisorToken } from "@rakazo/core";
+import {
+  deploymentMcpStdioInSandbox,
+  resolveEncryptionKey,
+  resolveSupervisorToken,
+} from "@rakazo/core";
 import {
   createDb,
   createThreadEvents,
@@ -111,6 +116,31 @@ async function main() {
       resolveStdioHome: (botId) => home.pathFor(botId),
       events,
       allowPrivateEndpoint,
+      stdioInSandbox: deploymentMcpStdioInSandbox(process.env),
+      hostDataDir: dataDir,
+      // `jobs` is declared further down, after this connector: the closures below run only
+      // during a run, long after main() finished, so the late declaration is safe by design.
+      resolveStdioComputer: async (context) => {
+        if (!context.botId) throw new Error("stdio MCP in the sandbox needs a bot identity");
+        const bot = await prisma.bot.findUnique({
+          where: { id: context.botId },
+          select: { computer: { select: { id: true } } },
+        });
+        if (!bot?.computer) throw new Error("Bot has no computer");
+        // Same lifecycle path the run executor takes: waits for a boot another run owns,
+        // throws ComputerBusyError when contended — and never falls back to the host.
+        return provisionComputer(
+          { prisma, sandbox, home, jobs, events, dataDir },
+          bot.computer.id,
+          context,
+          "bot",
+        );
+      },
+      openStdioProcess: async (computer, request, context) => {
+        if (!sandbox.openProcess)
+          throw new Error("this computer provider cannot host a stdio process");
+        return sandbox.openProcess(computer, request, context);
+      },
     },
     mcpOAuth,
   );

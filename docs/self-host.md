@@ -341,9 +341,12 @@ metadata addresses stay blocked. Leave the flag unset on public installs.
 | `RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP` | `1` | off | Bot credentials (`request_secret` / website logins) against plain-`http://` private origins. |
 | `MCP_STDIO_ENABLED` | `true` | off | stdio MCP servers, which spawn a process on the API/worker host. |
 | `MCP_STDIO_ALLOWED_COMMANDS` | comma-separated executables, e.g. `npx,node` | empty | The exact executables a stdio server may start; anything else is refused. |
+| `RAKAZO_MCP_STDIO_IN_SANDBOX` | `1`, `true`, `yes` or `on` (both API and worker) | off | Run stdio MCP servers as processes inside each bot's own computer instead of on the API/worker host. See "Running stdio MCP inside the bot's computer". |
 
 The `MCP_*` switches are read as the literal `true` and the `RAKAZO_*` escape hatches as the literal
 `1`; any other spelling (`TRUE`, `yes`, `true` for a `RAKAZO_*` gate) leaves the gate off.
+One gate deviates: `RAKAZO_MCP_STDIO_IN_SANDBOX` is on for `1`, `true`, `yes` or `on`
+(whitespace- and case-tolerant), off for anything else.
 
 Where the operator sees the refusal: adding an MCP server on web answers
 `MCP endpoint targets a private host (…)` plus the assignment to set, the same sentence carries the
@@ -398,6 +401,25 @@ The Electron desktop app is a client of the same API. Docker and E2B still apply
   configured, or when a remote provider is selected without its API key).
 
 For provider configuration and health checks, see the [provider setup guide](./self-host-sandbox-providers.md).
+
+### Running stdio MCP inside the bot's computer
+
+`RAKAZO_MCP_STDIO_IN_SANDBOX` (on for `1`, `true`, `yes` or `on`; read by both the API and the
+worker) starts stdio MCP servers as processes inside the bot's own Docker computer instead of
+inside the API/worker process. A computer provider without the supervisor's process channel makes
+such a connection fail visibly; the path never falls back to the host silently. What an operator does
+**not** get from this switch:
+
+- Containment covers network and credentials, **not** the filesystem. The bot's home directory
+  (`data/homes/<botId>`) is mounted into both containers, so a server process can still read and
+  write the bot's own files.
+- A supervisor restart kills all MCP processes. The run in flight sees a session end; there is no
+  respawn within the same run.
+- After four idle minutes the next caller pays process start plus handshake.
+- `MCP_STDIO_ALLOWED_COMMANDS` is the only filter stage. It does not protect against a malicious
+  package that the allowlist permits. The gain is the radius, not the admission.
+- Flag off means exactly today's behaviour: stdio servers run in the API/worker process, with that
+  process's credential radius, gated by `MCP_STDIO_ENABLED`.
 
 ## Backup
 

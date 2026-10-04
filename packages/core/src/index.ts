@@ -26,6 +26,7 @@ export * from "./group-mentions.js";
 export * from "./http-response.js";
 export * from "./markdown-plain.js";
 export * from "./mcp.js";
+export * from "./mcp-stdio.js";
 export * from "./message-pages.js";
 export * from "./message-reactions.js";
 export * from "./message-visibility.js";
