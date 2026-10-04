@@ -18,7 +18,6 @@
     "@rakazo/core": "workspace:*",
     "@rakazo/db": "workspace:*",
     "@rakazo/delegation-queue": "workspace:*",
-    "@rakazo/jev-gate": "workspace:*",
     "@rakazo/team-sync": "workspace:*",
     "@rakazo/credential-guard": "workspace:*",
     "@testcontainers/postgresql": "12.1.0",
