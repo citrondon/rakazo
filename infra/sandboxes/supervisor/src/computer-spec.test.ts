@@ -242,6 +242,23 @@ describe("graphical computer spec", () => {
     expect(dockerfile).toMatch(/gh --version/);
   });
 
+  it("ships a pinned node runtime with a checksum, like uv and gh", () => {
+    const root = path.resolve(import.meta.dirname, "../../computer");
+    const dockerfile = readFileSync(path.join(root, "Dockerfile"), "utf8");
+    expect(dockerfile).toMatch(/ARG NODE_VERSION=\d+\.\d+\.\d+/);
+    expect(dockerfile).toMatch(
+      /nodejs\.org\/dist\/v\$\{NODE_VERSION\}\/node-v\$\{NODE_VERSION\}-linux-\$\{node_arch\}\.tar\.xz/,
+    );
+    expect(dockerfile).toMatch(/amd64\) node_arch=x64;\s*node_sha256=[0-9a-f]{64}/);
+    expect(dockerfile).toMatch(/arm64\) node_arch=arm64;\s*node_sha256=[0-9a-f]{64}/);
+    expect(dockerfile.match(/node_sha256=[0-9a-f]{64}/g) ?? []).toHaveLength(2);
+    expect(dockerfile).toMatch(/sha256sum -c/);
+    expect(dockerfile).toMatch(/-C \/usr\/local --strip-components=1/);
+    expect(dockerfile).toMatch(/node --version/);
+    expect(dockerfile).toMatch(/npm --version/);
+    expect(dockerfile).toMatch(/npx --version/);
+  });
+
   it.skipIf(process.platform === "win32")(
     "delivers desktop menu exec arguments intact through /bin/sh",
     () => {
