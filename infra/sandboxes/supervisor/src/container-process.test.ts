@@ -13,8 +13,10 @@ class FakeDuplex extends EventEmitter {
     return true;
   }
 
+  // A destroyed stream emits "close" but never "end" — this is what hangs a `done` keyed on "end".
   destroy() {
     this.destroyed = true;
+    this.emit("close");
   }
 
   pushOutput(data: Buffer) {
@@ -23,6 +25,10 @@ class FakeDuplex extends EventEmitter {
 
   finish() {
     this.emit("end");
+  }
+
+  fail(error: Error) {
+    this.emit("error", error);
   }
 }
 
@@ -33,11 +39,11 @@ function frame(channel: number, text: string) {
   return Buffer.concat([header, Buffer.from(text)]);
 }
 
-function fakeContainer() {
+function fakeContainer(options: { inspect?: () => Promise<{ ExitCode: number | null }> } = {}) {
   const stream = new FakeDuplex();
   const exec = {
     start: vi.fn(async () => stream),
-    inspect: vi.fn(async () => ({ ExitCode: 3 })),
+    inspect: vi.fn(options.inspect ?? (async () => ({ ExitCode: 3 }))),
   };
   const container = { exec: vi.fn(async () => exec) };
   return { container, exec, stream };
@@ -80,5 +86,42 @@ describe("startContainerProcess", () => {
     await handle.kill();
     expect(runKill).toHaveBeenCalledTimes(1);
     expect(stream.destroyed).toBe(true);
+  });
+
+  it("settles done from the close event when kill destroys the stream before EOF", async () => {
+    const { container } = fakeContainer();
+    const handle = await startContainerProcess(container as never, ["node", "server.js"], {
+      runKill: async () => undefined,
+    });
+    const done = handle.done;
+    // A destroyed stream emits "close", not "end": the handle must still settle so the exit is visible.
+    await handle.kill();
+    await expect(done).resolves.toEqual({ code: 3 });
+  });
+
+  it("resolves done with the kill exit code when a destroyed stream closes but inspect fails", async () => {
+    const { container } = fakeContainer({
+      inspect: async () => {
+        throw new Error("exec is gone");
+      },
+    });
+    const handle = await startContainerProcess(container as never, ["node", "server.js"], {
+      runKill: async () => undefined,
+    });
+    const done = handle.done;
+    await handle.kill();
+    // The process was killed and its exec is gone: settle visibly with a distinguishable code, not hang.
+    await expect(done).resolves.toEqual({ code: 143 });
+  });
+
+  it("rejects done when the hijack stream errors", async () => {
+    const { container, stream } = fakeContainer();
+    const handle = await startContainerProcess(container as never, ["node", "server.js"], {
+      runKill: async () => undefined,
+    });
+    const done = handle.done;
+    // A torn hijack is not an exit: an uncaught rejection here would crash the supervisor.
+    stream.fail(new Error("hijack torn"));
+    await expect(done).rejects.toThrow("hijack torn");
   });
 });
