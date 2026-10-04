@@ -440,6 +440,14 @@ export class McpSession {
    * `sandboxStdioArgv`; this seam only speaks MCP over the handle. Containment of
    * this path covers network and credentials, not the filesystem: the computer
    * shares the bot's home mount.
+   *
+   * Timeout policy: deliberate deviation from Spec 4.4. The spec carries openbot's
+   * ceilings ("list 15 s, call 60 s"); adopting them here would be a new policy for
+   * both paths, not only this new one, and would abort long legitimate tool runs.
+   * This path keeps parity with the host: handshake at 15 s (`timeoutMs ?? 15_000`),
+   * tool calls uncapped, cancellation only through `context.signal`. Anyone who wants
+   * a per-call ceiling must add it as its own deployment-wide gate, not as a
+   * side-effect of this plan.
    */
   async connectSandboxStdio(
     process: SandboxProcess,

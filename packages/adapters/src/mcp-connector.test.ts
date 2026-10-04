@@ -1,7 +1,16 @@
-import type { ConnectorEvent } from "@rakazo/adapter-kit";
+import type {
+  AdapterContext,
+  CommandRequest,
+  ComputerRef,
+  ConnectorEvent,
+  SandboxProcess,
+} from "@rakazo/adapter-kit";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { allowlistDrift, McpConnector } from "./mcp-connector.js";
-import { type McpOAuthBroker, StoredMcpOAuthProvider } from "./mcp-oauth.js";
+import { allowlistDrift, McpConnector, SANDBOX_STDIO_PROCESS_IDLE_MS } from "./mcp-connector.js";
+import type { McpOAuthBroker } from "./mcp-oauth.js";
+import { StoredMcpOAuthProvider } from "./mcp-oauth.js";
+import { McpSession } from "./mcp-transport.js";
+import { fakeSandboxProcess } from "./sandbox-process-fake.js";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -1037,5 +1046,244 @@ describe("allowlistDrift", () => {
       offered: 2,
       stringAllowedCount: 1,
     });
+  });
+});
+
+describe("MCP connector stdio in the bot's computer", () => {
+  // Spies install on the McpSession prototype (which the connector builds itself), and
+  // fake timers freeze Date for the idle window; both are undone after each test.
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  const STDIO_ASSIGNMENT = {
+    ...ASSIGNMENT,
+    server: { ...SERVER, transport: "stdio", command: "npx", args: ["-y", "pkg@1"] },
+  };
+
+  const sandboxConnector = (options: {
+    prisma?: unknown;
+    events?: { append: ReturnType<typeof vi.fn> };
+    resolveStdioComputer?: (context: AdapterContext) => Promise<ComputerRef>;
+    openStdioProcess?: (
+      computer: ComputerRef,
+      request: CommandRequest,
+      context: AdapterContext,
+    ) => Promise<SandboxProcess>;
+  }) =>
+    new McpConnector(
+      (options.prisma ?? {
+        botMcpServer: {
+          findMany: vi.fn().mockResolvedValue([STDIO_ASSIGNMENT]),
+          findFirst: vi.fn().mockResolvedValue(STDIO_ASSIGNMENT),
+        },
+      }) as never,
+      {} as never,
+      {
+        network: TEST_NETWORK,
+        stdioEnabled: true,
+        allowedCommands: ["npx"],
+        stdioInSandbox: true,
+        hostDataDir: "/host/data",
+        resolveStdioComputer:
+          options.resolveStdioComputer ??
+          (async (context) =>
+            ({
+              id: `computer-${context.botId}`,
+              botId: context.botId ?? "",
+              kind: "docker",
+              providerRef: `container-${context.botId}`,
+            }) as never),
+        openStdioProcess: options.openStdioProcess,
+        events: options.events as never,
+      },
+    );
+
+  const contextFor = (botId: string) =>
+    ({ spaceId: "w1", userId: "u1", botId, signal: new AbortController().signal }) as never;
+
+  // The handle cache is a private field; a failure test must prove nothing was leaked.
+  const cachedHandles = (connector: McpConnector): Map<string, unknown> =>
+    (connector as unknown as { sandboxProcesses: Map<string, unknown> }).sandboxProcesses;
+
+  it("starts one sandbox process per bot and server, and never shares it", async () => {
+    const first = fakeSandboxProcess();
+    const second = fakeSandboxProcess();
+    // The shared fake exposes `kill` as a plain method; a spy keeps the assertion below
+    // observable while still calling through to the fake's own bookkeeping.
+    vi.spyOn(first.handle, "kill");
+    vi.spyOn(second.handle, "kill");
+    const openStdioProcess = vi
+      .fn<
+        (
+          computer: ComputerRef,
+          request: CommandRequest,
+          context: AdapterContext,
+        ) => Promise<SandboxProcess>
+      >()
+      .mockResolvedValueOnce(first.handle)
+      .mockResolvedValueOnce(second.handle);
+    const connect = vi
+      .spyOn(McpSession.prototype, "connectSandboxStdio")
+      .mockResolvedValue(undefined);
+    vi.spyOn(McpSession.prototype, "listTools").mockResolvedValue({ tools: [] });
+    const connector = sandboxConnector({ openStdioProcess });
+
+    await connector.discoverTools(contextFor("bot-1"));
+    await connector.discoverTools(contextFor("bot-1"));
+    expect(openStdioProcess).toHaveBeenCalledTimes(1); // Cache-Treffer, kein zweiter Prozess
+
+    await connector.discoverTools(contextFor("bot-2"));
+    expect(openStdioProcess).toHaveBeenCalledTimes(2);
+    expect(openStdioProcess.mock.calls[1]?.[0]).toMatchObject({ botId: "bot-2" });
+    // Der Sandbox-Pfad bekommt die Allowlist-argv, nie einen Host-Pfad.
+    expect(openStdioProcess.mock.calls[0]?.[1]).toMatchObject({ argv: ["npx", "-y", "pkg@1"] });
+    expect(connect).toHaveBeenCalledTimes(2);
+
+    await connector.close();
+    expect(first.handle.kill).toHaveBeenCalledTimes(1);
+    expect(second.handle.kill).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs a stdio server in the bot's computer when the switch is on", async () => {
+    const handle = fakeSandboxProcess();
+    vi.spyOn(handle.handle, "kill");
+    const openStdioProcess = vi
+      .fn<
+        (
+          computer: ComputerRef,
+          request: CommandRequest,
+          context: AdapterContext,
+        ) => Promise<SandboxProcess>
+      >()
+      .mockResolvedValue(handle.handle);
+    const connect = vi
+      .spyOn(McpSession.prototype, "connectSandboxStdio")
+      .mockResolvedValue(undefined);
+    vi.spyOn(McpSession.prototype, "listTools").mockResolvedValue({ tools: [] });
+    // The exclusion the switch promises: the host process path must never be entered.
+    const hostConnect = vi.spyOn(McpSession.prototype, "connectStdio");
+    const connector = sandboxConnector({ openStdioProcess });
+
+    await connector.discoverTools(contextFor("bot-1"));
+
+    expect(openStdioProcess).toHaveBeenCalledTimes(1);
+    expect(connect).toHaveBeenCalledTimes(1);
+    expect(hostConnect).not.toHaveBeenCalled();
+    await connector.close();
+    expect(handle.handle.kill).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails visibly when the switch is on but the composition gave no computer", async () => {
+    vi.spyOn(McpSession.prototype, "listTools").mockResolvedValue({ tools: [] });
+    const hostConnect = vi.spyOn(McpSession.prototype, "connectStdio");
+    const openStdioProcess = vi.fn();
+    const append = vi.fn().mockResolvedValue(undefined);
+    const connector = sandboxConnector({
+      events: { append },
+      openStdioProcess,
+      prisma: {
+        botMcpServer: {
+          findMany: vi.fn().mockResolvedValue([STDIO_ASSIGNMENT]),
+          findFirst: vi.fn().mockResolvedValue(STDIO_ASSIGNMENT),
+        },
+        run: { findUnique: vi.fn().mockResolvedValue({ threadId: "thread-1" }) },
+      },
+      // The deployment never provisioned this bot's computer.
+      resolveStdioComputer: async () => {
+        throw new Error("the bot has no computer to run the server on");
+      },
+    });
+
+    // Discovery degrades to no tools for this server, but the reason is captured, and it
+    // names the computer; the host path is not entered and no handle is left running.
+    await expect(
+      connector.discoverTools({
+        spaceId: "w1",
+        userId: "u1",
+        botId: "bot-1",
+        runId: "run-1",
+        signal: new AbortController().signal,
+      } as never),
+    ).resolves.toEqual([]);
+    expect(hostConnect).not.toHaveBeenCalled();
+    expect(openStdioProcess).not.toHaveBeenCalled();
+    expect(cachedHandles(connector).size).toBe(0);
+    expect(String(append.mock.calls[0]?.[0].payload.error)).toContain("computer");
+  });
+
+  it("a closed session stops its process", async () => {
+    vi.useFakeTimers();
+    const first = fakeSandboxProcess();
+    const second = fakeSandboxProcess();
+    vi.spyOn(first.handle, "kill");
+    vi.spyOn(second.handle, "kill");
+    const openStdioProcess = vi
+      .fn<
+        (
+          computer: ComputerRef,
+          request: CommandRequest,
+          context: AdapterContext,
+        ) => Promise<SandboxProcess>
+      >()
+      .mockResolvedValueOnce(first.handle)
+      .mockResolvedValueOnce(second.handle);
+    vi.spyOn(McpSession.prototype, "connectSandboxStdio").mockResolvedValue(undefined);
+    vi.spyOn(McpSession.prototype, "listTools").mockResolvedValue({ tools: [] });
+    const connector = sandboxConnector({ openStdioProcess });
+
+    await connector.discoverTools(contextFor("bot-1"));
+    expect(openStdioProcess).toHaveBeenCalledTimes(1);
+
+    await connector.close();
+    expect(first.handle.kill).toHaveBeenCalledTimes(1);
+    expect(cachedHandles(connector).size).toBe(0);
+
+    // Past the idle window (fake clock advanced before the reconnect), the next discovery
+    // starts a fresh process — the killed handle is gone, not resurrected.
+    vi.setSystemTime(Date.now() + SANDBOX_STDIO_PROCESS_IDLE_MS + 1);
+    await connector.discoverTools(contextFor("bot-1"));
+    expect(openStdioProcess).toHaveBeenCalledTimes(2);
+    await connector.close();
+    expect(second.handle.kill).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets an idle process go instead of reusing it", async () => {
+    vi.useFakeTimers();
+    const first = fakeSandboxProcess();
+    const second = fakeSandboxProcess();
+    vi.spyOn(first.handle, "kill");
+    vi.spyOn(second.handle, "kill");
+    const openStdioProcess = vi
+      .fn<
+        (
+          computer: ComputerRef,
+          request: CommandRequest,
+          context: AdapterContext,
+        ) => Promise<SandboxProcess>
+      >()
+      .mockResolvedValueOnce(first.handle)
+      .mockResolvedValueOnce(second.handle);
+    vi.spyOn(McpSession.prototype, "connectSandboxStdio").mockResolvedValue(undefined);
+    vi.spyOn(McpSession.prototype, "listTools").mockResolvedValue({ tools: [] });
+    const connector = sandboxConnector({ openStdioProcess });
+
+    await connector.discoverTools(contextFor("bot-1"));
+    expect(openStdioProcess).toHaveBeenCalledTimes(1);
+    // Still inside the idle window: the session, and therefore the process, is reused.
+    await connector.discoverTools(contextFor("bot-1"));
+    expect(openStdioProcess).toHaveBeenCalledTimes(1);
+    expect(first.handle.kill).not.toHaveBeenCalled();
+
+    // Past the idle window the next connect discards the stale handle and opens a new one.
+    vi.setSystemTime(Date.now() + SANDBOX_STDIO_PROCESS_IDLE_MS + 1);
+    await connector.discoverTools(contextFor("bot-1"));
+    expect(openStdioProcess).toHaveBeenCalledTimes(2);
+    expect(first.handle.kill).toHaveBeenCalledTimes(1);
+
+    await connector.close();
+    expect(second.handle.kill).toHaveBeenCalledTimes(1);
+    expect(cachedHandles(connector).size).toBe(0);
   });
 });
