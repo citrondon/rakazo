@@ -369,19 +369,21 @@ Optional messaging platforms (iMessage, Slack, WhatsApp, Telegram, Feishu/Lark) 
 
 ### Reading what a bot was allowed to do
 
-Every tool action the approval gate lets through is recorded in `action_decisions` before it
-runs, and the database rejects any later update or delete of a row. The gate also records what it
-stopped: a row whose `decision` is `ask` marks a held action. A run cancelled mid-gate is the one
-case with no row, because nothing was allowed and nothing ran. `wouldDeny` marks a decision that
-was allowed only because no approval rule covered the tool, so counting them is what to look
-at before turning enforcement on:
+Every tool action that reaches the approval gate is recorded in `action_decisions` before it
+runs, and the append-only trigger rejects any later update or delete of a row. A row records one
+gate pass per attempt, not the final outcome: an action a human approved and that then executed
+writes another `ask` row on its replay, so rows with `decision = 'ask'` are not all held actions.
+Retries and resumes can record the same action again, so `count(distinct "effectId")` is the
+deduplicated view. A run cancelled mid-gate is the one case with no row, because nothing was
+allowed and nothing ran. `wouldDeny` marks a decision that was allowed only because no approval
+rule covered the tool, so counting them is what to look at before turning enforcement on:
 
 ```sql
-select "toolName", count(*) as silent_allows
+select "toolName", count(*) as passes, count(distinct "effectId") as actions
 from "action_decisions"
 where "wouldDeny"
 group by "toolName"
-order by silent_allows desc;
+order by passes desc;
 ```
 
 ## Choosing a computer provider
