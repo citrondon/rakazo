@@ -575,3 +575,13 @@ export function computerCommandEnv(layout: { display: string }) {
     "PIP_USER=1",
   ];
 }
+
+/**
+ * Encode a request's env for `docker exec`, allowing only names the shell could express.
+ * Mirrors the host stdio path: an unusable key is dropped, never passed through.
+ */
+export function toEnvList(env: Record<string, string> | undefined): string[] {
+  return Object.entries(env ?? {}).flatMap(([key, value]) =>
+    /^[A-Za-z_][A-Za-z0-9_]*$/.test(key) ? [`${key}=${value}`] : [],
+  );
+}

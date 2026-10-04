@@ -1,5 +1,6 @@
 import type { Logger } from "@rakazo/logging";
 import type { ContainerProcessHandle } from "./container-process.js";
+import { KILL_WITHOUT_INSPECT_EXIT_CODE } from "./container-process.js";
 
 /** Idle window per long-lived process, comfortably under the ten minute computer suspension. */
 export const MCP_PROCESS_IDLE_MS = 240_000;
@@ -37,7 +38,18 @@ export interface ReservedProcess {
 
 export interface ProcessRegistry {
   reserve(input: { id: string; computerId: string; botId: string }): ReservedProcess;
-  get(id: string): RegisteredProcess | undefined;
+  /**
+   * The channel's identity check: an entry answers only to the computer and bot that own it,
+   * so a processId can never open a window into another computer's process. A process that
+   * has ended answers `undefined` here — the reader distinguishes it from unknown via `wasEnded`.
+   */
+  get(id: string, computerId: string, botId: string): RegisteredProcess | undefined;
+  /**
+   * True while the ended marker of a once-running process stands, and only for its owner:
+   * it is what lets the events route answer 410 "process ended" instead of a stream that hangs,
+   * while a stranger still sees 404, and it is terminal — nothing resurrects an ended process.
+   */
+  wasEnded(id: string, computerId: string, botId: string): boolean;
   /**
    * Removes only when the requester is the attached reader, or when no reader is attached at all:
    * killing a process that is starting, or already readerless, is an operator action.
@@ -51,6 +63,8 @@ interface Entry {
   computerId: string;
   botId: string;
   released: boolean;
+  /** Set once a started process ended; the entry stays as the marker until the idle sweep takes it. */
+  ended: boolean;
   handle?: ContainerProcessHandle;
   process?: RegisteredProcess;
   /** Empty while no reader holds the process. */
@@ -74,15 +88,40 @@ export function createProcessRegistry(
     if (entries.get(entry.id) === entry) entries.delete(entry.id);
   };
 
+  /** The stored owner read from the entry: the identity check of the whole channel. */
+  const owned = (
+    table: Map<string, Entry>,
+    id: string,
+    computerId: string,
+    botId: string,
+  ): Entry | undefined => {
+    const entry = table.get(id);
+    if (!entry || entry.computerId !== computerId || entry.botId !== botId) return undefined;
+    return entry;
+  };
+
   /** Ends the process, its reservation, and its reader slot, then tells the reader why. */
   const drop = async (entry: Entry, reason: string) => {
+    if (entry.ended) return;
     entry.released = true;
-    forget(entry);
+    if (entry.process) {
+      // A process that actually ran leaves the ended marker behind, so the reader of the
+      // events route learns 410 "ended" instead of a 404 that hides a real past process.
+      entry.ended = true;
+      entry.lastActivity = Date.now();
+    } else {
+      // A reservation that never became a visible process stays unknown to every reader.
+      forget(entry);
+    }
     const onEvent = entry.onEvent;
     entry.readerId = "";
     entry.onEvent = undefined;
     if (entry.handle) await entry.handle.kill();
-    onEvent?.({ type: "stderr", data: `process closed: ${reason}\n` });
+    if (!onEvent) return;
+    onEvent({ type: "stderr", data: `process closed: ${reason}\n` });
+    // Spec 4.1 ends the event stream with exit: the process was killed here, and a killed
+    // child resolves with the SIGTERM code by the container-process convention.
+    onEvent({ type: "exit", code: KILL_WITHOUT_INSPECT_EXIT_CODE });
   };
 
   const processFor = (entry: Entry, handle: ContainerProcessHandle): RegisteredProcess => ({
@@ -110,6 +149,7 @@ export function createProcessRegistry(
       const entry: Entry = {
         ...input,
         released: false,
+        ended: false,
         readerId: "",
         lastActivity: Date.now(),
       };
@@ -137,19 +177,24 @@ export function createProcessRegistry(
           });
           void handle.done.then(
             (exit) => {
-              // Resolved exit: the child is gone, so the entry is dropped without a kill.
+              // Resolved exit: the child is gone; the ended marker answers the reader with 410.
+              entry.released = true;
+              entry.ended = true;
               entry.lastActivity = Date.now();
               entry.onEvent?.({ type: "exit", code: exit.code });
-              forget(entry);
             },
             // A torn stream never yields an exit code; the reader still has to stop waiting.
             () => {
               // Rejecting differs from resolving: only the stream tore, so the child is likely
-              // still alive and killable over the Docker API. Best-effort kill it before forgetting,
-              // or it keeps running in the sandbox until the ten minute suspension caps it.
+              // still alive and killable over the Docker API. Best-effort kill it before ending
+              // the entry, or it keeps running in the sandbox until the ten minute suspension caps it.
               void entry.handle?.kill().catch(() => {});
-              forget(entry);
+              entry.released = true;
+              entry.ended = true;
+              entry.lastActivity = Date.now();
               entry.onEvent?.({ type: "stderr", data: "process stream lost\n" });
+              // The event stream must end with exit (spec 4.1); an unknown code reads as failure.
+              entry.onEvent?.({ type: "exit", code: 1 });
             },
           );
           return entry.process;
@@ -160,7 +205,13 @@ export function createProcessRegistry(
         },
       };
     },
-    get: (id) => entries.get(id)?.process,
+    get(id, computerId, botId) {
+      const entry = owned(entries, id, computerId, botId);
+      return entry && !entry.ended ? entry.process : undefined;
+    },
+    wasEnded(id, computerId, botId) {
+      return owned(entries, id, computerId, botId)?.ended === true;
+    },
     async release(id, readerId, reason) {
       const entry = entries.get(id);
       if (!entry) return;
@@ -168,9 +219,13 @@ export function createProcessRegistry(
       await drop(entry, reason);
     },
     async sweep(now = Date.now()) {
-      const expired = [...entries.values()].filter((entry) => now - entry.lastActivity > idleMs);
-      await Promise.all(expired.map((entry) => drop(entry, "idle timeout")));
-      return expired.map((entry) => entry.id);
+      const stale = [...entries.values()].filter((entry) => now - entry.lastActivity > idleMs);
+      const running = stale.filter((entry) => !entry.ended);
+      await Promise.all(running.map((entry) => drop(entry, "idle timeout")));
+      // The ended marker has served its reader by now; past the idle window it goes,
+      // and the process table holds no more than the entries of this process' lifetime.
+      for (const entry of stale) if (entry.ended) forget(entry);
+      return running.map((entry) => entry.id);
     },
   };
 }

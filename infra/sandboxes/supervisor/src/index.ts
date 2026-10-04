@@ -49,7 +49,10 @@ import {
   screenUrlWithToken,
   xdotoolCommand,
 } from "./computer-spec.js";
+import { startContainerProcess } from "./container-process.js";
 import { assertComputerHomeWritable } from "./home-ownership.js";
+import type { ProcessEventLike } from "./process-registry.js";
+import { createProcessRegistry } from "./process-registry.js";
 import {
   assertRequestIdentity,
   attemptComputerControl,
@@ -76,12 +79,15 @@ import {
   resetManagedScreensCommand,
   type ScreenAssignment,
   sandboxCommandTimedOut,
+  sandboxProcessKillCommand,
+  sandboxProcessWrapper,
   sandboxTimeoutCommand,
   screenReleaseStopCommand,
   shouldReplayComputerActions,
   stopExtraScreenCommand,
   teardownReleasedScreen,
   terminalCommand,
+  toEnvList,
   toSandboxInput,
   withKeyedLock,
   workspaceTarget,
@@ -429,6 +435,168 @@ app.post("/computers/:id/exec", async (c) => {
       "x-accel-buffering": "no",
     },
   });
+});
+
+/** The module-singleton process table; entries live exactly as long as this process does. */
+const sandboxProcesses = createProcessRegistry();
+
+const startProcessBody = z.object({
+  argv: z.array(z.string()).min(1),
+  cwd: z.string().optional(),
+  env: z.record(z.string(), z.string()).optional(),
+});
+
+const stdinFrameBody = z.object({ data: z.string() });
+
+app.post("/computers/:id/processes", async (c) => {
+  const id = c.req.param("id");
+  const parsed = startProcessBody.safeParse(await c.req.json().catch(() => undefined));
+  // /exec parses with `.parse()` and answers an identity failure with 200 + code 1.
+  // A long-lived process may do neither: `safeParse` for 422, 403 for identity, so the client
+  // can tell "frame taken" apart from "does not exist".
+  if (!parsed.success) return c.json({ error: "argv must be a non-empty array of strings" }, 422);
+  let container: Docker.Container;
+  let layout: ReturnType<typeof screenPorts>;
+  try {
+    const managed = await managedContainer(
+      id,
+      c.req.header("x-rakazo-bot-id"),
+      c.req.header("x-rakazo-space-id"),
+    );
+    container = managed.container;
+    const screenId = c.req.header("x-rakazo-screen-id") || c.req.header("x-rakazo-bot-id") || id;
+    layout = screenPorts(computerScreens.get(id)?.get(screenId)?.index ?? 0);
+  } catch (error) {
+    if (error instanceof ComputerIdentityError)
+      return c.json({ error: "invalid computer identity" }, 403);
+    throw error;
+  }
+  const botId = c.req.header("x-rakazo-bot-id") ?? "";
+  // The idle TTL needs an executor. Sweeping before a start is enough: an expired entry is
+  // already unreachable by its reader, and nothing else in-process creates a race for it.
+  void sandboxProcesses.sweep().catch(() => undefined);
+  const processId = randomUUID();
+  const pidFile = `/tmp/rakazo-mcp-${processId}.pid`;
+  // Claim before any await: the reservation exists before the child is started, so a close
+  // landing in that window always finds something (Task 4: reserve/attach, no lease).
+  const reservation = sandboxProcesses.reserve({ id: processId, computerId: id, botId });
+  try {
+    const handle = await startContainerProcess(
+      container,
+      sandboxProcessWrapper(parsed.data.argv, pidFile),
+      {
+        workingDir: parsed.data.cwd,
+        // A later entry wins, so a request may override the computer's PATH or HOME — exactly
+        // what the host stdio path allows today; a blocklist would invent a second truth.
+        env: [...computerCommandEnv(layout), ...toEnvList(parsed.data.env)],
+        runKill: () =>
+          runContainerCommand(container, sandboxProcessKillCommand(pidFile), {
+            workingDir: parsed.data.cwd,
+            env: computerCommandEnv(layout),
+          }),
+      },
+    );
+    const registered = reservation.attach(handle);
+    if (!registered) return c.json({ error: "process was closed while starting" }, 409);
+  } catch (error) {
+    reservation.abort();
+    throw error;
+  }
+  return c.json({ processId });
+});
+
+app.get("/computers/:id/processes/:pid/events", (c) => {
+  const id = c.req.param("id");
+  const pid = c.req.param("pid");
+  const botId = c.req.header("x-rakazo-bot-id") ?? "";
+  // The stored owner is the channel's identity check: no route addressed to a different
+  // computer or bot may see this process, so a leaked processId opens nothing.
+  const process = sandboxProcesses.get(pid, id, botId);
+  if (!process) {
+    // An ended process answers its reader before the stream is ever opened: 410 with the
+    // end state, not a 200 that would hang — while an unknown id stays a 404.
+    if (sandboxProcesses.wasEnded(pid, id, botId)) return c.json({ error: "process ended" }, 410);
+    return c.json({ error: "process not found" }, 404);
+  }
+  const readerId = randomUUID();
+  const encoder = new TextEncoder();
+  let end: () => void = () => undefined;
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      let closed = false;
+      let detach: (() => void) | undefined;
+      const finish = () => {
+        if (closed) return;
+        closed = true;
+        detach?.();
+        // Reader gone, process gone with it (spec 4.1); identity-scoped, so a displaced
+        // reader ending its own stream never drops the process the replacement reads.
+        void sandboxProcesses.release(pid, readerId, "client disconnected").catch(() => undefined);
+        try {
+          controller.close();
+        } catch {
+          // The client already went away.
+        }
+      };
+      end = finish;
+      const send = (event: ProcessEventLike) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        } catch {
+          finish();
+          return;
+        }
+        if (event.type === "exit") finish();
+      };
+      // Before any await, so an output frame cannot overtake the reader slot.
+      detach = process.attachReader(readerId, send);
+      // The process may have ended between the get and the attach; then no further event will
+      // ever reach this sink and the response would hang, so end it right here.
+      if (!sandboxProcesses.get(pid, id, botId)) finish();
+    },
+    cancel() {
+      end();
+    },
+  });
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "content-type": "application/x-ndjson; charset=utf-8",
+      "cache-control": "no-cache, no-transform",
+      "x-accel-buffering": "no",
+    },
+  });
+});
+
+app.post("/computers/:id/processes/:pid/stdin", async (c) => {
+  const process = sandboxProcesses.get(
+    c.req.param("pid"),
+    c.req.param("id"),
+    c.req.header("x-rakazo-bot-id") ?? "",
+  );
+  // 409 is the only answer the client can distinguish from "frame taken".
+  if (!process) return c.json({ error: "process is not running" }, 409);
+  const parsed = stdinFrameBody.safeParse(await c.req.json().catch(() => undefined));
+  if (!parsed.success) return c.json({ error: "data must be a string" }, 422);
+  try {
+    await process.write(parsed.data.data);
+  } catch {
+    return c.json({ error: "process is not running" }, 409);
+  }
+  return c.json({ ok: true });
+});
+
+app.delete("/computers/:id/processes/:pid", async (c) => {
+  const process = sandboxProcesses.get(
+    c.req.param("pid"),
+    c.req.param("id"),
+    c.req.header("x-rakazo-bot-id") ?? "",
+  );
+  if (!process) return c.json({ error: "process not found" }, 404);
+  // A kill needs no reader: dropping the process is the operator path, not a release.
+  await process.kill("operator requested it");
+  return c.json({ ok: true });
 });
 
 app.post("/computers/:id/browser", async (c) => {

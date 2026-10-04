@@ -50,6 +50,7 @@ export function createRunSandbox(
 
 export class HostAwareSandbox implements SandboxProvider {
   readonly pageBrowser?: SandboxProvider["pageBrowser"];
+  readonly openProcess?: SandboxProvider["openProcess"];
 
   constructor(
     private readonly isolated: SandboxProvider,
@@ -67,6 +68,16 @@ export class HostAwareSandbox implements SandboxProvider {
               fallback: "computer_act",
               error: "Page browser is unavailable on this computer.",
             });
+      };
+    }
+    if (isolated.openProcess) {
+      this.openProcess = (computer, request, context) => {
+        const provider = this.route(computer);
+        if (!provider.openProcess) {
+          // A desktop computer has no duplex channel: refuse visibly instead of falling back.
+          return Promise.reject(new Error("process channel is unavailable on this computer"));
+        }
+        return provider.openProcess(computer, request, context);
       };
     }
   }

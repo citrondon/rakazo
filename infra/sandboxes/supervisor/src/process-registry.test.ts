@@ -26,9 +26,9 @@ describe("process registry", () => {
   it("reserves without awaiting, so a close during start still has something to release", () => {
     const registry = createProcessRegistry();
     const reserved = registry.reserve({ id: "p1", computerId: "c1", botId: "b1" });
-    expect(registry.get("p1")).toBeUndefined(); // no process yet, only the reservation
+    expect(registry.get("p1", "c1", "b1")).toBeUndefined(); // no process yet, only the reservation
     reserved.attach(handleExit(0) as never);
-    expect(registry.get("p1")?.id).toBe("p1");
+    expect(registry.get("p1", "c1", "b1")?.id).toBe("p1");
   });
 
   it("kills a handle that arrives after its reservation was already released", async () => {
@@ -38,7 +38,7 @@ describe("process registry", () => {
     await registry.release("race", "operator", "closed during start");
     const handle = handleExit(0);
     reserved.attach(handle as never);
-    expect(registry.get("race")).toBeUndefined();
+    expect(registry.get("race", "c1", "b1")).toBeUndefined();
     expect(handle.kill).toHaveBeenCalledTimes(1);
   });
 
@@ -46,18 +46,18 @@ describe("process registry", () => {
     const registry = createProcessRegistry();
     const reserved = registry.reserve({ id: "failed", computerId: "c1", botId: "b1" });
     reserved.abort();
-    expect(registry.get("failed")).toBeUndefined();
+    expect(registry.get("failed", "c1", "b1")).toBeUndefined();
   });
 
   it("releases only for the reader that attached", async () => {
     const registry = createProcessRegistry();
     const handle = handleExit(0);
     registry.reserve({ id: "p2", computerId: "c1", botId: "b1" }).attach(handle as never);
-    registry.get("p2")!.attachReader("reader-a", () => {});
+    registry.get("p2", "c1", "b1")!.attachReader("reader-a", () => {});
     await registry.release("p2", "reader-stale", "gone");
-    expect(registry.get("p2")).toBeDefined();
+    expect(registry.get("p2", "c1", "b1")).toBeDefined();
     await registry.release("p2", "reader-a", "client disconnected");
-    expect(registry.get("p2")).toBeUndefined();
+    expect(registry.get("p2", "c1", "b1")).toBeUndefined();
     expect(handle.kill).toHaveBeenCalledTimes(1);
   });
 
@@ -66,14 +66,14 @@ describe("process registry", () => {
     const registry = createProcessRegistry();
     const handle = handleExit(0);
     registry.reserve({ id: "swap", computerId: "c1", botId: "b1" }).attach(handle as never);
-    const detachFirst = registry.get("swap")!.attachReader("reader-a", () => {});
-    registry.get("swap")!.attachReader("reader-b", () => {});
+    const detachFirst = registry.get("swap", "c1", "b1")!.attachReader("reader-a", () => {});
+    registry.get("swap", "c1", "b1")!.attachReader("reader-b", () => {});
     detachFirst();
     await registry.release("swap", "reader-a", "stale detach");
-    expect(registry.get("swap")).toBeDefined();
+    expect(registry.get("swap", "c1", "b1")).toBeDefined();
     expect(handle.kill).not.toHaveBeenCalled();
     await registry.release("swap", "reader-b", "client disconnected");
-    expect(registry.get("swap")).toBeUndefined();
+    expect(registry.get("swap", "c1", "b1")).toBeUndefined();
     expect(handle.kill).toHaveBeenCalledTimes(1);
   });
 
@@ -99,9 +99,11 @@ describe("process registry", () => {
     registry.reserve({ id: "flow", computerId: "c1", botId: "b1" }).attach(handle as never);
     const stale: ProcessEventLike[] = [];
     const current: ProcessEventLike[] = [];
-    const detachStale = registry.get("flow")!.attachReader("reader-a", (e) => stale.push(e));
+    const detachStale = registry
+      .get("flow", "c1", "b1")!
+      .attachReader("reader-a", (e) => stale.push(e));
     detachStale();
-    registry.get("flow")!.attachReader("reader-b", (e) => current.push(e));
+    registry.get("flow", "c1", "b1")!.attachReader("reader-b", (e) => current.push(e));
 
     handle.emitOutput({ stream: "stdout", data: "{}\n" });
     handle.exit(7);
@@ -112,7 +114,7 @@ describe("process registry", () => {
       { type: "stdout", data: "{}\n" },
       { type: "exit", code: 7 },
     ]);
-    expect(registry.get("flow")).toBeUndefined();
+    expect(registry.get("flow", "c1", "b1")).toBeUndefined();
   });
 
   it("drops the entry when the process exits on its own", async () => {
@@ -121,7 +123,7 @@ describe("process registry", () => {
     registry.reserve({ id: "p3", computerId: "c1", botId: "b1" }).attach(handle as never);
     handle.exit(0);
     await new Promise((resolve) => setImmediate(resolve));
-    expect(registry.get("p3")).toBeUndefined();
+    expect(registry.get("p3", "c1", "b1")).toBeUndefined();
   });
 
   it("settles a torn stream instead of leaving the reader waiting", async () => {
@@ -130,14 +132,85 @@ describe("process registry", () => {
     const handle = handleExit(0);
     registry.reserve({ id: "torn", computerId: "c1", botId: "b1" }).attach(handle as never);
     const events: ProcessEventLike[] = [];
-    registry.get("torn")!.attachReader("reader-a", (e) => events.push(e));
+    registry.get("torn", "c1", "b1")!.attachReader("reader-a", (e) => events.push(e));
     handle.fail();
     await new Promise((resolve) => setImmediate(resolve));
     // A torn stream is not an exit: the child is likely still alive, so it is killed before the
     // entry is forgotten, or the process would run on until the ten minute suspension caps it.
     expect(handle.kill).toHaveBeenCalledTimes(1);
-    expect(registry.get("torn")).toBeUndefined();
-    expect(events).toEqual([{ type: "stderr", data: "process stream lost\n" }]);
+    expect(registry.get("torn", "c1", "b1")).toBeUndefined();
+    // Spec 4.1: the event stream ends with exit — an unknown outcome surfaces as code 1.
+    expect(events).toEqual([
+      { type: "stderr", data: "process stream lost\n" },
+      { type: "exit", code: 1 },
+    ]);
+  });
+
+  it("answers only the owning computer and bot on the channel", () => {
+    // The route identity check the stored computerId and botId exist for: a processId must
+    // never open a window into another computer's process.
+    const registry = createProcessRegistry();
+    registry.reserve({ id: "owned", computerId: "c1", botId: "b1" }).attach(handleExit(0) as never);
+    expect(registry.get("owned", "c2", "b1")).toBeUndefined();
+    expect(registry.get("owned", "c1", "b2")).toBeUndefined();
+    expect(registry.get("owned", "c1", "b1")).toBeDefined();
+  });
+
+  it("ends a process terminally and marks it ended only for its owner", async () => {
+    const registry = createProcessRegistry();
+    const handle = handleExit(0);
+    registry.reserve({ id: "ended", computerId: "c1", botId: "b1" }).attach(handle as never);
+    await registry.release("ended", "operator", "operator requested it");
+    expect(registry.get("ended", "c1", "b1")).toBeUndefined();
+    expect(registry.wasEnded("ended", "c1", "b1")).toBe(true);
+    // The marker is owner-scoped exactly like the live entry.
+    expect(registry.wasEnded("ended", "c2", "b1")).toBe(false);
+    expect(registry.wasEnded("ended", "c1", "b2")).toBe(false);
+    // Terminal: a second release kills nothing a second time.
+    await registry.release("ended", "operator", "again");
+    expect(handle.kill).toHaveBeenCalledTimes(1);
+  });
+
+  it("kills a handle that attaches after the process already exited instead of resurrecting it", async () => {
+    // attach must be terminal for an ended entry: the late handle has no owner again.
+    const registry = createProcessRegistry();
+    const first = handleExit(0);
+    const reserved = registry.reserve({ id: "dead", computerId: "c1", botId: "b1" });
+    reserved.attach(first as never);
+    first.exit(7);
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(registry.get("dead", "c1", "b1")).toBeUndefined();
+    expect(registry.wasEnded("dead", "c1", "b1")).toBe(true);
+    const late = handleExit(0);
+    expect(reserved.attach(late as never)).toBeUndefined();
+    expect(late.kill).toHaveBeenCalledTimes(1);
+    expect(registry.wasEnded("dead", "c1", "b1")).toBe(true);
+  });
+
+  it("forgets ended markers once they pass the idle window", async () => {
+    const registry = createProcessRegistry({ idleMs: 10 });
+    const handle = handleExit(0);
+    registry.reserve({ id: "marker", computerId: "c1", botId: "b1" }).attach(handle as never);
+    handle.exit(0);
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(registry.wasEnded("marker", "c1", "b1")).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(await registry.sweep()).toEqual([]);
+    expect(registry.wasEnded("marker", "c1", "b1")).toBe(false);
+  });
+
+  it("ends a reading channel with the killed exit code when the process is dropped", async () => {
+    // drop() must terminate the reader's stream: the killed child resolves as SIGTERM.
+    const registry = createProcessRegistry();
+    const handle = handleExit(0);
+    registry.reserve({ id: "gone", computerId: "c1", botId: "b1" }).attach(handle as never);
+    const events: ProcessEventLike[] = [];
+    registry.get("gone", "c1", "b1")!.attachReader("reader-a", (e) => events.push(e));
+    await registry.release("gone", "reader-a", "operator requested it");
+    expect(events).toEqual([
+      { type: "stderr", data: "process closed: operator requested it\n" },
+      { type: "exit", code: 143 },
+    ]);
   });
 
   it("swallows a kill failure on the torn-stream path instead of leaving an unhandled rejection", async () => {
@@ -151,7 +224,7 @@ describe("process registry", () => {
     handle.fail();
     await new Promise((resolve) => setImmediate(resolve));
     expect(handle.kill).toHaveBeenCalledTimes(1);
-    expect(registry.get("torn-kill")).toBeUndefined();
+    expect(registry.get("torn-kill", "c1", "b1")).toBeUndefined();
   });
 
   it("catches and logs a late-attach kill rejection instead of crashing the host", async () => {

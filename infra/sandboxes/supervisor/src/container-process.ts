@@ -3,7 +3,8 @@ import { createDockerStreamDemuxer } from "./supervisor-logic.js";
 
 // A kill destroys the hijack stream, so the exec can be gone before inspect reports: resolve
 // with the `kill -TERM` code (128 + SIGTERM) so a killed server still exits visibly downstream.
-const KILL_WITHOUT_INSPECT_EXIT_CODE = 143;
+// The registry reports a dropped process with this same code, so it is the shared convention.
+export const KILL_WITHOUT_INSPECT_EXIT_CODE = 143;
 
 export interface ContainerProcessHandle {
   write(line: string): Promise<void>;

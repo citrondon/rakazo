@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sandboxProcessKillCommand, sandboxProcessWrapper } from "./supervisor-logic.js";
+import { sandboxProcessKillCommand, sandboxProcessWrapper, toEnvList } from "./supervisor-logic.js";
 
 describe("sandbox process helpers", () => {
   it("records the child pid so a live process can be killed from inside the container", () => {
@@ -19,6 +19,15 @@ describe("sandbox process helpers", () => {
       "-c",
       'kill -TERM "$(cat "$0")" 2>/dev/null || true',
       "/tmp/rakazo-mcp-1.pid",
+    ]);
+  });
+});
+
+describe("toEnvList", () => {
+  it("drops an env name the shell could not express and keeps the rest", () => {
+    expect(toEnvList({ FOO: "1", "9BAD KEY": "2", PATH: "/custom" })).toEqual([
+      "FOO=1",
+      "PATH=/custom",
     ]);
   });
 });

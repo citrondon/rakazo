@@ -12,6 +12,7 @@ import type {
   PageBrowserResult,
   PortableFile,
   ProcessEvent,
+  SandboxProcess,
   SandboxProvider,
   ScreenRequest,
   ScreenSession,
@@ -29,6 +30,12 @@ import { readBodyCapped, withAbort } from "./web-ssrf.js";
 
 export const MAX_SANDBOX_ERROR_RESPONSE_BYTES = 8 * 1024;
 export const MAX_SANDBOX_SUCCESS_RESPONSE_BYTES = 16 * 1024 * 1024;
+/**
+ * Cap for the long-lived process channel's event stream. The one-shot exec cap stays
+ * 16 MiB; an MCP server answers for hours, so its stream gets a number that does not
+ * cut off a healthy run. Overflow stays a visible exit, never a silent drop.
+ */
+export const MAX_SANDBOX_PROCESS_STREAM_BYTES = 64 * 1024 * 1024;
 export const SCREEN_RELEASE_TIMEOUT_MS = 8_000;
 const SANDBOX_ERROR_RESPONSE_TIMEOUT_MS = 1_000;
 const SANDBOX_SUCCESS_RESPONSE_TIMEOUT_MS = 30_000;
@@ -215,6 +222,75 @@ export class DockerSandboxProvider implements SandboxProvider {
     if (body.stdout) yield { type: "stdout", data: body.stdout };
     if (body.stderr) yield { type: "stderr", data: body.stderr };
     yield { type: "exit", code: body.code };
+  }
+
+  async openProcess(
+    computer: ComputerRef,
+    request: CommandRequest,
+    context: AdapterContext,
+  ): Promise<SandboxProcess> {
+    const res = await fetch(this.url(`/computers/${computer.id}/processes`), {
+      method: "POST",
+      headers: { ...this.headers(context, computer.botId), "content-type": "application/json" },
+      body: JSON.stringify({ argv: request.argv, cwd: dockerCwd(request.cwd), env: request.env }),
+      signal: context.signal,
+    });
+    if (!res.ok) {
+      const detail = await safeBody(res, context.signal);
+      throw new Error(`sandbox process start failed: ${res.status} ${detail}`.trim());
+    }
+    const { processId } = await readSandboxJson<{ processId: string }>(res, context.signal);
+    let eventsOpened = false;
+    return {
+      id: processId,
+      write: async (line) => {
+        const frame = await fetch(
+          this.url(`/computers/${computer.id}/processes/${processId}/stdin`),
+          {
+            method: "POST",
+            headers: {
+              ...this.headers(context, computer.botId),
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ data: line }),
+            signal: context.signal,
+          },
+        );
+        if (!frame.ok) {
+          // A silent swallow would let the transport mistake a dead pipe for a live one.
+          throw new Error(`sandbox process ${processId} rejected a stdin frame: ${frame.status}`);
+        }
+      },
+      events: () => {
+        if (eventsOpened) {
+          throw new Error(`sandbox process ${processId} events may only be opened once`);
+        }
+        eventsOpened = true;
+        const url = this.url(`/computers/${computer.id}/processes/${processId}/events`);
+        const headers = this.headers(context, computer.botId);
+        return (async function* () {
+          const stream = await fetch(url, { headers, signal: context.signal });
+          if (!stream.ok) {
+            const detail = await safeBody(stream, context.signal);
+            throw new Error(
+              `sandbox process ${processId} event stream failed: ${stream.status} ${detail}`.trim(),
+            );
+          }
+          // A long-lived channel gets no short body deadline; only the run's own signal ends it.
+          yield* readNdjsonProcessEvents(stream, context.signal, MAX_SANDBOX_PROCESS_STREAM_BYTES);
+        })();
+      },
+      kill: async () => {
+        const res = await fetch(this.url(`/computers/${computer.id}/processes/${processId}`), {
+          method: "DELETE",
+          headers: this.headers(context, computer.botId),
+          signal: context.signal,
+        });
+        // A gone process is a stopped process; anything else must not look like success.
+        if (res.ok || res.status === 404) return;
+        throw new Error(`sandbox process ${processId} stop failed: ${res.status}`);
+      },
+    };
   }
 
   async pageBrowser(
@@ -573,6 +649,7 @@ export class DockerSandboxProvider implements SandboxProvider {
 async function* readNdjsonProcessEvents(
   res: Response,
   signal: AbortSignal,
+  maxBytes = MAX_SANDBOX_SUCCESS_RESPONSE_BYTES,
 ): AsyncIterable<ProcessEvent> {
   const reader = res.body?.getReader();
   if (!reader) {
