@@ -3,12 +3,12 @@
 ## Current State
 **Repo**: `C:/Users/pasca/Downloads/ssd/rakazo-bot`
 **Baseline**: `f9696aad` (user declined upstream merge)
-**Status**: **ALL TASKS 1-6 COMPLETE** ✅
+**Status**: Tasks 1-6 gebaut; Task 3 (Merge Gate) ist entfernt, siehe Kill list im decision-gate
 
 ## What's Done
 - ✅ Task 1: Bot Role & Capability Types (contracts: `bot-role.ts`, extended `BotSchema`)
 - ✅ Task 2: Delegation Queue with Acceptance Criteria (`packages/delegation-queue/`)
-- ✅ Task 3: Jev Merge Gate (`packages/jev-gate/`)
+- ❌ Task 3: Jev Merge Gate — entfernt; die Gates waren `return true`-Platzhalter und Jev entschied als Blocker. Begründung in `.agents/skills/decision-gate/SKILL.md` (Kill list).
 - ✅ Task 4: Team Template Sync (`packages/team-sync/`)
 - ✅ Task 5: Credential Guard Runtime Hooks (`packages/credential-guard/`, integrated into `executor.ts`)
 - ✅ Task 6: E2E Integration Test (`packages/testkit/src/e2e/multi-bot-e2e.test.ts`)
@@ -16,14 +16,13 @@
 ## Verification Status
 | Component | Tests | Status |
 |-----------|-------|--------|
-| Contracts (`@rakazo/contracts`) | 145 | ✅ PASS |
+| Contracts (`@rakazo/contracts`) | 135 | ✅ PASS |
 | Delegation Queue | 6 | ✅ PASS |
-| Jev Merge Gate | 6 | ✅ PASS |
 | Team Sync | 3 | ✅ PASS |
 | Credential Guard | 8 | ✅ PASS |
-| Multi-Bot E2E | 3 | ✅ PASS |
-| **Total Orchestration Tests** | **171** | ✅ **ALL PASS** |
-| Type Check (`pnpm check`) | 22 packages | ✅ PASS |
+| Multi-Bot E2E | 2 | ✅ PASS |
+| **Total Orchestration Tests** | **154** | ✅ **ALL PASS** |
+| Type Check (`packages/contracts`, `packages/testkit`) | 2 packages | ✅ PASS |
 
 ## Docker Environment Fixed
 - ✅ `.env` encoding fixed — recreated as UTF-8 in project root and `infra/compose/`

@@ -50,6 +50,19 @@ name the candidate, the numbers, and why it died, so nobody rebuilds it.
 Price a candidate before proposing it — per-decision cost, plus the corpus run
 and the L2 run.
 
+## Kill list
+
+- **Jev merge gate** (`packages/jev-gate`, added 2026-10-03, removed 2026-10-04).
+  Question: "should this PR merge?", `choice` over `pass`/`ask`. Numbers: none —
+  no corpus was ever scored, so it never reached L1, and no L2 run existed. It
+  died on eligibility instead: the answer was authority rather than a hint, since
+  a timeout or an HTTP error returned `fail` and blocked the merge, while its
+  three sibling gates were `return true` placeholders. Build merge checks on the
+  CI, review and QA APIs directly.
+- Same vendor family, so treat it as one candidate: the TypeSafe `jev` model and
+  the GLiDE/"fastino" wrapper both expose a `/v1/systemone` choice endpoint. A
+  new name on that endpoint is not new evidence.
+
 ## Known traps
 
 - **Confidence is calibrated across a group, not per answer.** A hard-scored rule

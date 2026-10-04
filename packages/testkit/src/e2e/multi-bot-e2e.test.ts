@@ -11,7 +11,6 @@ import { join } from "node:path";
 import { BotRoleRegistry, DelegationRequestSchema } from "@rakazo/contracts";
 import { CredentialGuard } from "@rakazo/credential-guard";
 import { DelegationQueue } from "@rakazo/delegation-queue";
-import { createJevMergeGate, JevMergeGate } from "@rakazo/jev-gate";
 import { TeamBootstrapper } from "@rakazo/team-sync";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -23,7 +22,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
  * 2. Coordinator creates DelegationRequest with acceptance criteria
  * 3. Queue enqueues, assigns to implementer bot
  * 4. CredentialGuard sanitizes tool args during execution
- * 5. PR opened → JevMergeGate evaluates → merge allowed when all gates pass
  */
 describe("Multi-Bot Orchestration E2E", () => {
   let tempDir: string;
@@ -41,7 +39,7 @@ describe("Multi-Bot Orchestration E2E", () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it("full orchestration flow: bootstrap → delegate → gate → guard", async () => {
+  it("full orchestration flow: bootstrap → delegate → guard", async () => {
     // --- Step 1: Team bootstrap ---
     const templateContent = `
 version: "1.0"
@@ -146,24 +144,6 @@ computerDefaults:
     expect(result.status).toBe("done");
     expect(result.result?.success).toBe(true);
 
-    // --- Step 5: JevMergeGate evaluates ---
-    const gate = createJevMergeGate(); // No API key = jev-decision skipped
-    const gateInput = {
-      prNumber: 42,
-      headSha: "abc123def456",
-      baseSha: "main-branch-sha",
-      requiredGates: [
-        { name: "ci" as const, required: true },
-        { name: "two-family-review" as const, required: true },
-        { name: "qa-verdict" as const, required: true },
-      ],
-    };
-
-    const gateResult = await gate.evaluate(gateInput);
-    expect(gateResult.allowed).toBe(true); // CI, review, QA all pass (placeholders return true)
-    expect(gateResult.results.length).toBe(3);
-    expect(gateResult.results.every((r) => r.status === "pass")).toBe(true);
-
     // Verify the complete flow state
     const finalEntry = queue.get(entry.id);
     expect(finalEntry?.status).toBe("done");
@@ -179,26 +159,5 @@ computerDefaults:
     expect(blocked).toBe(true);
     expect(clean).toContain("[REDACTED:PASSWORD]");
     expect(clean).not.toContain("hunter2");
-  });
-
-  it("orchestration blocks merge when required gate fails", async () => {
-    const gate = createJevMergeGate();
-
-    // Override CI to fail
-    (gate as any).checkCI = (() => Promise.resolve(false)) as any;
-
-    const gateResult = await gate.evaluate({
-      prNumber: 99,
-      headSha: "failed-sha",
-      baseSha: "main",
-      requiredGates: [
-        { name: "ci", required: true },
-        { name: "qa-verdict", required: true },
-      ],
-    });
-
-    expect(gateResult.allowed).toBe(false);
-    const ciResult = gateResult.results.find((r) => r.name === "ci");
-    expect(ciResult?.status).toBe("fail");
   });
 });
