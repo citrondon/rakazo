@@ -373,13 +373,14 @@ Every tool action that reaches the approval gate is recorded in `action_decision
 runs, and the append-only trigger rejects any later update or delete of a row. A row records one
 gate pass per attempt, not the final outcome: an action a human approved and that then executed
 writes another `ask` row on its replay, so rows with `decision = 'ask'` are not all held actions.
-Retries and resumes can record the same action again, so `count(distinct "effectId")` is the
-deduplicated view. A run cancelled mid-gate is the one case with no row, because nothing was
-allowed and nothing ran. `wouldDeny` marks a decision that was allowed only because no approval
+Retries and resumes can record the same action again, so deduplicate with
+`count(distinct coalesce("effectId", "id"))`: a read-only tool records no effect, so its rows have
+nothing to deduplicate against. A run cancelled mid-gate is the one case with no row, because nothing
+was allowed and nothing ran. `wouldDeny` marks a decision that was allowed only because no approval
 rule covered the tool, so counting them is what to look at before turning enforcement on:
 
 ```sql
-select "toolName", count(*) as passes, count(distinct "effectId") as actions
+select "toolName", count(*) as passes, count(distinct coalesce("effectId", "id")) as actions
 from "action_decisions"
 where "wouldDeny"
 group by "toolName"
