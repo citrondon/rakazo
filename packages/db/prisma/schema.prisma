@@ -133,7 +133,6 @@ model ActionApprovalRule {
 model ActionDecision {
   id            String   @id @default(cuid())
   spaceId       String
-  space         Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   botId         String
   threadId      String?
   runId         String?
@@ -224,7 +223,6 @@ model Space {
   messagingIdentities         MessagingIdentity[]
   actionApprovalRules         ActionApprovalRule[]
   actionAutoReviewPreferences ActionAutoReviewPreference[]
-  actionDecisions             ActionDecision[]
   memoryConfig                SpaceMemoryConfig?
   secrets                     Secret[]
   chatGroups                  ChatGroup[]

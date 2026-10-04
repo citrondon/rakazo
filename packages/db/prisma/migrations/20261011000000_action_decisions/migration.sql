@@ -23,11 +23,13 @@ CREATE INDEX "action_decisions_spaceId_createdAt_idx" ON "action_decisions"("spa
 -- CreateIndex
 CREATE INDEX "action_decisions_runId_idx" ON "action_decisions"("runId");
 
--- AddForeignKey
-ALTER TABLE "action_decisions" ADD CONSTRAINT "action_decisions_spaceId_fkey" FOREIGN KEY ("spaceId") REFERENCES "spaces"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- No foreign key on "spaceId" (nor on botId/threadId/runId/effectId): a recorded decision counts
+-- after the space is deleted, and a cascade would delete from this table — which its trigger
+-- forbids, breaking space and account deletion. The audit wins.
 
 -- Decisions are a record of what was allowed. Mutating or removing one would rewrite history,
--- so the database refuses it even if a future caller gets the idea.
+-- so the trigger refuses UPDATE and DELETE of a recorded row even if a future caller gets the
+-- idea. Permission Revokes below are best effort only: they do not bind the table owner.
 CREATE FUNCTION "prevent_action_decision_mutation"() RETURNS trigger
     LANGUAGE plpgsql AS
     $$

@@ -84,4 +84,46 @@ describe.skipIf(!databaseAvailable)("action_decisions append-only", () => {
       await db.pool.end();
     }
   });
+
+  it("lets a space be deleted while its recorded decisions survive", async () => {
+    const db = createDb(process.env.DATABASE_URL!);
+    const prisma = db.prisma;
+    const stamp = `${process.pid}-${Date.now()}`;
+    const organizationId = `action-decisions-organization-space-${stamp}`;
+    const spaceId = `action-decisions-space-space-${stamp}`;
+    // Thrown at the end of the interactive transaction so it never commits.
+    const rollback = Symbol("rollback-fixture-transaction");
+    try {
+      // Space deletion must coexist with the append-only audit: spaceId carries no
+      // foreign key, so deleting the space neither cascades into the table (which
+      // would fire the DELETE trigger and break the lifecycle flow) nor removes
+      // the audit. The decision row outlives the space.
+      await expect(
+        prisma.$transaction(async (tx) => {
+          await tx.organization.create({
+            data: {
+              id: organizationId,
+              name: "action-decisions-fixture",
+              slug: organizationId,
+              createdAt: new Date(),
+            },
+          });
+          await tx.space.create({
+            data: { id: spaceId, organizationId, name: "action-decisions-fixture" },
+          });
+          await tx.actionDecision.create({ data: decisionData(spaceId) });
+          await tx.space.delete({ where: { id: spaceId } });
+          await expect(tx.actionDecision.count({ where: { spaceId } })).resolves.toBe(1);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+
+      await expect(prisma.organization.count({ where: { id: organizationId } })).resolves.toBe(0);
+      await expect(prisma.space.count({ where: { id: spaceId } })).resolves.toBe(0);
+      await expect(prisma.actionDecision.count({ where: { spaceId } })).resolves.toBe(0);
+    } finally {
+      await prisma.$disconnect();
+      await db.pool.end();
+    }
+  });
 });
