@@ -57,6 +57,24 @@ describe("sandbox conformance", () => {
     await desktop.destroy(e, ctx);
   });
 
+  it("requires a declared process channel to satisfy the same event contract as execute", async () => {
+    const fake = new FakeSandboxProvider();
+    const computer = await provisionPrepared(
+      fake,
+      { botId: "process", homePath: "/tmp/process" },
+      ctx,
+    );
+    const provider: SandboxProvider = fake;
+    if (!provider.openProcess) {
+      throw new Error("provider must expose openProcess to pass conformance");
+    }
+    const processHandle = await provider.openProcess(computer, { argv: ["node", "-e", "0"] }, ctx);
+    const seen: ProcessEvent[] = [];
+    for await (const event of processHandle.events()) seen.push(event);
+    expect(seen.at(-1)).toEqual({ type: "exit", code: 0 });
+    await fake.destroy(computer, ctx);
+  });
+
   it("offers the same observation, action, and workspace contract across providers", async () => {
     const providers: SandboxProvider[] = [
       new FakeSandboxProvider(),

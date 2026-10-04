@@ -53,6 +53,7 @@ import type {
   PortableFile,
   ProcessEvent,
   SandboxCapabilities,
+  SandboxProcess,
   ScreenRequest,
   ScreenSession,
   SecretRecord,
@@ -105,6 +106,12 @@ export interface SandboxProvider {
     request: CommandRequest,
     context: AdapterContext,
   ): AsyncIterable<ProcessEvent>;
+  /** Long-lived full-duplex process in the computer; stdin through write(), output through events(). */
+  openProcess?(
+    computer: ComputerRef,
+    request: CommandRequest,
+    context: AdapterContext,
+  ): Promise<SandboxProcess>;
   inspectBackgroundWork?(
     computer: ComputerRef,
     markerId: string,

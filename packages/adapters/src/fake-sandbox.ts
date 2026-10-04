@@ -8,6 +8,7 @@ import type {
   ControlLeaseRef,
   PortableFile,
   ProcessEvent,
+  SandboxProcess,
   SandboxProvider,
   ScreenRequest,
   ScreenSession,
@@ -108,6 +109,23 @@ export class FakeSandboxProvider implements SandboxProvider {
       yield { type: "stdout", data: `ran ${cmd}\n` };
     }
     yield { type: "exit", code: 0 };
+  }
+
+  async openProcess(
+    computer: ComputerRef,
+    request: CommandRequest,
+    _context: AdapterContext,
+  ): Promise<SandboxProcess> {
+    this.requiredBox(computer);
+    return {
+      id: `fake-process-${computer.id}-${request.argv.join("-")}`,
+      write: async () => undefined,
+      events: async function* () {
+        yield { type: "stdout", data: "ready\n" };
+        yield { type: "exit", code: 0 };
+      },
+      kill: async () => undefined,
+    };
   }
 
   async inspectBackgroundWork(
