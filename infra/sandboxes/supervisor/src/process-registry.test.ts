@@ -62,7 +62,7 @@ describe("process registry", () => {
   });
 
   it("lets a displaced reader go away without dropping the new one", async () => {
-    // Der Fall, den openbots viewer.ts:202-213 mit Identitätsvergleich löst.
+    // The case openbots viewer.ts:202-213 resolves with an identity comparison.
     const registry = createProcessRegistry();
     const handle = handleExit(0);
     registry.reserve({ id: "swap", computerId: "c1", botId: "b1" }).attach(handle as never);
@@ -133,7 +133,43 @@ describe("process registry", () => {
     registry.get("torn")!.attachReader("reader-a", (e) => events.push(e));
     handle.fail();
     await new Promise((resolve) => setImmediate(resolve));
+    // A torn stream is not an exit: the child is likely still alive, so it is killed before the
+    // entry is forgotten, or the process would run on until the ten minute suspension caps it.
+    expect(handle.kill).toHaveBeenCalledTimes(1);
     expect(registry.get("torn")).toBeUndefined();
     expect(events).toEqual([{ type: "stderr", data: "process stream lost\n" }]);
+  });
+
+  it("swallows a kill failure on the torn-stream path instead of leaving an unhandled rejection", async () => {
+    // The best-effort kill here is fire-and-forget; a rejecting Docker kill must not reach the host.
+    const registry = createProcessRegistry();
+    const handle = handleExit(0);
+    handle.kill = vi.fn(async () => {
+      throw new Error("docker api down");
+    });
+    registry.reserve({ id: "torn-kill", computerId: "c1", botId: "b1" }).attach(handle as never);
+    handle.fail();
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(handle.kill).toHaveBeenCalledTimes(1);
+    expect(registry.get("torn-kill")).toBeUndefined();
+  });
+
+  it("catches and logs a late-attach kill rejection instead of crashing the host", async () => {
+    // runKill is a Docker call and can reject; an uncaught fire-and-forget reject would take the
+    // supervisor down under --unhandled-rejections=throw, so it is caught and logged best-effort.
+    const warnings: string[] = [];
+    const registry = createProcessRegistry({
+      logger: { warn: (message) => warnings.push(message) },
+    });
+    const reserved = registry.reserve({ id: "late", computerId: "c1", botId: "b1" });
+    await registry.release("late", "operator", "closed during start");
+    const handle = handleExit(0);
+    handle.kill = vi.fn(async () => {
+      throw new Error("docker api down");
+    });
+    expect(reserved.attach(handle as never)).toBeUndefined();
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(handle.kill).toHaveBeenCalledTimes(1);
+    expect(warnings).toEqual(["supervisor process kill failed after late attach"]);
   });
 });

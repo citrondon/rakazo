@@ -1,3 +1,4 @@
+import type { Logger } from "@rakazo/logging";
 import type { ContainerProcessHandle } from "./container-process.js";
 
 /** Idle window per long-lived process, comfortably under the ten minute computer suspension. */
@@ -58,9 +59,16 @@ interface Entry {
   lastActivity: number;
 }
 
-export function createProcessRegistry(options: { idleMs?: number } = {}): ProcessRegistry {
+export function createProcessRegistry(
+  options: { idleMs?: number; logger?: Pick<Logger, "warn"> } = {},
+): ProcessRegistry {
   const idleMs = options.idleMs ?? MCP_PROCESS_IDLE_MS;
   const entries = new Map<string, Entry>();
+  // A fire-and-forget kill can reject over the Docker API; the supervisor runs with
+  // --unhandled-rejections=throw, so a swallowed error still needs to reach the host log.
+  const warn = (message: string, error: unknown) => {
+    options.logger?.warn(message, { error });
+  };
 
   const forget = (entry: Entry) => {
     if (entries.get(entry.id) === entry) entries.delete(entry.id);
@@ -111,8 +119,12 @@ export function createProcessRegistry(options: { idleMs?: number } = {}): Proces
         attach(handle) {
           if (entry.released || entries.get(input.id) !== entry) {
             // The reservation went away during the start: the process that just came up has no
-            // owner, so it is terminated instead of being handed out as if it were alive.
-            void handle.kill();
+            // owner, so it is terminated instead of being handed out as if it were alive. The kill
+            // is a Docker call that can reject, and this is fire-and-forget, so it is caught and
+            // logged rather than left to bring the supervisor down on an unhandled rejection.
+            void handle.kill().catch((error: unknown) => {
+              warn("supervisor process kill failed after late attach", error);
+            });
             return undefined;
           }
           entry.handle = handle;
@@ -125,12 +137,17 @@ export function createProcessRegistry(options: { idleMs?: number } = {}): Proces
           });
           void handle.done.then(
             (exit) => {
+              // Resolved exit: the child is gone, so the entry is dropped without a kill.
               entry.lastActivity = Date.now();
               entry.onEvent?.({ type: "exit", code: exit.code });
               forget(entry);
             },
             // A torn stream never yields an exit code; the reader still has to stop waiting.
             () => {
+              // Rejecting differs from resolving: only the stream tore, so the child is likely
+              // still alive and killable over the Docker API. Best-effort kill it before forgetting,
+              // or it keeps running in the sandbox until the ten minute suspension caps it.
+              void entry.handle?.kill().catch(() => {});
               forget(entry);
               entry.onEvent?.({ type: "stderr", data: "process stream lost\n" });
             },
