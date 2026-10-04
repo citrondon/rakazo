@@ -8,6 +8,7 @@ import type {
   ControlLeaseRef,
   PortableFile,
   ProcessEvent,
+  SandboxProcess,
   SandboxProvider,
   ScreenRequest,
   ScreenSession,
@@ -23,6 +24,7 @@ import {
   workspacePath,
 } from "./computer-support.js";
 import { FakeTerminalGateway } from "./fake-terminal.js";
+import { fakeSandboxProcess } from "./sandbox-process-fake.js";
 
 export interface FakeBox {
   ref: ComputerRef;
@@ -108,6 +110,21 @@ export class FakeSandboxProvider implements SandboxProvider {
       yield { type: "stdout", data: `ran ${cmd}\n` };
     }
     yield { type: "exit", code: 0 };
+  }
+
+  async openProcess(
+    computer: ComputerRef,
+    _request: CommandRequest,
+    _context: AdapterContext,
+  ): Promise<SandboxProcess> {
+    this.requiredBox(computer);
+    // One source of truth for a process fake: the shared controllable handle,
+    // answering like a short-lived stdio server (stdout, then exit) and recording
+    // writes instead of discarding them.
+    const fake = fakeSandboxProcess();
+    fake.emitStdout("ready\n");
+    fake.emitExit(0);
+    return fake.handle;
   }
 
   async inspectBackgroundWork(

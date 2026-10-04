@@ -95,6 +95,20 @@ export type ProcessEvent =
   | { type: "stderr"; data: string }
   | { type: "exit"; code: number };
 
+/**
+ * A long-lived full-duplex process owned by a computer. `write` resolves once
+ * the provider has accepted the frame; `events` yields output in order and ends
+ * with `exit`, and may only be iterated once. `kill` tears the process down.
+ */
+export interface SandboxProcess {
+  readonly id: string;
+  /** One JSON-RPC frame including its newline. Resolves when the provider took the frame. */
+  write(line: string): Promise<void>;
+  /** stdout/stderr/exit in order; ends with exit. May only be iterated once. */
+  events(): AsyncIterable<ProcessEvent>;
+  kill(): Promise<void>;
+}
+
 export interface ScreenRequest {
   view: "stream" | "snapshot";
   /** Request a separately authorized control stream instead of the read-only viewer. */

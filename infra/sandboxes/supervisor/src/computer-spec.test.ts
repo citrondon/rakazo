@@ -242,6 +242,22 @@ describe("graphical computer spec", () => {
     expect(dockerfile).toMatch(/gh --version/);
   });
 
+  it("ships a pinned node with a checksum, like uv and gh", () => {
+    const root = path.resolve(import.meta.dirname, "../../computer");
+    const dockerfile = readFileSync(path.join(root, "Dockerfile"), "utf8");
+    expect(dockerfile).toMatch(/ARG NODE_VERSION=\d+\.\d+\.\d+/);
+    expect(dockerfile).toMatch(/node-v\$\{NODE_VERSION\}-linux-\$\{node_arch\}\.tar\.xz/);
+    // Beide Architekturen müssen eine eigene sha256 haben — ein Fall ohne Prüfung ist
+    // kein Pin, sondern ein Download ins Blaue.
+    const shaLines = dockerfile.match(/node_sha256=[0-9a-f]{64}/g) ?? [];
+    expect(shaLines).toHaveLength(2);
+    expect(dockerfile).toMatch(/amd64\) node_arch=x64; node_sha256=[0-9a-f]{64}/);
+    expect(dockerfile).toMatch(/arm64\) node_arch=arm64; node_sha256=[0-9a-f]{64}/);
+    expect(dockerfile).toMatch(/sha256sum -c/);
+    expect(dockerfile).toMatch(/node --version/);
+    expect(dockerfile).toMatch(/npx --version/);
+  });
+
   it.skipIf(process.platform === "win32")(
     "delivers desktop menu exec arguments intact through /bin/sh",
     () => {

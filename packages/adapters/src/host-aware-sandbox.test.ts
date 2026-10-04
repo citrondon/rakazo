@@ -70,6 +70,24 @@ describe("host-aware sandbox", () => {
     expect(sandbox.pageBrowser).toBeUndefined();
   });
 
+  it("refuses the process channel for a desktop computer instead of falling back to the host", async () => {
+    // The security statement of the wrapper: a desktop computer has no duplex channel, and the
+    // connector must see a rejection — never a silent hand-off to the host provider.
+    const isolated = new FakeSandboxProvider();
+    const host = new DesktopSandboxProvider();
+    const sandbox = new HostAwareSandbox(isolated, host, async () => false);
+    expect(typeof sandbox.openProcess).toBe("function");
+    const computer: ComputerRef = {
+      id: "computer",
+      providerRef: "computer",
+      botId: "home",
+      kind: "desktop",
+    };
+    await expect(
+      sandbox.openProcess!(computer, { argv: ["node", "server.js"] }, ctx),
+    ).rejects.toThrow("process channel is unavailable on this computer");
+  });
+
   it("lets this-mac cwd run under a host root", async () => {
     const desktop = new DesktopSandboxProvider({ hostRoots: [hostRoot] });
     const computer = await desktop.provision({ botId: "host", homePath: "/tmp/host-home" }, ctx);

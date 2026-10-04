@@ -8,6 +8,7 @@ import { DaytonaSandboxEmulator } from "./daytona-emulator.js";
 import { DesktopSandboxProvider } from "./desktop-sandbox.js";
 import { ManagedSandboxEmulator } from "./e2b-emulator.js";
 import { FakeSandboxProvider } from "./fake-sandbox.js";
+import { HostAwareSandbox } from "./host-aware-sandbox.js";
 import { provisionPrepared } from "./sandbox-test-support.js";
 
 const ctx = {
@@ -55,6 +56,50 @@ describe("sandbox conformance", () => {
     await daytona.destroy(c, ctx);
     await box.destroy(d, ctx);
     await desktop.destroy(e, ctx);
+  });
+
+  it("requires a declared process channel to satisfy the same event contract as execute", async () => {
+    // supportsProcess per entry, so one table answers both ways: a provider that declares
+    // openProcess must honor the event contract, and one that does not (desktop) must be
+    // visibly absent — not a silent fallback to the host path.
+    const entries: Array<{ provider: SandboxProvider; supportsProcess: boolean }> = [
+      { provider: new FakeSandboxProvider(), supportsProcess: true },
+      {
+        provider: new HostAwareSandbox(
+          new FakeSandboxProvider(),
+          new DesktopSandboxProvider(),
+          async () => false,
+        ),
+        supportsProcess: true,
+      },
+      { provider: new ManagedSandboxEmulator(), supportsProcess: true },
+      { provider: new DaytonaSandboxEmulator(), supportsProcess: true },
+      { provider: new BoxSandboxEmulator(), supportsProcess: true },
+      { provider: new DesktopSandboxProvider(), supportsProcess: false },
+    ];
+    for (const [index, entry] of entries.entries()) {
+      const computer = await provisionPrepared(
+        entry.provider,
+        { botId: `process-${index}`, homePath: `/tmp/process-${index}` },
+        ctx,
+      );
+      if (!entry.supportsProcess) {
+        expect(entry.provider.openProcess).toBeUndefined();
+      } else {
+        if (!entry.provider.openProcess) {
+          throw new Error("provider must expose openProcess to pass conformance");
+        }
+        const processHandle = await entry.provider.openProcess(
+          computer,
+          { argv: ["node", "-e", "0"] },
+          ctx,
+        );
+        const seen: ProcessEvent[] = [];
+        for await (const event of processHandle.events()) seen.push(event);
+        expect(seen.at(-1)).toEqual({ type: "exit", code: 0 });
+      }
+      await entry.provider.destroy(computer, ctx);
+    }
   });
 
   it("offers the same observation, action, and workspace contract across providers", async () => {

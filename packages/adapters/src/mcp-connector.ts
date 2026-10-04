@@ -1,9 +1,12 @@
 import type {
   AdapterContext,
+  CommandRequest,
+  ComputerRef,
   ConnectorCall,
   ConnectorEvent,
   ConnectorProvider,
   ConnectorTool,
+  SandboxProcess,
 } from "@rakazo/adapter-kit";
 import { isLocalMcpHost } from "@rakazo/contracts";
 import type { McpServer, PrismaClient, ThreadEvents } from "@rakazo/db";
@@ -23,13 +26,26 @@ import {
 } from "./lazy-tool-catalog.js";
 import type { McpOAuthBroker, OAuthMaterial } from "./mcp-oauth.js";
 import { oauthMaterialSecrets } from "./mcp-oauth.js";
-import { McpSession } from "./mcp-transport.js";
+import { McpSession, sandboxStdioArgv } from "./mcp-transport.js";
 import { actorMayUsePrivateEndpoint } from "./private-endpoint.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";
 import type { EncryptedSecretStore } from "./secrets.js";
 
 type SessionEntry = { session: McpSession; revision: number; material: OAuthMaterial };
 type PendingSession = { revision: number; promise: Promise<McpSession> };
+type SandboxProcessEntry = { process: SandboxProcess; lastActivity: number };
+
+/**
+ * Idle window for a stdio process started in the bot's computer. This is the same number
+ * as `MCP_PROCESS_IDLE_MS` in the supervisor (infra/sandboxes/supervisor/src/process-registry.ts):
+ * two systems, one number. It is repeated rather than imported because `@rakazo/adapters`
+ * must not depend on the infra package — keep the two values in lockstep.
+ */
+export const SANDBOX_STDIO_PROCESS_IDLE_MS = 240_000;
+
+function resolveServerArgs(server: McpServer): string[] {
+  return Array.isArray(server.args) ? server.args.map(String) : [];
+}
 
 /** Runtime MCP connector. Authorization is re-checked against the bot assignment on every call. */
 /**
@@ -85,6 +101,11 @@ function reportAllowlistDrift(
 export class McpConnector implements ConnectorProvider {
   private readonly sessions = new Map<string, SessionEntry>();
   private readonly connecting = new Map<string, PendingSession>();
+  // One long-lived stdio process per (bot, server): the handle cache is keyed by the
+  // SAME session key, because both maps describe the same ownership — a stdio session
+  // already scopes to a botId, and that bot owns one home mount. A second key here
+  // would be a second truth about the same identity.
+  private readonly sandboxProcesses = new Map<string, SandboxProcessEntry>();
   // Discovery runs more than once per run: once up front, then again on every lazy
   // catalog access. Each attempt needs its own executionId.
   private discoverySeq = 0;
@@ -103,6 +124,18 @@ export class McpConnector implements ConnectorProvider {
       /** Audit sink for failed discovery. Without it the log line stays the only trace. */
       events?: Pick<ThreadEvents, "append">;
       allowPrivateEndpoint?: boolean;
+      /** Deployment switch: run stdio servers in the bot's computer instead of this process. */
+      stdioInSandbox?: boolean;
+      /** Starts the server process on that bot's computer. */
+      openStdioProcess?: (
+        computer: ComputerRef,
+        request: CommandRequest,
+        context: AdapterContext,
+      ) => Promise<SandboxProcess>;
+      /** The bot's own computer, provisioned through the existing lifecycle path. */
+      resolveStdioComputer?: (context: AdapterContext) => Promise<ComputerRef>;
+      /** Host `DATA_DIR` root, used only to *reject* arguments that point into it. */
+      hostDataDir?: string;
     } = {},
     private readonly oauth?: McpOAuthBroker,
   ) {}
@@ -309,6 +342,10 @@ export class McpConnector implements ConnectorProvider {
     await Promise.all([...this.sessions.values()].map(({ session }) => session.close()));
     this.sessions.clear();
     this.connecting.clear();
+    // The stdio session and its process share one key: dropping one always drops the
+    // other, so a close cannot leave a computer process running behind a cleared session.
+    const keys = [...this.sandboxProcesses.keys()];
+    await Promise.all(keys.map((key) => this.releaseProcess(key, "connector closed")));
   }
 
   private sessionKey(server: McpServer, context: AdapterContext): string {
@@ -321,15 +358,29 @@ export class McpConnector implements ConnectorProvider {
 
   private async evict(sessionKey: string): Promise<void> {
     const entry = this.sessions.get(sessionKey);
-    if (!entry) return;
-    this.sessions.delete(sessionKey);
-    await entry.session.close();
+    if (entry) {
+      this.sessions.delete(sessionKey);
+      await entry.session.close();
+    }
+    // A session with no cached process releases nothing extra; a stdio-in-sandbox
+    // session must never leave its computer process running.
+    await this.releaseProcess(sessionKey, "session evicted");
   }
 
   private async sessionFor(server: McpServer, context: AdapterContext): Promise<McpSession> {
     const sessionKey = this.sessionKey(server, context);
     const existing = this.sessions.get(sessionKey);
-    if (existing && existing.revision === server.revision) return existing.session;
+    if (existing && existing.revision === server.revision) {
+      // A sandboxed stdio process that has gone idle is reaped, not reused: the entry
+      // was refreshed on each connect, so this only fires when nothing connected within
+      // the window. Evicting tears down both the session and its process, then reconnects.
+      if (this.sandboxProcessIdle(sessionKey)) {
+        await this.evict(sessionKey);
+        return this.sessionFor(server, context);
+      }
+      this.stampSandboxProcess(sessionKey);
+      return existing.session;
+    }
     const pending = this.connecting.get(sessionKey);
     if (pending?.revision === server.revision) return pending.promise;
     if (pending) {
@@ -348,6 +399,86 @@ export class McpConnector implements ConnectorProvider {
       return await promise;
     } finally {
       if (this.connecting.get(sessionKey)?.promise === promise) this.connecting.delete(sessionKey);
+    }
+  }
+
+  private stampSandboxProcess(sessionKey: string): void {
+    const entry = this.sandboxProcesses.get(sessionKey);
+    if (entry) entry.lastActivity = Date.now();
+  }
+
+  private sandboxProcessIdle(sessionKey: string): boolean {
+    const entry = this.sandboxProcesses.get(sessionKey);
+    if (!entry) return false;
+    return Date.now() - entry.lastActivity > SANDBOX_STDIO_PROCESS_IDLE_MS;
+  }
+
+  /**
+   * Removes the cached handle for a session key and stops its process. The protocol is
+   * already gone by the time we reap here, so a failed kill never changes the session
+   * decision; it only surfaces in the host log. The `410`/ended answer from the supervisor
+   * is a "this process is gone" signal, not something to retry — kill() treats `404` as
+   * success, and any other rejection is logged and swallowed for the same reason.
+   */
+  private async releaseProcess(sessionKey: string, reason: string): Promise<void> {
+    const entry = this.sandboxProcesses.get(sessionKey);
+    if (!entry) return;
+    if (this.sandboxProcesses.get(sessionKey) === entry) this.sandboxProcesses.delete(sessionKey);
+    try {
+      await entry.process.kill();
+    } catch (error) {
+      getLogger().warn(
+        `mcp sandbox stdio process kill failed (${reason}): ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  /**
+   * Runs one stdio MCP server as a process inside the bot's own computer. Exactly one
+   * process per (bot, server), reused while fresh and reaped once idle. The argv comes
+   * from the shared allowlist gate; the connector reads no `process.env`, so the host
+   * data root is supplied by the composition (Task 8) and used only to reject escaping
+   * arguments. Containment of this path covers network and credentials, not the
+   * filesystem: the computer shares the bot's home mount.
+   */
+  private async connectSandboxStdio(
+    session: McpSession,
+    server: McpServer,
+    context: AdapterContext,
+    env: Record<string, string>,
+  ): Promise<void> {
+    const args = resolveServerArgs(server);
+    const argv = sandboxStdioArgv(
+      String(server.command ?? ""),
+      args,
+      this.options.allowedCommands ?? [],
+      this.options.hostDataDir,
+    );
+    if (!this.options.resolveStdioComputer || !this.options.openStdioProcess) {
+      // A deployment flip without the composition wired is a misconfiguration, not a
+      // user-facing condition: name the computer and fail visibly.
+      throw new Error(
+        "MCP stdio runs in the bot's computer, but this deployment gave no computer resolver or process opener",
+      );
+    }
+    const sessionKey = this.sessionKey(server, context);
+    const cached = this.sandboxProcesses.get(sessionKey);
+    const reused = cached !== undefined;
+    const handle =
+      cached?.process ??
+      (await this.options.openStdioProcess(
+        await this.options.resolveStdioComputer(context),
+        { argv, env, cwd: undefined },
+        context,
+      ));
+    this.sandboxProcesses.set(sessionKey, { process: handle, lastActivity: Date.now() });
+    try {
+      await session.connectSandboxStdio(handle, { signal: context.signal });
+    } catch (error) {
+      // A brand-new process that never completed the handshake has no session to reap it,
+      // so drop it here; a reused handle belongs to an existing session's lifecycle.
+      if (!reused) await this.releaseProcess(sessionKey, "sandbox stdio connect failed");
+      throw error;
     }
   }
 
@@ -372,22 +503,26 @@ export class McpConnector implements ConnectorProvider {
         ? (JSON.parse(this.secrets.load(secret.ciphertext, secret.id)) as OAuthMaterial)
         : {};
       const loaded = { material, ...(secret ? { secretId: secret.id } : {}) };
-      const args = Array.isArray(server.args) ? server.args.map(String) : [];
+      const args = resolveServerArgs(server);
       const env = { ...(material.env ?? {}) };
       if (server.transport === "stdio") {
-        if (!this.options.stdioEnabled) {
-          throw new Error(
-            "MCP stdio servers are disabled on this deployment (MCP_STDIO_ENABLED=true)",
-          );
+        if (this.options.stdioInSandbox) {
+          await this.connectSandboxStdio(session, server, context, env);
+        } else {
+          if (!this.options.stdioEnabled) {
+            throw new Error(
+              "MCP stdio servers are disabled on this deployment (MCP_STDIO_ENABLED=true)",
+            );
+          }
+          await session.connectStdio({
+            command: String(server.command ?? ""),
+            args,
+            env,
+            allowedCommands: this.options.allowedCommands ?? [],
+            homePath: context.botId ? this.options.resolveStdioHome?.(context.botId) : undefined,
+            signal: context.signal,
+          });
         }
-        await session.connectStdio({
-          command: String(server.command ?? ""),
-          args,
-          env,
-          allowedCommands: this.options.allowedCommands ?? [],
-          homePath: context.botId ? this.options.resolveStdioHome?.(context.botId) : undefined,
-          signal: context.signal,
-        });
       } else {
         if (!server.endpoint) throw new Error("MCP endpoint is required");
         const endpoint = new URL(server.endpoint);

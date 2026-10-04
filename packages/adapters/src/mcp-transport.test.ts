@@ -6,10 +6,12 @@ import { StoredMcpOAuthProvider } from "./mcp-oauth.js";
 import {
   expandStdioHomeToken,
   McpSession,
+  sandboxStdioArgv,
   secureFetch,
   validateUrl,
   withEndpointOriginFallback,
 } from "./mcp-transport.js";
+import { fakeSandboxProcess } from "./sandbox-process-fake.js";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -65,6 +67,32 @@ describe("MCP transport seam", () => {
     expect(expandStdioHomeToken(["-y", "mcp-fetch-server"])).toEqual(["-y", "mcp-fetch-server"]);
     // No home root: fail loudly instead of starting a server pointed at the literal token.
     expect(() => expandStdioHomeToken(["{home}"])).toThrow("no agent home root");
+  });
+
+  it("builds sandbox argv from the sandbox home root, never the host one", () => {
+    expect(
+      sandboxStdioArgv("npx", ["-y", "pkg@1", "--state-dir", "{home}/mcp"], ["npx"], "/host/data"),
+    ).toEqual(["npx", "-y", "pkg@1", "--state-dir", "/home/rakazo/mcp"]);
+    // Derselbe Allowlist-Text wie der Host-Pfad: eine zweite Formulierung wäre eine zweite Wahrheit.
+    expect(() => sandboxStdioArgv("bash", [], ["npx"], "/host/data")).toThrow(
+      'MCP stdio command "bash" is not in the configured allowlist (MCP_STDIO_ALLOWED_COMMANDS)',
+    );
+    // ein Host-Pfad im Argument wird abgelehnt, nicht übersetzt (Spec 4.4)
+    expect(() =>
+      sandboxStdioArgv("npx", ["--dir", "/host/data/homes/bot-1"], ["npx"], "/host/data"),
+    ).toThrow("/host/data");
+    // ohne bekanntes Host-Root bleibt ein absoluter Pfad unübersetzt, aber erlaubt
+    expect(sandboxStdioArgv("npx", ["/etc/passwd"], ["npx"])).toEqual(["npx", "/etc/passwd"]);
+  });
+
+  it("refuses a second connect while the sandbox handshake is still in flight", async () => {
+    const session = new McpSession();
+    const first = session.connectSandboxStdio(fakeSandboxProcess().handle, { timeoutMs: 50 });
+    await expect(session.connectSandboxStdio(fakeSandboxProcess().handle)).rejects.toThrow(
+      "already connected or connecting",
+    );
+    await expect(first).rejects.toThrow(); // der Fake antwortet nie → Timeout, kein zweiter Aufbau
+    await session.close();
   });
 
   it("rejects remote endpoints that resolve to a private address", async () => {

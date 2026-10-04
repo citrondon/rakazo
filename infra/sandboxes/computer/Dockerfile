@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     libnss-wrapper \
     ca-certificates \
+    xz-utils \
     procps \
     bash \
     chromium \
@@ -85,6 +86,26 @@ RUN set -eux; \
   tar -xzf "$archive" -C /usr/local/bin --strip-components=2 "gh_${GH_VERSION}_linux_${gh_arch}/bin/gh"; \
   rm -f "$archive"; \
   gh --version
+# stdio-MCP-Presets starten mit npx; bookworm-slim bringt kein Node mit.
+# Pinned und checksummiert wie uv und gh.
+ARG NODE_VERSION=22.20.0
+RUN set -eux; \
+  case "$TARGETARCH" in \
+    amd64) node_arch=x64; node_sha256=00bbd05e306ea68b6e13e17360d0e2f680b493ef95f2fea1c4296ff7437530bc ;; \
+    arm64) node_arch=arm64; node_sha256=06907b9c088ce62305bc1530e5c1ae1510245114645768f7750c349c5b6fe667 ;; \
+    *) echo "unsupported TARGETARCH: $TARGETARCH" >&2; exit 1 ;; \
+  esac; \
+  archive="$(mktemp)"; \
+  curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${node_arch}.tar.xz" -o "$archive"; \
+  echo "$node_sha256  $archive" | sha256sum -c -; \
+  tar -xJf "$archive" -C /usr/local --strip-components=1 \
+    "node-v${NODE_VERSION}-linux-${node_arch}/bin" \
+    "node-v${NODE_VERSION}-linux-${node_arch}/lib" \
+    "node-v${NODE_VERSION}-linux-${node_arch}/include"; \
+  rm -f "$archive"; \
+  node --version; \
+  npm --version; \
+  npx --version
 ENV DISPLAY=:1
 ENV HOME=/home/rakazo
 # Keep UTF-8 explicit (an empty LANG broke non-ASCII file handling in the

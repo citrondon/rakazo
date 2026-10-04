@@ -4,10 +4,40 @@ export function combineSignals(...signals: Array<AbortSignal | undefined>): Abor
   return AbortSignal.any(signals.filter((signal): signal is AbortSignal => Boolean(signal)));
 }
 
+const USER_ERROR_MAP: Array<{ pattern: RegExp; message: string }> = [
+  {
+    pattern: /stdio MCP in the sandbox needs a bot identity/,
+    message:
+      "MCP stdio: bot has no identity (botId missing). Assign the bot to an agent computer first.",
+  },
+  {
+    pattern: /Bot has no computer/,
+    message:
+      "This bot has no computer assigned — configure a computer for the bot before using MCP stdio.",
+  },
+  {
+    pattern: /this computer provider cannot host a stdio process/,
+    message: "This computer provider cannot host a stdio process — use E2B or Docker.",
+  },
+  {
+    pattern:
+      /MCP stdio runs in the bot's computer, but this deployment gave no computer resolver or process opener/,
+    message:
+      "MCP stdio is enabled but this deployment has no computer resolver or process opener wired up.",
+  },
+];
+
+function mapConnectorUserError(message: string): string {
+  for (const { pattern, message: mapped } of USER_ERROR_MAP) {
+    if (pattern.test(message)) return mapped;
+  }
+  return message;
+}
+
 export function sanitizeConnectorError(error: unknown, secrets: string[] = []): string {
   const message = error instanceof Error ? error.message : String(error);
   return redactSecrets(
-    message
+    mapConnectorUserError(message)
       .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
       .replace(/trg_(?:live|test)_[A-Za-z0-9_-]+/g, "[redacted]"),
     secrets,
