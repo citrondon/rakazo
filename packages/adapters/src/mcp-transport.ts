@@ -8,6 +8,7 @@ import {
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { CallToolResult, ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
+import type { SandboxProcess } from "@rakazo/adapter-kit";
 import { isLocalMcpHost } from "@rakazo/contracts";
 import { describeMcpFailure, MCP_HTTPS_HINT } from "./connector-failures.js";
 import { combineSignals } from "./connector-safety.js";
@@ -16,6 +17,7 @@ import {
   type RemoteTransportDependencies,
   type SafeRemoteFetch,
 } from "./remote-mcp.js";
+import { SandboxStdioTransport } from "./sandbox-stdio-transport.js";
 
 export type McpRemoteTransport = "streamable-http" | "sse";
 
@@ -248,13 +250,47 @@ export function expandStdioHomeToken(args: readonly string[], homePath?: string)
   });
 }
 
-function stdioParams(options: McpStdioOptions): StdioServerParameters {
-  const command = options.command.trim();
-  if (!command || !options.allowedCommands.includes(command)) {
+/** The bot computer's home root; `{home}` expands here on the sandbox path (Spec 4.4). */
+export const SANDBOX_STDIO_HOME_ROOT = "/home/rakazo";
+
+/**
+ * Argv for an MCP stdio server started inside the computer. Same allowlist text as
+ * the host path — one phrasing, one truth. `{home}` expands to the container home;
+ * an argument under the host DATA_DIR is rejected, not translated, so a host path
+ * can never silently become a container path.
+ */
+export function sandboxStdioArgv(
+  command: string,
+  args: readonly string[],
+  allowedCommands: readonly string[],
+  hostDataDir?: string,
+): string[] {
+  const allowed = requireStdioCommand(command, allowedCommands);
+  const expanded = expandStdioHomeToken(args, SANDBOX_STDIO_HOME_ROOT);
+  if (hostDataDir) {
+    for (const arg of expanded) {
+      if (arg.startsWith(hostDataDir)) {
+        throw new Error(
+          `MCP sandbox stdio argument must not use the host data directory (${hostDataDir}); use the ${MCP_STDIO_HOME_TOKEN} token instead`,
+        );
+      }
+    }
+  }
+  return [allowed, ...expanded];
+}
+
+function requireStdioCommand(command: string, allowedCommands: readonly string[]): string {
+  const trimmed = command.trim();
+  if (!trimmed || !allowedCommands.includes(trimmed)) {
     throw new Error(
-      `MCP stdio command "${command || "(empty)"}" is not in the configured allowlist (MCP_STDIO_ALLOWED_COMMANDS)`,
+      `MCP stdio command "${trimmed || "(empty)"}" is not in the configured allowlist (MCP_STDIO_ALLOWED_COMMANDS)`,
     );
   }
+  return trimmed;
+}
+
+function stdioParams(options: McpStdioOptions): StdioServerParameters {
+  const command = requireStdioCommand(options.command, options.allowedCommands);
   const env: Record<string, string> = {};
   for (const [key, value] of Object.entries(options.env ?? {})) {
     if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) env[key] = value;
@@ -395,6 +431,38 @@ export class McpSession {
       });
     await this.connecting.catch((error) => {
       throw mcpConnectError(error, { host: command });
+    });
+  }
+
+  /**
+   * Connects over a process already running in the bot's computer. The caller owns
+   * process creation (one process per bot and server) and the allowlist through
+   * `sandboxStdioArgv`; this seam only speaks MCP over the handle. Containment of
+   * this path covers network and credentials, not the filesystem: the computer
+   * shares the bot's home mount.
+   */
+  async connectSandboxStdio(
+    process: SandboxProcess,
+    options?: { signal?: AbortSignal; timeoutMs?: number },
+  ): Promise<void> {
+    if (this.connected || this.connecting)
+      throw new Error("MCP session is already connected or connecting");
+    const transport = new SandboxStdioTransport(process);
+    this.transport = transport;
+    const signal = combineSignals(
+      options?.signal,
+      AbortSignal.timeout(options?.timeoutMs ?? 15_000),
+    );
+    this.connecting = this.client
+      .connect(transport, { signal, timeout: options?.timeoutMs ?? 15_000 })
+      .then(() => {
+        this.connected = true;
+      })
+      .finally(() => {
+        this.connecting = undefined;
+      });
+    await this.connecting.catch((error) => {
+      throw mcpConnectError(error, { host: "sandbox stdio" });
     });
   }
 
