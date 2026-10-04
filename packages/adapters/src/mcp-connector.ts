@@ -43,6 +43,10 @@ type SandboxProcessEntry = { process: SandboxProcess; lastActivity: number };
  */
 export const SANDBOX_STDIO_PROCESS_IDLE_MS = 240_000;
 
+function resolveServerArgs(server: McpServer): string[] {
+  return Array.isArray(server.args) ? server.args.map(String) : [];
+}
+
 /** Runtime MCP connector. Authorization is re-checked against the bot assignment on every call. */
 /**
  * Stale allowlist entries are filtered out below with no error. Discovery already has the
@@ -443,7 +447,7 @@ export class McpConnector implements ConnectorProvider {
     context: AdapterContext,
     env: Record<string, string>,
   ): Promise<void> {
-    const args = Array.isArray(server.args) ? server.args.map(String) : [];
+    const args = resolveServerArgs(server);
     const argv = sandboxStdioArgv(
       String(server.command ?? ""),
       args,
@@ -460,16 +464,16 @@ export class McpConnector implements ConnectorProvider {
     const sessionKey = this.sessionKey(server, context);
     const cached = this.sandboxProcesses.get(sessionKey);
     const reused = cached !== undefined;
-    const process =
+    const handle =
       cached?.process ??
       (await this.options.openStdioProcess(
         await this.options.resolveStdioComputer(context),
         { argv, env, cwd: undefined },
         context,
       ));
-    this.sandboxProcesses.set(sessionKey, { process, lastActivity: Date.now() });
+    this.sandboxProcesses.set(sessionKey, { process: handle, lastActivity: Date.now() });
     try {
-      await session.connectSandboxStdio(process, { signal: context.signal });
+      await session.connectSandboxStdio(handle, { signal: context.signal });
     } catch (error) {
       // A brand-new process that never completed the handshake has no session to reap it,
       // so drop it here; a reused handle belongs to an existing session's lifecycle.
@@ -499,7 +503,7 @@ export class McpConnector implements ConnectorProvider {
         ? (JSON.parse(this.secrets.load(secret.ciphertext, secret.id)) as OAuthMaterial)
         : {};
       const loaded = { material, ...(secret ? { secretId: secret.id } : {}) };
-      const args = Array.isArray(server.args) ? server.args.map(String) : [];
+      const args = resolveServerArgs(server);
       const env = { ...(material.env ?? {}) };
       if (server.transport === "stdio") {
         if (this.options.stdioInSandbox) {
