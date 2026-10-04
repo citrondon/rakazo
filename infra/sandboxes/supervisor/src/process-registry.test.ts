@@ -245,4 +245,29 @@ describe("process registry", () => {
     expect(handle.kill).toHaveBeenCalledTimes(1);
     expect(warnings).toEqual(["supervisor process kill failed after late attach"]);
   });
+
+  it("still ends the reader and resolves the drop when the kill rejects", async () => {
+    // A rejecting Docker kill must not turn the operator's DELETE into a 500 or leave the reader's
+    // stream hanging: the frames go out before the kill, which is best-effort and logged.
+    const warnings: string[] = [];
+    const registry = createProcessRegistry({
+      logger: { warn: (message) => warnings.push(message) },
+    });
+    const handle = handleExit(0);
+    handle.kill = vi.fn(async () => {
+      throw new Error("docker api down");
+    });
+    registry.reserve({ id: "drop-kill", computerId: "c1", botId: "b1" }).attach(handle as never);
+    const events: ProcessEventLike[] = [];
+    registry.get("drop-kill", "c1", "b1")!.attachReader("reader-a", (e) => events.push(e));
+    await expect(
+      registry.release("drop-kill", "reader-a", "operator requested it"),
+    ).resolves.toBeUndefined();
+    expect(events).toEqual([
+      { type: "stderr", data: "process closed: operator requested it\n" },
+      { type: "exit", code: 143 },
+    ]);
+    expect(handle.kill).toHaveBeenCalledTimes(1);
+    expect(warnings).toEqual(["supervisor process kill failed (operator requested it)"]);
+  });
 });

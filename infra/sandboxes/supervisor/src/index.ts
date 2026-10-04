@@ -11,7 +11,7 @@ import {
   resolveSupervisorToken,
 } from "@rakazo/core";
 import { loadRootEnv } from "@rakazo/core/node/load-root-env";
-import { SERVICE_NAMES } from "@rakazo/logging";
+import { type Logger, SERVICE_NAMES } from "@rakazo/logging";
 import { createRootLogger } from "@rakazo/logging/axiom";
 import { requestLogging } from "@rakazo/logging/hono";
 import Docker from "dockerode";
@@ -437,8 +437,16 @@ app.post("/computers/:id/exec", async (c) => {
   });
 });
 
+/**
+ * The process table is built at module load, before startSupervisor installs the root logger, so its
+ * warn channel forwards through this holder. Without it, a failed process kill — the exact case the
+ * registry grew a warn channel for — would be dropped in production.
+ */
+let supervisorLogger: Pick<Logger, "warn"> | undefined;
 /** The module-singleton process table; entries live exactly as long as this process does. */
-const sandboxProcesses = createProcessRegistry();
+const sandboxProcesses = createProcessRegistry({
+  logger: { warn: (message, bindings) => supervisorLogger?.warn(message, bindings) },
+});
 
 const startProcessBody = z.object({
   argv: z.array(z.string()).min(1),
@@ -1127,6 +1135,8 @@ app.delete("/computers/:id", async (c) => {
 
 function startSupervisor() {
   const logger = createRootLogger(SERVICE_NAMES.supervisor);
+  // Hand the real logger to the process table built above, so its warn channel is live.
+  supervisorLogger = logger;
   // Resolve the ceilings before binding the port. They are otherwise parsed inside
   // containerCreateOptions, so a malformed RAKAZO_COMPUTER_* value would let the supervisor start
   // and pass its healthcheck, then fail the first POST /computers with a 500 that reads like a

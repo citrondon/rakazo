@@ -118,12 +118,24 @@ export function createProcessRegistry(
     const onEvent = entry.onEvent;
     entry.readerId = "";
     entry.onEvent = undefined;
-    if (entry.handle) await entry.handle.kill();
-    if (!onEvent) return;
-    onEvent({ type: "stderr", data: `process closed: ${reason}\n` });
-    // Spec 4.1 ends the event stream with exit: the process was killed here, and a killed
-    // child resolves with the SIGTERM code by the container-process convention.
-    onEvent({ type: "exit", code: KILL_WITHOUT_INSPECT_EXIT_CODE });
+    // The terminal frames go out before the kill, not after it: runKill is a Docker call that can
+    // reject or stall, and a reader that never gets stderr/exit hangs its response while the entry
+    // is already marked ended and every later release/kill exits early. The kill is best-effort.
+    if (onEvent) {
+      onEvent({ type: "stderr", data: `process closed: ${reason}\n` });
+      // Spec 4.1 ends the event stream with exit: the process is being killed here, and a killed
+      // child resolves with the SIGTERM code by the container-process convention.
+      onEvent({ type: "exit", code: KILL_WITHOUT_INSPECT_EXIT_CODE });
+    }
+    if (entry.handle) {
+      try {
+        await entry.handle.kill();
+      } catch (error) {
+        // A rejecting kill must not turn the operator's DELETE into a 500 or crash the host; the
+        // entry is already ended, so log it and let the caller finish.
+        warn(`supervisor process kill failed (${reason})`, error);
+      }
+    }
   };
 
   const processFor = (entry: Entry, handle: ContainerProcessHandle): RegisteredProcess => ({
