@@ -1,6 +1,6 @@
 import type { ContainerProcessHandle } from "./container-process.js";
 
-/** Idle window per long-lived process, comfortably under the 10 minute computer suspension. */
+/** Idle window per long-lived process, comfortably under the ten minute computer suspension. */
 export const MCP_PROCESS_IDLE_MS = 240_000;
 
 /** NDJSON event shape shared with the exec stream: stdout, stderr, or exit. */
@@ -9,23 +9,38 @@ export type ProcessEventLike =
   | { type: "stderr"; data: string }
   | { type: "exit"; code: number };
 
+type ReaderSink = (event: ProcessEventLike) => void;
+
 export interface RegisteredProcess {
   id: string;
   write(line: string): Promise<void>;
-  /** Takes the single reader. A second call does not evict the first. */
-  attachReader(readerId: string, onEvent: (event: ProcessEventLike) => void): () => void;
+  /** Takes the single reader slot. A second call replaces the reader, it never evicts the process. */
+  attachReader(readerId: string, onEvent: ReaderSink): () => void;
   kill(reason: string): Promise<void>;
 }
 
+/**
+ * A reservation exists before the child process is started, so a close that lands in that window
+ * always finds an entry — and `attach` has to be able to kill the handle it is handed.
+ */
+export interface ReservedProcess {
+  readonly id: string;
+  /**
+   * Commits the reservation. If it was released in the meantime, the handle is terminated straight
+   * away and the result is `undefined`, which is what lets the route answer `409`.
+   */
+  attach(handle: ContainerProcessHandle): RegisteredProcess | undefined;
+  /** The start itself failed: entry gone, nothing to kill. */
+  abort(): void;
+}
+
 export interface ProcessRegistry {
-  claim(input: {
-    id: string;
-    computerId: string;
-    botId: string;
-    handle: ContainerProcessHandle;
-  }): RegisteredProcess;
+  reserve(input: { id: string; computerId: string; botId: string }): ReservedProcess;
   get(id: string): RegisteredProcess | undefined;
-  /** Removes only when the same reader releases; otherwise the handle stays. */
+  /**
+   * Removes only when the requester is the attached reader, or when no reader is attached at all:
+   * killing a process that is starting, or already readerless, is an operator action.
+   */
   release(id: string, readerId: string, reason: string): Promise<void>;
   sweep(now?: number): Promise<string[]>;
 }
@@ -34,85 +49,110 @@ interface Entry {
   id: string;
   computerId: string;
   botId: string;
-  handle: ContainerProcessHandle;
-  reader: { id: string; onEvent?: (event: ProcessEventLike) => void };
+  released: boolean;
+  handle?: ContainerProcessHandle;
+  process?: RegisteredProcess;
+  /** Empty while no reader holds the process. */
+  readerId: string;
+  onEvent?: ReaderSink;
   lastActivity: number;
-  process: RegisteredProcess;
 }
 
 export function createProcessRegistry(options: { idleMs?: number } = {}): ProcessRegistry {
   const idleMs = options.idleMs ?? MCP_PROCESS_IDLE_MS;
   const entries = new Map<string, Entry>();
 
-  const touch = (entry: Entry) => {
-    entry.lastActivity = Date.now();
+  const forget = (entry: Entry) => {
+    if (entries.get(entry.id) === entry) entries.delete(entry.id);
   };
 
-  const forget = (id: string) => {
-    entries.delete(id);
-  };
-
-  const release = async (id: string, readerId: string, reason: string) => {
-    const entry = entries.get(id);
-    if (!entry || entry.reader.id !== readerId) return;
-    const onEvent = entry.reader.onEvent;
-    entry.reader = { id: "" };
-    forget(id);
-    await entry.handle.kill();
+  /** Ends the process, its reservation, and its reader slot, then tells the reader why. */
+  const drop = async (entry: Entry, reason: string) => {
+    entry.released = true;
+    forget(entry);
+    const onEvent = entry.onEvent;
+    entry.readerId = "";
+    entry.onEvent = undefined;
+    if (entry.handle) await entry.handle.kill();
     onEvent?.({ type: "stderr", data: `process closed: ${reason}\n` });
   };
 
-  const processFor = (entry: Entry): RegisteredProcess => ({
+  const processFor = (entry: Entry, handle: ContainerProcessHandle): RegisteredProcess => ({
     id: entry.id,
     write: async (line) => {
-      touch(entry);
-      await entry.handle.write(line);
+      entry.lastActivity = Date.now();
+      await handle.write(line);
     },
     attachReader: (readerId, onEvent) => {
-      entry.reader = { id: readerId, onEvent };
-      touch(entry);
+      entry.readerId = readerId;
+      entry.onEvent = onEvent;
+      entry.lastActivity = Date.now();
       return () => {
-        if (entry.reader.id !== readerId) return;
-        void release(entry.id, readerId, "reader detached");
+        // Identity check: a displaced reader must not clear the reader that replaced it.
+        if (entry.readerId !== readerId) return;
+        entry.readerId = "";
+        entry.onEvent = undefined;
       };
     },
-    kill: (reason) => release(entry.id, entry.reader.id, reason),
+    kill: (reason) => drop(entry, reason),
   });
 
   return {
-    claim(input) {
+    reserve(input) {
       const entry: Entry = {
-        id: input.id,
-        computerId: input.computerId,
-        botId: input.botId,
-        handle: input.handle,
-        reader: { id: "" },
+        ...input,
+        released: false,
+        readerId: "",
         lastActivity: Date.now(),
-        process: undefined as never,
       };
-      entry.process = processFor(entry);
       entries.set(input.id, entry);
-      input.handle.onOutput((chunk) => {
-        touch(entry);
-        entry.reader.onEvent?.({ type: chunk.stream, data: chunk.data });
-      });
-      void input.handle.done.then((result) => {
-        touch(entry);
-        entry.reader.onEvent?.({ type: "exit", code: result.code });
-        forget(input.id);
-      });
-      return entry.process;
+      return {
+        id: input.id,
+        attach(handle) {
+          if (entry.released || entries.get(input.id) !== entry) {
+            // The reservation went away during the start: the process that just came up has no
+            // owner, so it is terminated instead of being handed out as if it were alive.
+            void handle.kill();
+            return undefined;
+          }
+          entry.handle = handle;
+          entry.process = processFor(entry, handle);
+          // Output meets whichever reader is current: neither a displaced reader nor a missing one
+          // gets a frame, and no frame is ever dropped.
+          handle.onOutput((chunk) => {
+            entry.lastActivity = Date.now();
+            entry.onEvent?.({ type: chunk.stream, data: chunk.data });
+          });
+          void handle.done.then(
+            (exit) => {
+              entry.lastActivity = Date.now();
+              entry.onEvent?.({ type: "exit", code: exit.code });
+              forget(entry);
+            },
+            // A torn stream never yields an exit code; the reader still has to stop waiting.
+            () => {
+              forget(entry);
+              entry.onEvent?.({ type: "stderr", data: "process stream lost\n" });
+            },
+          );
+          return entry.process;
+        },
+        abort() {
+          entry.released = true;
+          forget(entry);
+        },
+      };
     },
     get: (id) => entries.get(id)?.process,
-    release: (id, readerId, reason) => release(id, readerId, reason),
+    async release(id, readerId, reason) {
+      const entry = entries.get(id);
+      if (!entry) return;
+      if (entry.readerId !== "" && entry.readerId !== readerId) return;
+      await drop(entry, reason);
+    },
     async sweep(now = Date.now()) {
       const expired = [...entries.values()].filter((entry) => now - entry.lastActivity > idleMs);
-      await Promise.all(
-        expired.map(async (entry) => {
-          forget(entry.id);
-          await entry.handle.kill();
-        }),
-      );
+      await Promise.all(expired.map((entry) => drop(entry, "idle timeout")));
       return expired.map((entry) => entry.id);
     },
   };
