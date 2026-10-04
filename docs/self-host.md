@@ -376,8 +376,11 @@ writes another `ask` row on its replay, so rows with `decision = 'ask'` are not 
 Retries and resumes can record the same action again, so deduplicate with
 `count(distinct coalesce("effectId", "id"))`: a read-only tool records no effect, so its rows have
 nothing to deduplicate against. A run cancelled mid-gate is the one case with no row, because nothing
-was allowed and nothing ran. `wouldDeny` marks a decision that was allowed only because no approval
-rule covered the tool, so counting them is what to look at before turning enforcement on:
+was allowed and nothing ran. `wouldDeny` marks an action the gate could hold that was allowed only
+because no approval rule covered it, so counting them is what to look at before turning enforcement
+on. Built-in reads (`read_file`, `web_search`, `schedule_list`, …) are not held by enforcement —
+they record no effect, so nothing can park them — and they are written neither as `enforced` nor as
+`wouldDeny`:
 
 ```sql
 select "toolName", count(*) as passes, count(distinct coalesce("effectId", "id")) as actions
@@ -386,6 +389,14 @@ where "wouldDeny"
 group by "toolName"
 order by passes desc;
 ```
+
+The table only grows. Run retention prunes runs, attempts, effects and progress events; it does not
+reach `action_decisions`, and it could not: the append-only trigger refuses `UPDATE` and `DELETE` for
+any caller, so no scheduled cleanup can trim history. Deleting a space leaves its decisions behind,
+because the rows carry no foreign key by design. A deployment that must bound the table takes a
+backup and disables the trigger for one maintenance window
+(`ALTER TABLE "action_decisions" DISABLE TRIGGER action_decision_append_only;`, re-enabled right
+after) — the deliberate cost of removing a recorded decision is the point.
 
 ## Choosing a computer provider
 

@@ -2160,6 +2160,11 @@ export function createRunExecutor(deps: ExecutorDeps) {
             name,
             connectedPlugins.map((plugin) => plugin.provider),
           );
+          // The gate holds an action by parking its effect record until the owner answers. A
+          // tool the name list keeps out of the effect table cannot be held, so it must not
+          // resolve to a held decision either — the audit would claim an enforcement that
+          // never happened. This is the gate's own list, not a connector's read-only hint.
+          const gateHoldsEffect = !READ_ONLY_AGENT_TOOLS.has(name);
           const approvalResolved = requiresMandatoryApproval
             ? { decision: "ask" as const, source: "default" as const, matchingRules: [] }
             : resolveActionApprovalDetail({
@@ -2167,7 +2172,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 connectorKind,
                 readOnly: declaredReadOnly,
                 rules: await loadApprovalRules(),
-                failClosed: failClosedActions,
+                failClosed: gateHoldsEffect && failClosedActions,
               });
           const autoReviewPref = requiresMandatoryApproval
             ? false
@@ -2215,10 +2220,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
             usesApprovalKey && occurrence === 0
               ? approvalEffectKey(runId, replayEffectToolName, args)
               : toolEffectIdempotencyKey(runId, replayEffectToolName, args, occurrence);
-          // Connector read-only hints must not bypass approval, review, or replay decisions.
-          const applied = READ_ONLY_AGENT_TOOLS.has(name)
-            ? undefined
-            : await recordEffect(
+          const applied = gateHoldsEffect
+            ? await recordEffect(
                 deps,
                 run,
                 replayEffectToolName,
@@ -2226,7 +2229,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 effectRequest,
                 executionId,
                 consumedEffectIds,
-              );
+              )
+            : undefined;
 
           const runAutoReview = async () => {
             if (!injectedReview && !checker) return;
@@ -2379,6 +2383,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               resolved: approvalResolved,
               gateDecision,
               failClosed: failClosedActions,
+              gateHoldsEffect,
             }),
           });
 

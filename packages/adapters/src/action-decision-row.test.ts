@@ -31,6 +31,7 @@ describe("buildActionDecisionRow", () => {
       connectorKind: "gmail",
       resolved,
       gateDecision: "allow",
+      gateHoldsEffect: true,
       failClosed: false,
     });
     expect(row.decision).toBe("allow");
@@ -47,6 +48,7 @@ describe("buildActionDecisionRow", () => {
       connectorKind: "gmail",
       resolved: { ...resolved, decision: "ask" },
       gateDecision: "ask",
+      gateHoldsEffect: true,
       failClosed: true,
     });
     expect(row.enforced).toBe(true);
@@ -65,6 +67,7 @@ describe("buildActionDecisionRow", () => {
         matchingRules: [storedAlwaysAllow],
       },
       gateDecision: "allow",
+      gateHoldsEffect: true,
       failClosed: false,
     });
     expect(row.wouldDeny).toBe(false);
@@ -82,6 +85,7 @@ describe("buildActionDecisionRow", () => {
       connectorKind: "gmail",
       resolved,
       gateDecision: "allow",
+      gateHoldsEffect: true,
       failClosed: true,
     });
     expect(row.enforced).toBe(true);
@@ -96,6 +100,7 @@ describe("buildActionDecisionRow", () => {
       connectorKind: "gmail",
       resolved: { ...resolved, decision: "ask" },
       gateDecision: "ask",
+      gateHoldsEffect: true,
       failClosed: false,
     });
     expect(row.enforced).toBe(false);
@@ -113,6 +118,7 @@ describe("buildActionDecisionRow", () => {
       connectorKind: "gmail",
       resolved,
       gateDecision: "ask",
+      gateHoldsEffect: true,
       failClosed: false,
     });
     expect(row.decision).toBe("ask");
@@ -130,11 +136,30 @@ describe("buildActionDecisionRow", () => {
       connectorKind: "some",
       resolved,
       gateDecision: "allow",
+      gateHoldsEffect: true,
       failClosed: false,
     });
     expect(row.threadId).toBeNull();
     expect(row.runId).toBeNull();
     expect(row.effectId).toBeNull();
+  });
+
+  it("never credits an action the gate cannot hold", () => {
+    // A built-in read records no effect, so fail-closed cannot stop it. It must appear neither as
+    // enforced nor as something enforcement would have denied.
+    const row = buildActionDecisionRow({
+      spaceId: "space-1",
+      botId: "bot-1",
+      toolName: "scratchpad_list",
+      connectorKind: "rakazo",
+      resolved,
+      gateDecision: "allow",
+      gateHoldsEffect: false,
+      failClosed: true,
+    });
+    expect(row.decision).toBe("allow");
+    expect(row.enforced).toBe(false);
+    expect(row.wouldDeny).toBe(false);
   });
 
   it("passes a provided effect id through unchanged", () => {
@@ -146,6 +171,7 @@ describe("buildActionDecisionRow", () => {
       effectId: "effect-1",
       resolved,
       gateDecision: "allow",
+      gateHoldsEffect: true,
       failClosed: false,
     });
     expect(row.effectId).toBe("effect-1");

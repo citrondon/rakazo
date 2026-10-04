@@ -6,7 +6,7 @@ import type {
 } from "@rakazo/adapter-kit";
 import type { ActionApprovalRule } from "@rakazo/core";
 import { approvalEffectKey, toolEffectIdempotencyKey } from "@rakazo/core/node/approval-effect-key";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { isApprovalPausedResult } from "./approval-effect.js";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
 import { createRunExecutor } from "./executor.js";
@@ -82,6 +82,7 @@ function fixture({
   };
   const effects: Effect[] = [];
   const results: unknown[] = [];
+  const decisions: Record<string, unknown>[] = [];
   const run = {
     id: "run-1",
     botId: "bot-1",
@@ -175,7 +176,11 @@ function fixture({
     agentSkill: { findMany: vi.fn(async () => []) },
     scratchpadItem: { findMany: vi.fn(async () => []) },
     actionApprovalRule: { findMany: vi.fn(async () => rules) },
-    actionDecision: { create: vi.fn(async () => undefined) },
+    actionDecision: {
+      create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
+        decisions.push(data);
+      }),
+    },
     actionAutoReviewPreference: { findUnique: vi.fn(async () => ({ enabled: autoReview })) },
     trustPolicy: { findUnique: vi.fn(async () => trustPolicy) },
     // The trust-policy read loads the space row (it carries the per-turn tool-call fuse).
@@ -244,6 +249,7 @@ function fixture({
   return {
     effects,
     results,
+    decisions,
     execute,
     pauseRunForInput,
     setCalls(next: typeof calls) {
@@ -566,6 +572,40 @@ describe("connector read-only metadata and approval enforcement", () => {
       expect(f.effects[0]?.reviewDecision).toBeUndefined();
       expect(f.execute).not.toHaveBeenCalled();
       expect(f.pauseRunForInput).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe("fail-closed enforcement", () => {
+  beforeEach(() => {
+    vi.stubEnv("RAKAZO_ACTION_FAIL_CLOSED", "1");
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("runs a built-in read no rule covers, because the gate cannot hold it", async () => {
+    const f = fixture({ name: "scratchpad_list" });
+    await f.run();
+    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+    expect(f.decisions.at(-1)).toMatchObject({
+      toolName: "scratchpad_list",
+      decision: "allow",
+      enforced: false,
+      wouldDeny: false,
+    });
+  });
+
+  it("still holds a connector read no rule covers", async () => {
+    const f = fixture({ name: "demo_get_item" });
+    await f.run();
+    expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+    expect(isApprovalPausedResult(f.results[0])).toBe(true);
+    expect(f.decisions.at(-1)).toMatchObject({
+      toolName: "demo_get_item",
+      decision: "ask",
+      enforced: true,
+      wouldDeny: false,
     });
   });
 });

@@ -12,6 +12,8 @@ export interface ActionGateOutcome {
   resolved: ActionApprovalResolved;
   gateDecision: "ask" | "allow";
   failClosed: boolean;
+  /** Whether this action is one the gate can hold, i.e. it has an effect record. */
+  gateHoldsEffect: boolean;
 }
 
 export interface ActionDecisionRow {
@@ -30,8 +32,9 @@ export interface ActionDecisionRow {
 }
 
 /**
- * `wouldDeny` is the measurement that makes the flip safe: it is true only for a run that was
- * allowed silently, so an operator can count what fail-closed would stop before turning it on.
+ * `wouldDeny` is the measurement that makes the flip safe: it is true only for an action the gate
+ * can hold that was allowed silently, so an operator can count what fail-closed would stop before
+ * turning it on.
  */
 export function buildActionDecisionRow(outcome: ActionGateOutcome): ActionDecisionRow {
   return {
@@ -44,8 +47,9 @@ export function buildActionDecisionRow(outcome: ActionGateOutcome): ActionDecisi
     connectorKind: outcome.connectorKind,
     decision: outcome.gateDecision,
     source: outcome.resolved.source,
-    enforced: outcome.failClosed,
+    enforced: outcome.failClosed && outcome.gateHoldsEffect,
     wouldDeny:
+      outcome.gateHoldsEffect &&
       !outcome.failClosed &&
       outcome.gateDecision === "allow" &&
       outcome.resolved.source === "default",
