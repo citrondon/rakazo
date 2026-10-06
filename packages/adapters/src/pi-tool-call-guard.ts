@@ -1,0 +1,87 @@
+import type { Message, MutableModels, Provider, TranscriptContext } from "@earendil-works/pi-ai";
+
+/**
+ * A tool call is only replayable when it carries a name. Some OpenAI-compatible
+ * gateways stream tool-call deltas whose `function.name` never arrives, and some
+ * models replay a call for a tool that was never declared. pi-ai keeps such a
+ * block with an empty name, and the gateway then rejects the whole transcript on
+ * the next turn with `messages[N].tool_calls[0] is missing a function name`.
+ *
+ * The call can neither be executed nor replayed, so it is dropped together with
+ * the result that belongs to it. The alternative — sending it back — fails the
+ * request outright.
+ */
+function hasToolCallName(name: string | undefined): boolean {
+  return typeof name === "string" && name.trim().length > 0;
+}
+
+function hasNamelessToolCall(messages: readonly Message[]): boolean {
+  for (const message of messages) {
+    if (message.role === "assistant") {
+      for (const part of message.content) {
+        if (part.type === "toolCall" && !hasToolCallName(part.name)) return true;
+      }
+    } else if (message.role === "toolResult") {
+      if (!hasToolCallName(message.toolName)) return true;
+    }
+  }
+  return false;
+}
+
+export function withoutNamelessToolCalls(messages: readonly Message[]): Message[] {
+  const droppedCallIds = new Set<string>();
+  const kept: Message[] = [];
+  for (const message of messages) {
+    if (message.role === "assistant") {
+      const content = message.content.filter((part) => {
+        if (part.type !== "toolCall" || hasToolCallName(part.name)) return true;
+        droppedCallIds.add(part.id);
+        return false;
+      });
+      if (content.length === message.content.length) {
+        kept.push(message);
+      } else if (content.length > 0) {
+        kept.push({ ...message, content });
+      }
+      continue;
+    }
+    if (
+      message.role === "toolResult" &&
+      (droppedCallIds.has(message.toolCallId) || !hasToolCallName(message.toolName))
+    ) {
+      continue;
+    }
+    kept.push(message);
+  }
+  return kept;
+}
+
+function guardContext(context: TranscriptContext): TranscriptContext {
+  if (!hasNamelessToolCall(context.messages)) return context;
+  return { ...context, messages: withoutNamelessToolCalls(context.messages) };
+}
+
+const guardedProviders = new WeakSet<Provider>();
+
+/**
+ * Wraps every registered provider so a transcript is sanitized just before it is
+ * sent. Only providers that actually produced a nameless tool call are affected:
+ * a clean transcript is passed through untouched.
+ */
+export function guardToolCallNames(models: MutableModels): MutableModels {
+  for (const provider of models.getProviders()) {
+    if (guardedProviders.has(provider)) continue;
+    const guarded = {
+      ...provider,
+      stream(model, context, options) {
+        return provider.stream(model, guardContext(context), options);
+      },
+      streamSimple(model, context, options) {
+        return provider.streamSimple(model, guardContext(context), options);
+      },
+    } satisfies Provider;
+    guardedProviders.add(guarded);
+    models.setProvider(guarded);
+  }
+  return models;
+}
