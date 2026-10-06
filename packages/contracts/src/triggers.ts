@@ -21,19 +21,27 @@ export const TriggerOperatorSchema = z.enum([
   "oneOf",
   "regex",
   "exists",
+  "gt",
+  "lt",
+  "gte",
+  "lte",
 ]);
 export type TriggerOperator = z.infer<typeof TriggerOperatorSchema>;
 
+/** The operators that compare numbers instead of text; their value is a bound, not a needle. */
+export const NUMERIC_TRIGGER_OPERATORS: readonly TriggerOperator[] = ["gt", "lt", "gte", "lte"];
+
 /**
  * One narrow rule against an event field. `value` is omitted only for `exists`; `oneOf`
- * requires a non-empty list; every other operator takes one string. Regexes are compiled
+ * requires a non-empty list; every other operator takes one string, and the numeric
+ * comparison operators take a number (a numeric string counts). Regexes are compiled
  * by the evaluator rather than here, so a stored rule never fails to load.
  */
 export const TriggerPredicateSchema = z
   .object({
     field: z.string().min(1).max(200),
     operator: TriggerOperatorSchema,
-    value: z.union([z.string(), z.array(z.string())]).optional(),
+    value: z.union([z.string(), z.number(), z.array(z.string())]).optional(),
     caseSensitive: z.boolean().default(false),
   })
   .superRefine((predicate, ctx) => {
@@ -49,6 +57,16 @@ export const TriggerPredicateSchema = z
       }
       return;
     }
+    if (NUMERIC_TRIGGER_OPERATORS.includes(predicate.operator)) {
+      if (!isNumericBound(predicate.value)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `${predicate.operator} needs a numeric value`,
+          path: ["value"],
+        });
+      }
+      return;
+    }
     if (typeof predicate.value !== "string") {
       ctx.addIssue({
         code: "custom",
@@ -58,6 +76,13 @@ export const TriggerPredicateSchema = z
     }
   });
 export type TriggerPredicate = z.infer<typeof TriggerPredicateSchema>;
+
+/** A finite number, or a string that names one; anything else cannot bound a comparison. */
+export function isNumericBound(value: unknown): boolean {
+  if (typeof value === "number") return Number.isFinite(value);
+  if (typeof value !== "string" || value.trim() === "") return false;
+  return Number.isFinite(Number(value));
+}
 
 /** All predicates must pass. An empty filter is a broad listener and is rejected on create. */
 export const TriggerFilterSchema = z.object({

@@ -98,17 +98,36 @@ export function evaluatePredicate(predicate: TriggerPredicate, event: TriggerEve
         return false;
       }
     }
-    case "gt":
-      return typeof actual === "number" && typeof predicate.value === "number" && actual > predicate.value;
-    case "lt":
-      return typeof actual === "number" && typeof predicate.value === "number" && actual < predicate.value;
-    case "gte":
-      return typeof actual === "number" && typeof predicate.value === "number" && actual >= predicate.value;
-    case "lte":
-      return typeof actual === "number" && typeof predicate.value === "number" && actual <= predicate.value;
+    case "gt": {
+      const bound = numericBound(predicate.value);
+      return typeof actual === "number" && bound !== null && actual > bound;
+    }
+    case "lt": {
+      const bound = numericBound(predicate.value);
+      return typeof actual === "number" && bound !== null && actual < bound;
+    }
+    case "gte": {
+      const bound = numericBound(predicate.value);
+      return typeof actual === "number" && bound !== null && actual >= bound;
+    }
+    case "lte": {
+      const bound = numericBound(predicate.value);
+      return typeof actual === "number" && bound !== null && actual <= bound;
+    }
     default:
       return false;
   }
+}
+
+/**
+ * The bound of a numeric comparison. A number is used as it is, a string is parsed, and
+ * anything else (a list, a blank string, a non-numeric one) names no bound at all.
+ */
+function numericBound(value: TriggerPredicate["value"]): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value !== "string" || value.trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 /**

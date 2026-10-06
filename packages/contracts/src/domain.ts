@@ -374,6 +374,8 @@ export const UpdateBotInput = z
 export const RoutineSchema = z.object({
   id: Id,
   botId: Id,
+  /** The chat the routine wakes its bot in; null means the bot's own chat. */
+  threadId: Id.nullable(),
   name: z.string(),
   prompt: z.string(),
   crons: z.array(z.string()),
@@ -397,6 +399,11 @@ export type Routine = z.infer<typeof RoutineSchema>;
 export const CreateRoutineInput = z
   .object({
     botId: Id,
+    /**
+     * The chat to wake the bot in: its own chat, or a group chat it belongs to. A
+     * routine that targets a group starts the work where the team can see it.
+     */
+    threadId: Id.nullable().default(null),
     name: z.string().min(1).max(80),
     prompt: z.string().min(1),
     crons: z.array(z.string().min(1)).default([]),

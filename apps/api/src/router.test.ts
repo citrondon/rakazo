@@ -2914,7 +2914,11 @@ describe("routines.update", () => {
     createdAt: new Date("2026-09-01T00:00:00.000Z"),
   };
 
-  function fixture(botArchived: boolean, archivedBeforeWrite = false) {
+  function fixture(
+    botArchived: boolean,
+    archivedBeforeWrite = false,
+    options: { body?: Record<string, unknown>; thread?: { id: string } | null } = {},
+  ) {
     const update = vi.fn(async (args: { data: Record<string, unknown> }) => {
       if (archivedBeforeWrite) throw Object.assign(new Error("not found"), { code: "P2025" });
       return {
@@ -2935,6 +2939,9 @@ describe("routines.update", () => {
           botArchived ? null : { id: "bot-1", thread: { id: "thread-1" }, computer: null },
         ),
       },
+      // The chat a routine wakes in has to belong to the bot: own thread or a group it
+      // is a member of. This stub answers the membership lookup `assertRoutineThread` does.
+      thread: { findFirst: vi.fn(async () => options.thread ?? null) },
     };
     const handler = new RPCHandler(
       createRouter({
@@ -2954,6 +2961,7 @@ describe("routines.update", () => {
               routineId: "routine-1",
               active: true,
               runAt: new Date(Date.now() + 60_000).toISOString(),
+              ...options.body,
             },
           }),
         }),
@@ -2988,6 +2996,28 @@ describe("routines.update", () => {
     const { response } = await call();
     expect(response.status).toBe(404);
     expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  it("moves a routine into a chat the bot is in", async () => {
+    const { update, call } = fixture(false, false, {
+      body: { threadId: "group-1" },
+      thread: { id: "group-1" },
+    });
+    const { response } = await call();
+    expect(response.status).toBe(200);
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ threadId: "group-1" }) }),
+    );
+  });
+
+  it("refuses a wake chat the bot is not in", async () => {
+    const { update, call } = fixture(false, false, {
+      body: { threadId: "someone-elses-chat" },
+      thread: null,
+    });
+    const { response } = await call();
+    expect(response.status).toBe(400);
+    expect(update).not.toHaveBeenCalled();
   });
 });
 

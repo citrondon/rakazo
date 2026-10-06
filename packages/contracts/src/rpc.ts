@@ -499,6 +499,7 @@ export const appContract = {
             prompt: z.string().optional(),
             crons: z.array(z.string().min(1)).optional(),
             timezone: z.string().optional(),
+            threadId: Id.nullable().optional(),
             active: z.boolean().optional(),
             notify: z.boolean().optional(),
             webhookEnabled: z.boolean().optional(),

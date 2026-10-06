@@ -17,17 +17,43 @@ export const TeamTemplateMemberSchema = z.object({
   /** A bot preset in `bot-library`, named without the `.v1.json` suffix. */
   preset: z.string().trim().regex(TEAM_SLUG),
   role: z.string().trim().min(1).max(120),
+  /**
+   * What this member owns, appended to the preset's own instructions when the team
+   * starts. `role` stays a label for the roster; this is the text the bot reads.
+   */
+  instructions: z.string().trim().min(1).max(4_000).optional(),
 });
 
-/** The first member is the lead: it receives `firstTask`. */
+/**
+ * The schedule that keeps a team going after its first task. A handoff chain is capped
+ * at `BOT_MESSAGE_MAX_HOPS`, so a project longer than one chain needs a fresh wake: this
+ * recurring nudge starts the lead again inside the team's own group chat.
+ *
+ * `active` has no default on purpose — a template that ships automation says out loud
+ * whether starting the team also arms the schedule.
+ */
+export const TeamAutomationSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  prompt: z.string().trim().min(1).max(4_000),
+  crons: z.array(z.string().trim().min(1)).min(1).max(8),
+  timezone: z.string().trim().min(1).max(80).default("UTC"),
+  active: z.boolean(),
+});
+
+export type TeamAutomation = z.infer<typeof TeamAutomationSchema>;
+
+/** The first member is the lead: it receives `firstTask` and any `automation`. */
 export const TeamTemplateSchema = z.object({
   id: z.string().trim().regex(TEAM_SLUG),
   label: z.string().trim().min(1).max(80),
   summary: z.string().trim().min(1).max(200),
   members: z.array(TeamTemplateMemberSchema).min(2).max(TEAM_MEMBERS_MAX_COUNT),
+  /** Rules every member shares, appended after each member's own instructions. */
+  protocol: z.string().trim().min(1).max(8_000).optional(),
   /** Connectors the roster expects. Advisory: creating a team connects nothing. */
   integrations: z.array(z.string().trim().min(1).max(64)).max(12).default([]),
   firstTask: z.string().trim().min(1).max(1_000),
+  automation: TeamAutomationSchema.optional(),
 });
 
 export type TeamTemplate = z.infer<typeof TeamTemplateSchema>;

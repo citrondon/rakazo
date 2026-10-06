@@ -19,7 +19,14 @@ const OPERATORS: TriggerOperator[] = [
   "oneOf",
   "regex",
   "exists",
+  "gt",
+  "lt",
+  "gte",
+  "lte",
 ];
+
+/** These operators bound a number instead of matching text. */
+const NUMERIC_OPERATORS: TriggerOperator[] = ["gt", "lt", "gte", "lte"];
 
 /** Risk tier to a monochrome badge; only the top tier borrows the status color. */
 const RISK_VARIANT: Record<TrustEffect["risk"], "destructive" | "outline" | "secondary"> = {
@@ -265,7 +272,13 @@ export function ReactiveTriggerSection({ routineId }: { routineId: string }) {
                 <Input
                   aria-label={t`Value`}
                   value={value}
-                  placeholder={operator === "oneOf" ? t`a, b, c` : t`Value to match`}
+                  placeholder={
+                    operator === "oneOf"
+                      ? t`a, b, c`
+                      : NUMERIC_OPERATORS.includes(operator)
+                        ? t`Number to compare`
+                        : t`Value to match`
+                  }
                   onChange={(event) => setValue(event.target.value)}
                 />
               ) : null}

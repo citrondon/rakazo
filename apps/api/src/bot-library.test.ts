@@ -1,5 +1,8 @@
+import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo/contracts";
+import { nextCronDateAcrossStrict } from "@rakazo/core";
 import { describe, expect, it } from "vitest";
 import {
+  composeTeamInstructions,
   findIdentity,
   findTeamTemplate,
   listBotPresets,
@@ -138,6 +141,82 @@ describe("starting a team", () => {
         firstTask: "Start.",
       }),
     ).toThrow(/does-not-exist/);
+  });
+});
+
+describe("composing a member's instructions", () => {
+  // The roster's role line is a label for the start screen; the duty and the shared
+  // protocol are instruction text, and they have to arrive in that order below the
+  // preset's own prompt, which stays the base. Whitespace around a part is not content.
+  it("stacks the duty and the shared rules under the preset prompt", () => {
+    expect(
+      composeTeamInstructions({
+        presetInstructions: "  Preset prompt  ",
+        duty: " Stage duty ",
+        protocol: " Shared rules ",
+      }),
+    ).toBe("Preset prompt\n\nStage duty\n\nShared rules");
+  });
+
+  it("leaves the preset prompt alone when the roster adds nothing", () => {
+    expect(composeTeamInstructions({ presetInstructions: "Prompt" })).toBe("Prompt");
+    expect(
+      composeTeamInstructions({ presetInstructions: "Prompt", duty: "   ", protocol: "" }),
+    ).toBe("Prompt");
+  });
+
+  // A prompt plus a protocol can outgrow what a bot accepts, and a start must not fail
+  // on that: the composed text is cut to the limit the profile allows.
+  it("stays within the instruction limit a bot accepts", () => {
+    const composed = composeTeamInstructions({
+      presetInstructions: "p".repeat(BOT_INSTRUCTIONS_MAX_LENGTH),
+      duty: "d".repeat(500),
+      protocol: "r".repeat(500),
+    });
+
+    expect(composed.length).toBe(BOT_INSTRUCTIONS_MAX_LENGTH);
+  });
+});
+
+describe("the software factory roster", () => {
+  const template = findTeamTemplate("software-factory");
+
+  // A roster that ships automation has to ship a schedule the parser accepts: the
+  // start writes the routine's first date, and a cron nobody can read would fail the
+  // whole start after the bots already exist.
+  it("arms a round for its lead on a schedule the parser reads", () => {
+    if (!template) throw new Error("the software factory roster is not shipped");
+    const automation = template.automation;
+    if (!automation) throw new Error("the software factory roster ships no automation");
+
+    expect(automation.active).toBe(true);
+    expect(automation.crons.length).toBeGreaterThan(0);
+    expect(automation.prompt.trim().length).toBeGreaterThan(0);
+    expect(template.firstTask.length).toBeGreaterThan(0);
+    // The routine joins the group chat the start opens, so the roster's first member
+    // is the bot that has to receive it.
+    expect(template.members[0]?.preset).toBe("executive-chief");
+    expect(
+      nextCronDateAcrossStrict(
+        automation.crons,
+        new Date("2026-10-06T06:00:00.000Z"),
+        automation.timezone,
+      ),
+    ).toBeInstanceOf(Date);
+  });
+
+  // Every member works on the same computer, so the shared rules are what keep the
+  // rounds from colliding; a roster without them would start four bots with no
+  // common way to hand work over.
+  it("gives every member the shared protocol", () => {
+    if (!template) throw new Error("the software factory roster is not shipped");
+    expect(template.protocol?.trim().length).toBeGreaterThan(0);
+    for (const member of prepareTeamStart(template).bots) {
+      expect(member.instructions, member.preset).toContain(template.protocol?.trim() ?? "");
+      expect(member.instructions.length, member.preset).toBeLessThanOrEqual(
+        BOT_INSTRUCTIONS_MAX_LENGTH,
+      );
+    }
   });
 });
 

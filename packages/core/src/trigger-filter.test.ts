@@ -133,6 +133,26 @@ describe("evaluatePredicate", () => {
       ),
     ).toBe(false);
   });
+  // A count usually arrives as a JSON number, but a connector may send it as a string;
+  // both sides are compared as numbers, and a field that is not a number never matches.
+  it("compares numbers with gt, lt, gte, and lte", () => {
+    const counted = event({ count: 7, label: "7" });
+    const compare = (field: string, operator: "gt" | "lt" | "gte" | "lte", value: number) =>
+      evaluatePredicate({ field, operator, value, caseSensitive: false }, counted);
+
+    expect(compare("payload.count", "gt", 6)).toBe(true);
+    expect(compare("payload.count", "gt", 7)).toBe(false);
+    expect(compare("payload.count", "gte", 7)).toBe(true);
+    expect(compare("payload.count", "lt", 8)).toBe(true);
+    expect(compare("payload.count", "lt", 7)).toBe(false);
+    expect(compare("payload.count", "lte", 7)).toBe(true);
+
+    // Only a JSON number on the field compares; a string that looks like one does not,
+    // because a string field is text as far as the filter is concerned.
+    expect(compare("payload.label", "gte", 7)).toBe(false);
+    expect(compare("payload.action", "gt", 0)).toBe(false);
+    expect(compare("payload.missing", "lt", 1)).toBe(false);
+  });
 });
 
 describe("matchesTriggerFilter", () => {

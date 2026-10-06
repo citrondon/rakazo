@@ -70,6 +70,36 @@ describe("TriggerPredicate shape", () => {
     expect(badOneOf.success).toBe(false);
   });
 
+  // A threshold a person types arrives as a string; the number branch accepts both so a
+  // numeric predicate can be saved from the panel without the caller coercing first.
+  it("takes a number or a numeric string for the comparison operators", () => {
+    for (const operator of ["gt", "lt", "gte", "lte"] as const) {
+      const fromNumber = CreateTriggerInput.safeParse({
+        routineId: "r",
+        source: "connector",
+        provider: "slack",
+        filter: { predicates: [{ field: "payload.count", operator, value: 3 }] },
+      });
+      expect(fromNumber.success, operator).toBe(true);
+
+      const fromString = CreateTriggerInput.safeParse({
+        routineId: "r",
+        source: "connector",
+        provider: "slack",
+        filter: { predicates: [{ field: "payload.count", operator, value: "3.5" }] },
+      });
+      expect(fromString.success, operator).toBe(true);
+
+      const fromWord = CreateTriggerInput.safeParse({
+        routineId: "r",
+        source: "connector",
+        provider: "slack",
+        filter: { predicates: [{ field: "payload.count", operator, value: "many" }] },
+      });
+      expect(fromWord.success, operator).toBe(false);
+    }
+  });
+
   it("requires a non-empty list for oneOf", () => {
     const result = CreateTriggerInput.safeParse({
       routineId: "r",

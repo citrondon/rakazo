@@ -1545,6 +1545,9 @@ export function createRouter(deps: RouterDeps) {
               .$transaction(async (tx) => {
                 const bot = await repos.createBot(context.actor, {
                   ...member.prepared.profile,
+                  // The preset's prompt plus this roster's duty and shared rules; the
+                  // role line stays a label for the roster, never an instruction.
+                  instructions: member.instructions,
                   notifyOnFinish: true,
                   computerMode: "team",
                 });
@@ -1570,6 +1573,37 @@ export function createRouter(deps: RouterDeps) {
         const lead = bots[0];
         if (!lead) throw new IsolationError();
         const target = await resolveThreadTarget(deps.prisma, context.actor, { groupId: group.id });
+        // A handoff chain is capped, so a project longer than one chain stops at the last
+        // stage. A template that ships automation arms a routine on the lead in the team's
+        // own chat: every wake starts the next round of the same project from hop zero.
+        if (template.automation) {
+          const row = await deps.prisma.routine.create({
+            data: {
+              spaceId: context.actor.spaceId,
+              botId: lead.id,
+              userId: context.actor.userId,
+              threadId: target.threadId,
+              name: template.automation.name,
+              prompt: template.automation.prompt,
+              crons: template.automation.crons,
+              timezone: template.automation.timezone,
+              active: template.automation.active,
+              nextRunAt: template.automation.active
+                ? nextRoutineDate(template.automation.crons, template.automation.timezone)
+                : null,
+            },
+          });
+          await deps.events.append({
+            spaceId: context.actor.spaceId,
+            threadId: target.threadId,
+            botId: lead.id,
+            type: "routine.created",
+            payload: { name: row.name },
+          });
+          if (row.active && row.nextRunAt) {
+            await deps.jobs.enqueue(routineWakeupJob(row.id, row.nextRunAt));
+          }
+        }
         await sendThreadMessage(deps, context.actor, target, {
           text: template.firstTask,
           mentions: [{ kind: "bot", id: lead.id }],
@@ -2748,6 +2782,11 @@ export function createRouter(deps: RouterDeps) {
           });
         }
         const bot = await repos.getBot(context.actor, input.botId);
+        // A routine wakes its bot somewhere it is allowed to speak: its own chat, or a
+        // group chat it belongs to. Anything else would schedule a run that cannot post.
+        const threadId = input.threadId
+          ? await assertRoutineThread(deps.prisma, context.actor, bot.id, input.threadId)
+          : null;
         // Validate every recurring cron even when inactive; @once and webhook-only have no next date.
         let nextRunAt: Date | null = null;
         if (input.crons.length > 0 && !isOneShotRoutineCrons(input.crons)) {
@@ -2759,6 +2798,7 @@ export function createRouter(deps: RouterDeps) {
             spaceId: context.actor.spaceId,
             botId: input.botId,
             userId: context.actor.userId,
+            threadId,
             name: input.name,
             prompt: input.prompt,
             crons: input.crons,
@@ -2797,6 +2837,12 @@ export function createRouter(deps: RouterDeps) {
         });
         if (!existing) throw new ORPCError("NOT_FOUND");
         const bot = await repos.getBot(context.actor, existing.botId);
+        const threadId =
+          input.threadId === undefined
+            ? existing.threadId
+            : input.threadId === null
+              ? null
+              : await assertRoutineThread(deps.prisma, context.actor, bot.id, input.threadId);
         const active = input.active ?? existing.active;
         const crons = input.crons ?? existing.crons;
         const timezone = input.timezone ?? existing.timezone;
@@ -2872,6 +2918,7 @@ export function createRouter(deps: RouterDeps) {
               prompt: input.prompt,
               crons: input.crons,
               timezone: input.timezone,
+              threadId,
               active: input.active,
               notify: input.notify,
               webhookEnabled: input.webhookEnabled,
@@ -5971,9 +6018,34 @@ function nextRoutineDate(crons: string[], timezone: string): Date {
   return next;
 }
 
+/**
+ * The chat a routine may wake its bot in: the bot's own chat, or a group chat the bot is a
+ * member of. Anything else is rejected, because a wake there could not post anything.
+ */
+async function assertRoutineThread(
+  prisma: PrismaClient,
+  actor: Actor,
+  botId: string,
+  threadId: string,
+): Promise<string> {
+  const thread = await prisma.thread.findFirst({
+    where: {
+      id: threadId,
+      spaceId: actor.spaceId,
+      OR: [{ botId }, { group: { archivedAt: null, members: { some: { botId } } } }],
+    },
+    select: { id: true },
+  });
+  if (!thread) {
+    throw new ORPCError("BAD_REQUEST", { message: "That chat is not one this bot is in." });
+  }
+  return thread.id;
+}
+
 function mapRoutine(row: {
   id: string;
   botId: string;
+  threadId: string | null;
   name: string;
   prompt: string;
   crons: string[];
@@ -5990,6 +6062,7 @@ function mapRoutine(row: {
   return {
     id: row.id,
     botId: row.botId,
+    threadId: row.threadId ?? null,
     name: row.name,
     prompt: row.prompt,
     crons: row.crons,

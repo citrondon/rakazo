@@ -2,7 +2,12 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { BotPresetSummary, ExportManifest, Identity, TeamTemplate } from "@rakazo/contracts";
-import { ExportManifestSchema, IdentitySchema, TeamTemplateSchema } from "@rakazo/contracts";
+import {
+  BOT_INSTRUCTIONS_MAX_LENGTH,
+  ExportManifestSchema,
+  IdentitySchema,
+  TeamTemplateSchema,
+} from "@rakazo/contracts";
 import type { PreparedBotImport } from "./bot-import.js";
 import { prepareBotImport } from "./bot-import.js";
 
@@ -25,7 +30,21 @@ function readLibraryDir<T>(dir: string, parse: (value: unknown) => T): T[] {
   return readdirSync(dir)
     .filter((name) => name.endsWith(".json"))
     .sort()
-    .map((name) => parse(JSON.parse(readFileSync(path.join(dir, name), "utf8"))));
+    .map((name) => parse(readJsonFile(path.join(dir, name))));
+}
+
+/**
+ * One JSON file of the shipped library. A file that is not valid JSON is a bug in the
+ * repository, so it fails here with the file's name instead of a bare SyntaxError.
+ */
+function readJsonFile(file: string): unknown {
+  try {
+    return JSON.parse(readFileSync(file, "utf8"));
+  } catch (error) {
+    throw new Error(`Library file ${path.relative(BOT_LIBRARY_DIR, file)} is not valid JSON`, {
+      cause: error,
+    });
+  }
 }
 
 export function listTeamTemplates(): TeamTemplate[] {
@@ -66,9 +85,7 @@ export function listBotPresets(): BotPresetSummary[] {
     .filter((name) => name.endsWith(".v1.json"))
     .sort()
     .map((name) => {
-      const manifest = ExportManifestSchema.parse(
-        JSON.parse(readFileSync(path.join(BOT_LIBRARY_DIR, name), "utf8")),
-      );
+      const manifest = ExportManifestSchema.parse(readJsonFile(path.join(BOT_LIBRARY_DIR, name)));
       return {
         slug: name.slice(0, -".v1.json".length),
         name: manifest.bot.name,
@@ -89,7 +106,7 @@ export function listBotPresets(): BotPresetSummary[] {
 export function readBotPreset(slug: string): ExportManifest | undefined {
   const file = teamPresetManifestPath(slug);
   if (!file) return undefined;
-  return ExportManifestSchema.parse(JSON.parse(readFileSync(file, "utf8")));
+  return ExportManifestSchema.parse(readJsonFile(file));
 }
 
 /**
@@ -111,8 +128,30 @@ export function resolveStartTeam(input: {
 export type PreparedTeamStart = {
   template: TeamTemplate;
   /** Roster order: the first entry is the lead that receives the first task. */
-  bots: Array<{ preset: string; role: string; prepared: PreparedBotImport }>;
+  bots: Array<{
+    preset: string;
+    role: string;
+    /** The preset's prompt plus this team's duty and shared rules. */
+    instructions: string;
+    prepared: PreparedBotImport;
+  }>;
 };
+
+/**
+ * A member's prompt is three layers, in this order: what the preset already says, what
+ * this roster adds for this member, and the rules every member shares. `role` is not part
+ * of it — the role line labels the roster, the duty is what the bot is told to own.
+ */
+export function composeTeamInstructions(input: {
+  presetInstructions: string;
+  duty?: string | undefined;
+  protocol?: string | undefined;
+}): string {
+  return [input.presetInstructions.trim(), input.duty?.trim(), input.protocol?.trim()]
+    .filter((part): part is string => typeof part === "string" && part.length > 0)
+    .join("\n\n")
+    .slice(0, BOT_INSTRUCTIONS_MAX_LENGTH);
+}
 
 /**
  * Everything a team start needs, resolved before the first bot exists: a roster
@@ -126,9 +165,7 @@ export function prepareTeamStart(template: TeamTemplate): PreparedTeamStart {
   const bots = template.members.map((member) => {
     const file = teamPresetManifestPath(member.preset);
     if (!file) throw new Error(`Team ${template.id} names an unknown preset: ${member.preset}`);
-    const manifest: ExportManifest = ExportManifestSchema.parse(
-      JSON.parse(readFileSync(file, "utf8")),
-    );
+    const manifest: ExportManifest = ExportManifestSchema.parse(readJsonFile(file));
     const warnings: string[] = [];
     const prepared = prepareBotImport(
       {
@@ -146,7 +183,16 @@ export function prepareTeamStart(template: TeamTemplate): PreparedTeamStart {
     if (warnings.length > 0) {
       throw new Error(`Team ${template.id}, preset ${member.preset}: ${warnings.join(" ")}`);
     }
-    return { preset: member.preset, role: member.role, prepared };
+    return {
+      preset: member.preset,
+      role: member.role,
+      instructions: composeTeamInstructions({
+        presetInstructions: prepared.profile.instructions,
+        duty: member.instructions,
+        protocol: template.protocol,
+      }),
+      prepared,
+    };
   });
   return { template, bots };
 }
