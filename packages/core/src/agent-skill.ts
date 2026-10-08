@@ -57,6 +57,11 @@ export function isSkillReadOnly(source: SkillSource): boolean {
   return source === "builtin" || source === "plugin";
 }
 
+/** Frontmatter key a skill uses to declare the tools it needs. */
+export const SKILL_TOOLS_FRONTMATTER_KEY = "tools";
+/** More than this in one skill is a mistake, not a declaration. */
+export const MAX_DECLARED_SKILL_TOOLS = 32;
+
 /**
  * Parse a SKILL.md document. Requires YAML frontmatter with `name` and `description`.
  * Extra frontmatter keys are kept in `frontmatter`.
@@ -86,6 +91,34 @@ export function parseSkillMd(content: string): ParsedSkillMd | { error: string }
     return { error: "Skill description must be at most 2000 characters." };
   }
   return { name, description, body, frontmatter };
+}
+
+/**
+ * The tools a SKILL.md declares it needs, from `tools:` in its frontmatter.
+ * An inline list (`tools: [read_file, web_search]`), a block list and a comma-separated string all
+ * read; anything else yields the empty list. A declaration grants nothing — it only narrows what a
+ * run is offered, and the grants still decide what may happen.
+ */
+export function declaredSkillTools(content: string): string[] {
+  const parsed = parseSkillMd(content);
+  if ("error" in parsed) return [];
+  return normalizeDeclaredSkillTools(parsed.frontmatter[SKILL_TOOLS_FRONTMATTER_KEY]);
+}
+
+export function normalizeDeclaredSkillTools(value: unknown): string[] {
+  const raw = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.replace(/^\[|\]$/g, "").split(",")
+      : [];
+  const names: string[] = [];
+  for (const entry of raw) {
+    const name = stringifyScalar(entry).trim();
+    if (!name || names.includes(name)) continue;
+    names.push(name);
+    if (names.length >= MAX_DECLARED_SKILL_TOOLS) break;
+  }
+  return names;
 }
 
 /** Build SKILL.md, preserving unknown frontmatter keys from a prior parse. */

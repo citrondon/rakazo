@@ -356,6 +356,7 @@ import {
   materializeCurrentTurnFiles,
 } from "./thread-artifacts.js";
 import { advanceToolCallLoopGuard } from "./tool-loop.js";
+import { planConnectorToolOffer } from "./tool-narrowing.js";
 import { textContentArg } from "./tool-text.js";
 import {
   botMessageOutcomeFromMidTurn,
@@ -1708,9 +1709,25 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const exposedConnectorTools = discovered.filter(
           (tool) => !builtinAgentTools.some((builtin) => builtin.name === tool.name),
         );
-        const connectorTools = new Map(
-          exposedConnectorTools.map((tool) => [tool.name, tool] as const),
-        );
+        // A model picks the right tool reliably out of about ten and unreliably out of thirty, so
+        // the connector tools a run is offered are narrowed to the skills this prompt asks for.
+        // It fails open on every uncertainty: see planConnectorToolOffer.
+        const toolOffer = planConnectorToolOffer({
+          tools: exposedConnectorTools,
+          skills: agentSkills,
+          prompt: task.prompt,
+        });
+        if (toolOffer.reason === "narrowed") {
+          getLogger().info("connector tool offer narrowed", {
+            runId,
+            botId: run.botId,
+            skills: toolOffer.selectedSkills,
+            offered: toolOffer.tools.length,
+            total: exposedConnectorTools.length,
+            dropped: toolOffer.droppedTools,
+          });
+        }
+        const connectorTools = new Map(toolOffer.tools.map((tool) => [tool.name, tool] as const));
         let approvalRulesPromise: Promise<ActionApprovalRule[]> | undefined;
         const loadApprovalRules = () => {
           approvalRulesPromise ??= deps.prisma.actionApprovalRule
@@ -1748,7 +1765,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         // The intro turn confirms how a bot read its own role before anyone hands it
         // real work — it must not be able to act on that reading (shell, computer,
         // scheduling, spawning another bot, ...) before the user has assigned any task.
-        const tools = run.trigger === "created" ? [] : [...builtins, ...exposedConnectorTools];
+        const tools = run.trigger === "created" ? [] : [...builtins, ...toolOffer.tools];
         const taskCatalogInstruction = tools.some((tool) => tool.name === "task_catalog")
           ? TASK_CATALOG_GUIDANCE
           : undefined;
