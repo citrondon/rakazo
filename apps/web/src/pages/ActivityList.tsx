@@ -20,6 +20,8 @@ type ActivityListProps = {
 export function ActivityList({ onOpenRun }: ActivityListProps) {
   const [activeRuns, setActiveRuns] = useState<RunActivityRow[]>([]);
   const [recentRuns, setRecentRuns] = useState<RunActivityRow[]>([]);
+  const [unattendedRuns, setUnattendedRuns] = useState<RunActivityRow[]>([]);
+  const [showUnattended, setShowUnattended] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,13 +30,18 @@ export function ActivityList({ onOpenRun }: ActivityListProps) {
 
     const tick = async () => {
       try {
-        const [active, recent] = await Promise.all([
+        const [active, recent, unattended] = await Promise.all([
           rpc.runs.list({ filter: "active" }),
           rpc.runs.list({ filter: "recent" }),
+          // Only while the panel is showing it: the other two queries answer the default view.
+          showUnattended
+            ? rpc.runs.list({ filter: "unattended" })
+            : Promise.resolve({ runs: [] as RunActivityRow[] }),
         ]);
         if (cancelled) return;
         setActiveRuns(active.runs);
         setRecentRuns(recent.runs);
+        setUnattendedRuns(unattended.runs);
       } catch {
         // Keep the last good snapshot on transient RPC failures.
         if (cancelled) return;
@@ -52,7 +59,7 @@ export function ActivityList({ onOpenRun }: ActivityListProps) {
       cancelled = true;
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, []);
+  }, [showUnattended]);
 
   if (loading) {
     return (
@@ -62,7 +69,11 @@ export function ActivityList({ onOpenRun }: ActivityListProps) {
     );
   }
 
-  if (activeRuns.length === 0 && recentRuns.length === 0) return null;
+  if (activeRuns.length === 0 && recentRuns.length === 0 && unattendedRuns.length === 0) {
+    return null;
+  }
+
+  const shown = showUnattended ? unattendedRuns : recentRuns;
 
   return (
     <div className="mb-2 border-b border-border pb-2">
@@ -76,12 +87,27 @@ export function ActivityList({ onOpenRun }: ActivityListProps) {
           ))}
         </section>
       ) : null}
-      {recentRuns.length > 0 ? (
+      {recentRuns.length > 0 || unattendedRuns.length > 0 ? (
         <section className={activeRuns.length > 0 ? "mt-2" : undefined}>
-          <div className="px-2.5 pb-1 pt-1 text-[12.5px] font-medium text-muted-foreground/80">
-            <Trans>Recent</Trans>
+          <div className="flex items-center justify-between gap-2 px-2.5 pb-1 pt-1">
+            <span className="text-[12.5px] font-medium text-muted-foreground/80">
+              {showUnattended ? <Trans>Ran on their own</Trans> : <Trans>Recent</Trans>}
+            </span>
+            <button
+              type="button"
+              aria-pressed={showUnattended}
+              onClick={() => setShowUnattended((value) => !value)}
+              className="rounded-md px-1.5 py-0.5 text-[12px] text-muted-foreground/80 hover:bg-accent"
+            >
+              {showUnattended ? <Trans>Recent</Trans> : <Trans>Ran on their own</Trans>}
+            </button>
           </div>
-          {recentRuns.map((run) => (
+          {shown.length === 0 ? (
+            <div className="px-2.5 py-1 text-[13px] text-muted-foreground/80">
+              <Trans>Nothing ran on its own yet.</Trans>
+            </div>
+          ) : null}
+          {shown.map((run) => (
             <ActivityRow key={run.runId} run={run} onOpen={() => onOpenRun(run)} />
           ))}
         </section>

@@ -1,4 +1,10 @@
-import { type Actor, MessageBlock, type RunActivityRow } from "@rakazo/contracts";
+import {
+  type Actor,
+  AUTONOMOUS_RUN_TRIGGERS,
+  MessageBlock,
+  type RunActivityFilter,
+  type RunActivityRow,
+} from "@rakazo/contracts";
 import { ACTIVE_RUN_STATUSES, botMessageContext } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 
@@ -37,7 +43,7 @@ export function activityNotificationsEnabled(
 export async function listSpaceRuns(
   prisma: PrismaClient,
   actor: Actor,
-  filter: "active" | "recent",
+  filter: RunActivityFilter,
 ): Promise<RunActivityRow[]> {
   const rows = await prisma.run.findMany({
     where: {
@@ -46,7 +52,11 @@ export async function listSpaceRuns(
       bot: { archivedAt: null },
       ...(filter === "active"
         ? { status: { in: [...ACTIVE_RUN_STATUSES] } }
-        : { status: { in: [...TERMINAL_STATUSES] } }),
+        : filter === "recent"
+          ? { status: { in: [...TERMINAL_STATUSES] } }
+          : // Unattended is every status: a schedule's run that is still going belongs in the list
+            // that answers "what ran while I was away".
+            { trigger: { in: [...AUTONOMOUS_RUN_TRIGGERS] } }),
     },
     include: {
       bot: { select: { name: true, archivedAt: true, notifyOnFinish: true } },
@@ -63,7 +73,7 @@ export async function listSpaceRuns(
       filter === "active"
         ? [{ updatedAt: "desc" }, { id: "desc" }]
         : [{ completedAt: "desc" }, { updatedAt: "desc" }, { id: "desc" }],
-    take: filter === "recent" ? RECENT_LIMIT : undefined,
+    take: filter === "active" ? undefined : RECENT_LIMIT,
   });
 
   return rows.map((row) => ({
@@ -81,7 +91,7 @@ export async function listSpaceRuns(
       prompt: row.task.prompt,
       sourceBlocks: row.sourceMessage?.blocks,
     }),
-    updatedAt: (filter === "recent" && row.completedAt
+    updatedAt: (filter !== "active" && row.completedAt
       ? row.completedAt
       : row.updatedAt
     ).toISOString(),

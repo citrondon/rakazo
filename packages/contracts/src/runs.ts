@@ -18,6 +18,22 @@ export const RunTriggerSchema = z.enum([
 ]);
 export type RunTrigger = z.infer<typeof RunTriggerSchema>;
 
+/**
+ * Runs no person in this app started: a schedule woke the bot, another bot handed work over, a bot
+ * spawned one, an external system called a webhook, or a cloud agent reported back. A message that
+ * arrived over a messaging channel is deliberately not in here — somebody typed it, just not here.
+ */
+export const AUTONOMOUS_RUN_TRIGGERS: readonly RunTrigger[] = [
+  "routine",
+  "bot_message",
+  "spawn",
+  "webhook",
+  "cloud_agent",
+];
+
+export const RunActivityFilterSchema = z.enum(["active", "recent", "unattended"]);
+export type RunActivityFilter = z.infer<typeof RunActivityFilterSchema>;
+
 export const RunActivityRowSchema = z.object({
   runId: Id,
   botId: Id,

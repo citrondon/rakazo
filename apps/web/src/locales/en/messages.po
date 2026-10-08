@@ -3056,6 +3056,10 @@ msgstr "Not now"
 msgid "Nothing is still running"
 msgstr "Nothing is still running"
 
+#: src/pages/ActivityList.tsx
+msgid "Nothing ran on its own yet."
+msgstr "Nothing ran on its own yet."
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "Nothing remembered yet"
@@ -3072,6 +3076,10 @@ msgstr "Now"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Now using {0}."
 msgstr "Now using {0}."
+
+#: src/pages/ReactiveTriggerSection.tsx
+msgid "Number to compare"
+msgstr "Number to compare"
 
 #: src/pages/McpOAuthCallback.tsx
 msgid "OAuth authorization was cancelled."
@@ -3353,6 +3361,10 @@ msgstr "Raise budget"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Rakazo is installed as a standalone app."
 msgstr "Rakazo is installed as a standalone app."
+
+#: src/pages/ActivityList.tsx
+msgid "Ran on their own"
+msgstr "Ran on their own"
 
 #: src/pages/Shell.tsx
 msgid "React"

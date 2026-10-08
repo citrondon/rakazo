@@ -93,7 +93,7 @@ import {
 } from "./integration-settings.js";
 import { McpStdioStatusSchema } from "./mcp.js";
 import { MessageReactionSchema } from "./reactions.js";
-import { RunReceiptSchema, RunsListOutputSchema } from "./runs.js";
+import { RunActivityFilterSchema, RunReceiptSchema, RunsListOutputSchema } from "./runs.js";
 import { SearchQueryOutputSchema } from "./search.js";
 import {
   IdentitySchema,
@@ -901,7 +901,7 @@ export const appContract = {
     query: oc.input(z.object({ q: z.string().max(200) })).output(SearchQueryOutputSchema),
   },
   runs: {
-    list: oc.input(z.object({ filter: z.enum(["active", "recent"]) })).output(RunsListOutputSchema),
+    list: oc.input(z.object({ filter: RunActivityFilterSchema })).output(RunsListOutputSchema),
     receipt: oc.input(z.object({ runId: Id })).output(RunReceiptSchema.nullable()),
   },
   voice: {
