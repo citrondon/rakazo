@@ -1044,22 +1044,7 @@ async function ensureComputerImage() {
       const stream = await docker.buildImage(
         {
           context: computerContext,
-          src: [
-            "Dockerfile",
-            "start.sh",
-            "user-env.sh",
-            "control.py",
-            "xcapture.c",
-            "rakazo-browser",
-            "rakazo-page-browser",
-            "rakazo-browser.desktop",
-            "embed.html",
-            "clipboard-bridge.js",
-            "mobile-keyboard.js",
-            "fluxbox.init",
-            "fluxbox.apps",
-            "fluxbox.menu",
-          ],
+          src: ["."],
         },
         { t: COMPUTER_IMAGE },
       );
