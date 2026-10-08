@@ -28,14 +28,10 @@
   "automation": {
     "name": "Software Factory: nächste Runde",
     "prompt": "Weckruf der Software Factory. Lies shared/PLAN.md und entscheide danach, in dieser Reihenfolge: (1) Ein Stage hat Beleg und Review, aber keinen Haken: Haken setzen, Stand in zwei Sätzen melden, nächsten Stage starten. (2) Ein Stage ist offen und noch nie vergeben: genau ihn per handoff_to_bot vergeben. (3) Ein Stage ist vergeben, hat keinen Beleg und seit dem letzten Weckruf keinen neuen Befund: nichts anfassen, nur den Stand melden — kein zweiter Handoff an denselben Bot. (4) Ein Stage hat Beleg, aber kein Review: an das Review geben. (5) Kein offener Stage: keine Arbeit erfinden, nur den Stand melden. Trage Belege und Reviews, die im Thread stehen, selbst in den Plan nach, damit die Entscheidung aus dem Plan fällt.",
-    "crons": [
-      "0 8-20/3 * * 1-5"
-    ],
+    "crons": ["0 8-20/3 * * 1-5"],
     "timezone": "Europe/Berlin",
     "active": true
   },
-  "integrations": [
-    "GitHub"
-  ],
+  "integrations": ["GitHub"],
   "firstTask": "Nimm das Projekt-Briefing aus diesem Thread. Lege shared/PLAN.md an: Ziel des Projekts in einem messbaren Satz, dann vier bis acht Stages der Reihe nach, jeder mit Ergebnis, Owner, Akzeptanzkriterium und leerem Beleg. Schneide die Stages klein genug, dass einer in einer Runde fertig wird. Dann starte Stage 1 und gib ihn per handoff_to_bot an GrokCoder. Fehlt ein Briefing, frag in einem Satz danach und warte; erfinde kein Projekt."
 }
