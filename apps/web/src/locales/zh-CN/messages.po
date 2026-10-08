@@ -1173,6 +1173,10 @@ msgstr "正在连接…"
 msgid "Connection to {0} is still pending. You can close this and check again."
 msgstr "与 {0} 的连接仍在等待。可以关闭此窗口稍后再看。"
 
+#: src/pages/Shell.tsx
+msgid "Constraints"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Context limit"
@@ -1932,6 +1936,10 @@ msgstr "还没有账户？"
 #: src/pages/TeamTemplateOverlay.tsx
 msgid "Done"
 msgstr "完成"
+
+#: src/pages/Shell.tsx
+msgid "Done when"
+msgstr ""
 
 #: src/components/computer/FilesApp.tsx
 #: src/pages/Artifacts.tsx

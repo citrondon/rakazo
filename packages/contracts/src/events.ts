@@ -49,6 +49,7 @@ export const ProductEventType = z.enum([
   "group.created",
   "group.updated",
   "group.handoff",
+  "group.handoff_refused",
   /** Liveness only: never persisted, never applied to a snapshot, always seq 0. */
   "heartbeat",
 ]);
@@ -251,6 +252,10 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     fromBotId: Id,
     toBotId: Id,
     text: z.string(),
+    /** Rules the receiving stage has to respect, as named by the sender. */
+    constraints: z.string().optional(),
+    /** What the sender would accept as the stage's result. */
+    acceptance: z.string().optional(),
     /** Links ownership transfers in one user-started group turn. */
     hop: z.number().int().positive().optional(),
   }),

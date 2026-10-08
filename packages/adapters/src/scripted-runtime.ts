@@ -457,7 +457,7 @@ code-b
             name: "handoff_to_bot",
             args: {
               confirm_name: target,
-              message: prompt,
+              task: prompt,
             },
           },
         ],

@@ -6479,14 +6479,25 @@ const MessageView = memo(function MessageView({
           const from = memberName?.(block.fromBotId) ?? t`bot`;
           const to = memberName?.(block.toBotId) ?? t`bot`;
           return (
-            <div
-              key={i}
-              className="flex items-center justify-center gap-2 py-1 text-[13.5px] text-muted-foreground"
-            >
-              <span>
-                ↪ {to} ← {from}
-              </span>
-              <span>{block.text}</span>
+            <div key={i} className="flex flex-col gap-1 py-1 text-[13.5px] text-muted-foreground">
+              <div className="flex items-center justify-center gap-2">
+                <span className="shrink-0">
+                  ↪ {to} ← {from}
+                </span>
+                <span className="min-w-0 break-words">{block.text}</span>
+              </div>
+              {block.constraints ? (
+                <div className="mx-auto max-w-[80%] text-[12.5px]">
+                  <span className="font-medium">{t`Constraints`}: </span>
+                  <span className="break-words">{block.constraints}</span>
+                </div>
+              ) : null}
+              {block.acceptance ? (
+                <div className="mx-auto max-w-[80%] text-[12.5px]">
+                  <span className="font-medium">{t`Done when`}: </span>
+                  <span className="break-words">{block.acceptance}</span>
+                </div>
+              ) : null}
             </div>
           );
         }

@@ -964,7 +964,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "handoff_to_bot",
     description:
-      "In a group chat only: transfer a genuinely distinct next stage to another current member. Appends a visible handoff and starts that bot asynchronously. Do not hand a stage back merely to report or repeat the same work; post results in the shared thread.",
+      "In a group chat only: transfer a genuinely distinct next stage to another current member. Appends a visible handoff and starts that bot asynchronously. Name the task, the constraints it has to respect, and what a good result looks like: the receiving bot has your brief and nothing else, and a wrong guess comes back confidently instead of flagged. Do not hand a stage back merely to report or repeat the same work; post results in the shared thread.",
     inputSchema: {
       type: "object",
       properties: {
@@ -973,9 +973,22 @@ export const builtinAgentTools: ConnectorTool[] = [
           type: "string",
           description: "Exact name of the target member when bot_id is omitted.",
         },
-        message: { type: "string", description: "What the receiving bot should do next." },
+        task: {
+          type: "string",
+          description:
+            "The next stage as one task statement: what the receiving bot has to produce.",
+        },
+        constraints: {
+          type: "string",
+          description:
+            "Rules the result has to respect: format, sources, limits, what not to touch.",
+        },
+        acceptance: {
+          type: "string",
+          description: "What a good result looks like, so the receiver knows when to stop.",
+        },
       },
-      required: ["message"],
+      required: ["task"],
     },
   },
 ];

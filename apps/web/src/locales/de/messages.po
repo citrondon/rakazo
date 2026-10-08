@@ -1173,6 +1173,10 @@ msgstr "Verbindung wird hergestellt…"
 msgid "Connection to {0} is still pending. You can close this and check again."
 msgstr "Die Verbindung zu {0} steht noch aus. Du kannst dieses Fenster schließen und später erneut nachsehen."
 
+#: src/pages/Shell.tsx
+msgid "Constraints"
+msgstr "Vorgaben"
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Context limit"
@@ -1932,6 +1936,10 @@ msgstr "Du hast noch kein Konto?"
 #: src/pages/TeamTemplateOverlay.tsx
 msgid "Done"
 msgstr "Fertig"
+
+#: src/pages/Shell.tsx
+msgid "Done when"
+msgstr "Fertig, wenn"
 
 #: src/components/computer/FilesApp.tsx
 #: src/pages/Artifacts.tsx

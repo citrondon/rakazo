@@ -3982,7 +3982,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
             const result = await handoffToGroupBot(deps, run, thread.groupId, {
               bot_id: args.bot_id ? String(args.bot_id) : undefined,
               confirm_name: args.confirm_name ? String(args.confirm_name) : undefined,
-              message: String(args.message ?? ""),
+              task: args.task ? String(args.task) : args.message ? String(args.message) : undefined,
+              constraints: args.constraints ? String(args.constraints) : undefined,
+              acceptance: args.acceptance ? String(args.acceptance) : undefined,
             });
             if ("ok" in result && result.ok) handedOff = true;
             return finish(result);
