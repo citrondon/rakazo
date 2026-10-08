@@ -25,6 +25,7 @@ import {
 import { ChevronLeft, Clock, GitBranch, Globe, MessageSquare, Pause, Plus, X } from "lucide-react";
 import { useId } from "react";
 import { ReactiveTriggerSection } from "./ReactiveTriggerSection";
+import { RoutineRunHistory } from "./RoutineRunHistory";
 import { RoutineSchedule } from "./RoutineSchedule";
 
 function toDatetimeLocalValue(date: Date): string {
@@ -498,12 +499,7 @@ export function RoutineEditor({
         </p>
       ) : null}
 
-      <div className="mt-8 text-sm text-muted-foreground">
-        <Trans>Run history</Trans>
-        <p className="mt-2 text-[13.5px] text-muted-foreground/80">
-          <Trans>No runs yet</Trans>
-        </p>
-      </div>
+      {editing ? <RoutineRunHistory key={editing.id} routineId={editing.id} /> : null}
     </div>
   );
 }

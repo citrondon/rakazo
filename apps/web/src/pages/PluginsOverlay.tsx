@@ -57,6 +57,7 @@ import {
 } from "../lib/connection-state";
 import { optionalCatalogFeedProbe } from "../lib/optional-catalog-feed";
 import { rpc } from "../lib/rpc";
+import { errorText } from "../lib/user-error";
 import { McpPresetBlockerNote } from "./McpPresetBlockerNote";
 import { MCP_PRESETS, type McpPreset, stdioBlockerReason } from "./mcp-presets";
 
@@ -214,9 +215,7 @@ export function PluginsOverlay({
 
   useEffect(() => {
     void refresh()
-      .catch((err: unknown) =>
-        setCatalogError(err instanceof Error ? err.message : t`Could not load integrations`),
-      )
+      .catch((err: unknown) => setCatalogError(errorText(err, t`Could not load integrations`)))
       .finally(() => setLoading(false));
     return () => connectionAttempt.current?.abort();
   }, []);
@@ -338,7 +337,7 @@ export function PluginsOverlay({
       await refresh().catch(() => undefined);
     } catch (err) {
       if (controller.signal.aborted) return;
-      setCatalogError(err instanceof Error ? err.message : t`Could not connect`);
+      setCatalogError(errorText(err, t`Could not connect`));
     } finally {
       if (connectionAttempt.current === controller) {
         connectionAttempt.current = null;
@@ -361,7 +360,7 @@ export function PluginsOverlay({
       await refresh().catch(() => undefined);
       setToolsTick((tick) => tick + 1);
     } catch (err) {
-      setCatalogError(err instanceof Error ? err.message : t`Could not revoke connection`);
+      setCatalogError(errorText(err, t`Could not revoke connection`));
     } finally {
       setPending(null);
     }
@@ -384,7 +383,7 @@ export function PluginsOverlay({
       await refresh().catch(() => undefined);
       closeDetail();
     } catch (err) {
-      setCatalogError(err instanceof Error ? err.message : t`Could not revoke connection`);
+      setCatalogError(errorText(err, t`Could not revoke connection`));
       await refresh().catch(() => undefined);
     } finally {
       setPending(null);
@@ -405,7 +404,7 @@ export function PluginsOverlay({
       );
       setLabelDrafts((current) => ({ ...current, [row.id]: updated.displayName }));
     } catch (err) {
-      setCatalogError(err instanceof Error ? err.message : t`Could not rename connection`);
+      setCatalogError(errorText(err, t`Could not rename connection`));
     } finally {
       setPending(null);
     }
@@ -432,7 +431,7 @@ export function PluginsOverlay({
       setCatalogFeedResults(response.results);
       setCatalogFeedSearched(true);
     } catch (err) {
-      setCatalogFeedError(err instanceof Error ? err.message : t`Could not search catalog`);
+      setCatalogFeedError(errorText(err, t`Could not search catalog`));
     } finally {
       setCatalogFeedPending(false);
     }
@@ -491,7 +490,7 @@ export function PluginsOverlay({
       setSourceKind(null);
       await refresh();
     } catch (err) {
-      setSourceError(err instanceof Error ? err.message : t`Could not install connector`);
+      setSourceError(errorText(err, t`Could not install connector`));
     } finally {
       setPending(null);
     }
@@ -504,7 +503,7 @@ export function PluginsOverlay({
       await rpc.capabilities.remove({ id: install.id });
       setSources((current) => current.filter((source) => source.id !== install.id));
     } catch (err) {
-      setSourceError(err instanceof Error ? err.message : t`Could not remove connector`);
+      setSourceError(errorText(err, t`Could not remove connector`));
     } finally {
       setPending(null);
     }
@@ -1001,9 +1000,7 @@ export function PluginsOverlay({
                 onDone={() => {
                   setSetupOpen(false);
                   void refresh().catch((err: unknown) =>
-                    setCatalogError(
-                      err instanceof Error ? err.message : t`Could not load integrations`,
-                    ),
+                    setCatalogError(errorText(err, t`Could not load integrations`)),
                   );
                 }}
               />

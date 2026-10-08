@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
 import { createTriggerRepos } from "@rakazo/db";
 import type { Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
@@ -8,6 +9,7 @@ import {
   parseWebhookPayload,
   WEBHOOK_MAX_BODY_BYTES,
   type WebhookDeps,
+  type WebhookSecretCache,
 } from "./webhook-inbound.js";
 
 export function hasValidGithubSignature(
@@ -167,7 +169,11 @@ export function githubWebhookPath(botId: string): string {
 }
 
 /** Mount the signed GitHub delivery route onto the shared webhook deps. */
-export function mountGithubWebhookRoute(app: Hono, deps: WebhookDeps) {
+export function mountGithubWebhookRoute(
+  app: Hono,
+  deps: WebhookDeps,
+  secretCache: WebhookSecretCache,
+) {
   app.post("/api/v1/bots/:botId/github", async (c) => {
     const unauthorized = () => c.json({ error: "Unauthorized" }, 401);
 
@@ -177,7 +183,15 @@ export function mountGithubWebhookRoute(app: Hono, deps: WebhookDeps) {
       return c.json({ error: "Payload too large" }, 413);
     }
 
-    const target = await loadWebhookTarget(deps, c.req.param("botId"));
+    let target: Awaited<ReturnType<typeof loadWebhookTarget>>;
+    try {
+      target = await loadWebhookTarget(deps, secretCache, c.req.param("botId"));
+    } catch (error) {
+      if (error instanceof SecretStoreUnavailableError) {
+        return c.json({ error: "Service unavailable" }, 503);
+      }
+      throw error;
+    }
     if (!target) return unauthorized();
     if (!hasValidGithubSignature(c.req.header("x-hub-signature-256"), target.expected, raw)) {
       return unauthorized();

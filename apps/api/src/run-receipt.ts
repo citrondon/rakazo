@@ -100,7 +100,12 @@ export async function loadRunReceipt(
       error: run.error,
     },
     toolEvents,
-    usage: run.usageRecords,
+    usage: run.usageRecords.map((record) => ({
+      inputTokens: record.inputTokens ?? 0,
+      outputTokens: record.outputTokens ?? 0,
+      cacheReadTokens: record.cacheReadTokens ?? 0,
+      cacheWriteTokens: record.cacheWriteTokens ?? 0,
+    })),
     artifacts,
     effects: run.effects,
     approvals: approvalsFromMessageBlocks(messages.map((message) => message.blocks)),

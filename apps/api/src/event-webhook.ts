@@ -9,6 +9,7 @@ import {
   loadWebhookTarget,
   WEBHOOK_MAX_BODY_BYTES,
   type WebhookDeps,
+  type WebhookSecretCache,
 } from "./webhook-inbound.js";
 
 /** Provider slug shape, the same the trigger store accepts. */
@@ -26,13 +27,14 @@ export function eventWebhookPath(botId: string): string {
  * this shape belongs to that provider's adapter, not to the core.
  */
 export function mountEventWebhookRoute(app: Hono, deps: WebhookDeps) {
+  const secretCache: WebhookSecretCache = new Map();
   app.post("/api/v1/bots/:botId/events", async (c) => {
     const unauthorized = () => c.json({ error: "Unauthorized" }, 401);
 
     const raw = await readBoundedBody(c.req.raw, WEBHOOK_MAX_BODY_BYTES);
     if (raw === null) return c.json({ error: "Payload too large" }, 413);
 
-    const target = await loadWebhookTarget(deps, c.req.param("botId"));
+    const target = await loadWebhookTarget(deps, secretCache, c.req.param("botId"));
     // Same 401 for a missing bot, a missing secret, and a bad bearer so ids stay unenumerable.
     if (!target || !hasValidBearerToken(c.req.header("authorization"), target.expected)) {
       return unauthorized();

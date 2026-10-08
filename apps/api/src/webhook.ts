@@ -1,3 +1,4 @@
+import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
 import { hasValidBearerToken } from "@rakazo/core";
 import { createTriggerRepos } from "@rakazo/db";
 import type { Hono } from "hono";
@@ -12,6 +13,7 @@ import {
   parseWebhookPayload,
   WEBHOOK_MAX_BODY_BYTES,
   type WebhookDeps,
+  type WebhookSecretCache,
 } from "./webhook-inbound.js";
 
 export { eventWebhookPath, mountEventWebhookRoute } from "./event-webhook.js";
@@ -36,6 +38,8 @@ export function webhookPath(botId: string): string {
 }
 
 export function mountWebhookHttpRoutes(app: Hono, deps: WebhookDeps) {
+  const secretCache: WebhookSecretCache = new Map();
+
   app.post("/api/v1/bots/:botId/webhook", async (c) => {
     const unauthorized = () => c.json({ error: "Unauthorized" }, 401);
 
@@ -45,7 +49,15 @@ export function mountWebhookHttpRoutes(app: Hono, deps: WebhookDeps) {
       return c.json({ error: "Payload too large" }, 413);
     }
 
-    const target = await loadWebhookTarget(deps, c.req.param("botId"));
+    let target: Awaited<ReturnType<typeof loadWebhookTarget>>;
+    try {
+      target = await loadWebhookTarget(deps, secretCache, c.req.param("botId"));
+    } catch (error) {
+      if (error instanceof SecretStoreUnavailableError) {
+        return c.json({ error: "Service unavailable" }, 503);
+      }
+      throw error;
+    }
 
     // Same 401 for missing bot, missing secret, and bad bearer so bot ids are not enumerable.
     if (!target || !hasValidBearerToken(c.req.header("authorization"), target.expected)) {
@@ -96,6 +108,6 @@ export function mountWebhookHttpRoutes(app: Hono, deps: WebhookDeps) {
     );
   });
 
-  mountGithubWebhookRoute(app, deps);
+  mountGithubWebhookRoute(app, deps, secretCache);
   mountEventWebhookRoute(app, deps);
 }

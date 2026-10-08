@@ -156,6 +156,7 @@ export function createBotsRouter(ctx: BotsRouterContext) {
           modelProvider: source.modelProvider,
           modelId: source.modelId,
           thinkingLevel: source.thinkingLevel,
+          disabledBuiltinTools: source.disabledBuiltinTools,
         })
         .catch((error: unknown) => {
           throw mapSpaceLifecycleError(error);
@@ -289,7 +290,7 @@ export function createBotsRouter(ctx: BotsRouterContext) {
                   allowed =
                     modelCredentialDto(
                       credential,
-                      deps.secrets.load(secret.ciphertext, credential.secretId),
+                      await deps.secrets.load(secret.ciphertext, credential.secretId),
                     ).thinkingLevels ?? allowed;
                 } catch {
                   // Unreadable connections must not advertise reasoning support.
@@ -349,6 +350,9 @@ export function createBotsRouter(ctx: BotsRouterContext) {
             ? { teamChatAmbientEnabled: input.teamChatAmbientEnabled }
             : {}),
           ...(input.teamChatRules !== undefined ? { teamChatRules: input.teamChatRules } : {}),
+          ...(input.disabledBuiltinTools !== undefined
+            ? { disabledBuiltinTools: input.disabledBuiltinTools }
+            : {}),
         },
       });
 

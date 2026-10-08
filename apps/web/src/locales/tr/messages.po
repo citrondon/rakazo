@@ -114,7 +114,7 @@ msgid "{0} rollup hours"
 msgstr ""
 
 #. placeholder {0}: usage.runs
-#. placeholder {1}: usage.inputTokens + usage.outputTokens
+#. placeholder {1}: usage.totalTokens ?? "—"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "{0} runs · {1} tokens"
 msgstr "{0} çalıştırma · {1} token"
@@ -134,9 +134,29 @@ msgstr ""
 msgid "{0}'s screen"
 msgstr ""
 
+#: src/lib/billing.ts
+msgid "{amount} / {period}"
+msgstr ""
+
 #: src/pages/Shell.tsx
 msgid "{botName}’s computer"
 msgstr "{botName} adlı botun bilgisayarı"
+
+#: src/lib/billing.ts
+msgid "{count} days"
+msgstr ""
+
+#: src/lib/billing.ts
+msgid "{count} months"
+msgstr ""
+
+#: src/lib/billing.ts
+msgid "{count} weeks"
+msgstr ""
+
+#: src/lib/billing.ts
+msgid "{count} years"
+msgstr ""
 
 #: src/lib/relative-time.ts
 #: src/pages/ActivityList.tsx
@@ -175,6 +195,10 @@ msgstr "{name} durduruldu"
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left · bot is watching, not acting"
 msgstr "{remaining} kaldı · bot yalnızca izliyor"
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "{seats, plural, one {# seat} other {# seats}}"
+msgstr ""
 
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
@@ -263,6 +287,11 @@ msgstr "Hesap"
 msgid "Account default"
 msgstr "Hesap varsayılanı"
 
+#: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Onboarding.tsx
+msgid "Account ID"
+msgstr "Hesap kimliği"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Account label"
 msgstr ""
@@ -287,6 +316,7 @@ msgstr "{0} için işlemler"
 msgid "Actions for space"
 msgstr ""
 
+#: src/pages/BillingSettingsPanel.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Active"
 msgstr ""
@@ -340,6 +370,10 @@ msgstr "Bir HTTPS sunucu URL'si gir."
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Add another"
+msgstr ""
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Add credential"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -440,6 +474,10 @@ msgstr ""
 msgid "All providers"
 msgstr ""
 
+#: src/pages/ActivityList.tsx
+msgid "All statuses"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "All time"
 msgstr ""
@@ -515,6 +553,10 @@ msgstr "Yanıtlandı: {0}"
 #: src/components/AskCard.tsx
 msgid "Answered: {answer}"
 msgstr "Yanıtlandı: {answer}"
+
+#: src/pages/Paywall.tsx
+msgid "Any model, with your own key"
+msgstr ""
 
 #: src/components/SoftwareUpdateSection.tsx
 msgid "API is back, but the update did not finish. Check the host logs."
@@ -703,10 +745,23 @@ msgstr "Oturum açmaya geri dön"
 msgid "Base URL"
 msgstr "Temel URL"
 
+#: src/pages/shell/bot-credentials.tsx
+msgid "Basic auth"
+msgstr ""
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Basic auth ({username})"
+msgstr ""
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/bot-credentials.tsx
 msgid "Bearer token"
 msgstr "Bearer token"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Billing"
+msgstr ""
 
 #: src/pages/Shell.tsx
 msgid "Booting live desktop…"
@@ -775,6 +830,10 @@ msgstr ""
 msgid "Bots are working"
 msgstr "Botlar çalışıyor"
 
+#: src/pages/Paywall.tsx
+msgid "Bots with their own computer and browser"
+msgstr ""
+
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Brain label"
 msgstr ""
@@ -782,6 +841,10 @@ msgstr ""
 #: src/components/computer/ComputerWorkspace.tsx
 msgid "Browser"
 msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Built-in"
+msgstr "Yerleşik"
 
 #: src/App.tsx
 msgid "Can't reach the server."
@@ -799,6 +862,7 @@ msgstr "Sunucuya ulaşılamıyor."
 #: src/pages/Onboarding.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/ReactiveTriggerSection.tsx
+#: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/TeamTemplateOverlay.tsx
 msgid "Cancel"
@@ -812,9 +876,13 @@ msgstr "Yeni botu iptal et"
 msgid "Cancel new group"
 msgstr "Yeni grubu iptal et"
 
-#: src/pages/Shell.tsx
+#: src/pages/shell/chat-context.tsx
 msgid "Cancel reply"
 msgstr "Yanıtı iptal et"
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Canceled"
+msgstr ""
 
 #: src/components/CloudAgentCard.tsx
 msgid "cancelled"
@@ -857,6 +925,11 @@ msgstr ""
 msgid "Chat Settings"
 msgstr "Sohbet Ayarları"
 
+#: src/components/ComputersUnavailableHint.tsx
+#: src/pages/HostComputerPrompt.tsx
+msgid "Check again"
+msgstr ""
+
 #: src/components/SoftwareUpdateSection.tsx
 msgid "Check failed"
 msgstr ""
@@ -874,8 +947,14 @@ msgstr "Durum bildir."
 msgid "Check your email"
 msgstr "E-postanızı kontrol edin"
 
+#: src/components/ComputersUnavailableHint.tsx
+msgid "Checking computer setup…"
+msgstr ""
+
+#: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
 #: src/components/SoftwareUpdateSection.tsx
+#: src/pages/HostComputerPrompt.tsx
 msgid "Checking…"
 msgstr ""
 
@@ -921,6 +1000,10 @@ msgstr "{0} sohbeti temizlensin mi?"
 msgid "Clear conversation"
 msgstr "Sohbeti temizle"
 
+#: src/pages/ActivityList.tsx
+msgid "Clear filter {label}"
+msgstr ""
+
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "Temizleniyor…"
@@ -933,6 +1016,7 @@ msgstr ""
 msgid "Client secret"
 msgstr ""
 
+#: src/components/ErrorBoundary.tsx
 #: src/pages/BotLibraryOverlay.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsOverlay.tsx
@@ -1068,6 +1152,10 @@ msgid "Computers"
 msgstr "Bilgisayarlar"
 
 #: src/components/ComputersUnavailableHint.tsx
+msgid "Computers are available. Reload or open a bot to continue."
+msgstr ""
+
+#: src/components/ComputersUnavailableHint.tsx
 msgid "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, daytona, or box with its API key. Recreate the stack after changing .env."
 msgstr "Bilgisayarlar kapalı. SANDBOX_PROVIDER=docker ve SANDBOX_SUPERVISOR_TOKEN ayarlayın; ya da SANDBOX_PROVIDER değerini e2b, daytona veya box yapıp API anahtarını ekleyin. .env değişince stacki yeniden oluşturun."
 
@@ -1191,10 +1279,16 @@ msgstr "Devam"
 msgid "Continue in Background"
 msgstr ""
 
+#. placeholder {0}: reset.sso.name
+#: src/pages/Auth.tsx
+msgid "Continue with {0}"
+msgstr "{0} ile devam et"
+
 #: src/pages/Auth.tsx
 msgid "Continue with email"
 msgstr "E-posta ile devam et"
 
+#: src/components/ComputersUnavailableHint.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Copied"
@@ -1205,6 +1299,10 @@ msgstr ""
 #: src/pages/Shell.tsx
 msgid "Copy"
 msgstr "Kopyala"
+
+#: src/components/ComputersUnavailableHint.tsx
+msgid "Copy .env example"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Could not add"
@@ -1276,6 +1374,10 @@ msgstr "Bu ses sağlayıcısı bağlanamadı"
 msgid "Could not connect to the computer screen"
 msgstr ""
 
+#: src/components/AccountAccess.tsx
+#: src/lib/account-security.ts
+#: src/lib/sso-flow.ts
+#: src/lib/user-error.ts
 #: src/pages/Auth.tsx
 #: src/pages/Shell.tsx
 msgid "Could not continue"
@@ -1388,9 +1490,14 @@ msgstr ""
 msgid "Could not list files"
 msgstr ""
 
+#: src/components/ErrorBoundary.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not load"
 msgstr "Yüklenemedi"
+
+#: src/pages/ActivityList.tsx
+msgid "Could not load activity"
+msgstr ""
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not load approval rules"
@@ -1400,12 +1507,20 @@ msgstr "Onay kuralları yüklenemedi"
 msgid "Could not load artifacts."
 msgstr ""
 
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Could not load billing"
+msgstr ""
+
 #: src/pages/IntegrationSetup.tsx
 msgid "Could not load bots. Reload to try again."
 msgstr ""
 
 #: src/components/computer/TerminalApp.tsx
 msgid "Could not load commands"
+msgstr ""
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Could not load credentials."
 msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
@@ -1420,6 +1535,15 @@ msgstr "MCP sunucuları yüklenemedi"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Could not load model settings"
 msgstr "Model ayarları yüklenemedi"
+
+#: src/pages/RoutineRunHistory.tsx
+msgid "Could not load run history"
+msgstr "Çalıştırma geçmişi yüklenemedi"
+
+#: src/lib/account-security.ts
+#: src/pages/Auth.tsx
+msgid "Could not load sign-in options"
+msgstr "Giriş seçenekleri yüklenemedi"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not load skill"
@@ -1453,6 +1577,11 @@ msgstr ""
 msgid "Could not load voice settings"
 msgstr "Ses ayarları yüklenemedi"
 
+#: src/pages/BillingSettingsPanel.tsx
+#: src/pages/Paywall.tsx
+msgid "Could not open billing"
+msgstr ""
+
 #: src/components/computer/FilesApp.tsx
 msgid "Could not open file"
 msgstr ""
@@ -1469,6 +1598,8 @@ msgstr "Terminal açılamadı"
 msgid "Could not play a test clip"
 msgstr "Deneme sesi çalınamadı"
 
+#: src/lib/computer-sandbox.ts
+#: src/lib/user-error.ts
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 msgid "Could not reach the server"
@@ -1509,6 +1640,10 @@ msgstr ""
 msgid "Could not remove rule"
 msgstr "Kural kaldırılamadı"
 
+#: src/pages/shell/bot-credentials.tsx
+msgid "Could not remove the credential"
+msgstr ""
+
 #: src/pages/ReactiveTriggerSection.tsx
 msgid "Could not remove the trigger"
 msgstr ""
@@ -1520,6 +1655,10 @@ msgstr ""
 #: src/pages/shell/dialogs.tsx
 msgid "Could not rename section"
 msgstr "Bölüm yeniden adlandırılamadı"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Could not rename space"
+msgstr "Space yeniden adlandırılamadı"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Could not render chart"
@@ -1579,6 +1718,10 @@ msgstr "Bu konuşma modeli kaydedilemedi"
 msgid "Could not save that voice"
 msgstr "Bu ses kaydedilemedi"
 
+#: src/pages/shell/bot-credentials.tsx
+msgid "Could not save the credential"
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not save this choice"
 msgstr "Bu seçim kaydedilemedi"
@@ -1637,6 +1780,10 @@ msgstr "Varsayılan hafıza kapsamı güncellenemedi"
 
 #: src/components/computer/FilesApp.tsx
 msgid "Could not upload file"
+msgstr ""
+
+#: src/components/ComputersUnavailableHint.tsx
+msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr ""
 
 #: src/pages/MessagingSettingsOverlay.tsx
@@ -1720,6 +1867,10 @@ msgstr "Kimlik bilgisi"
 msgid "credential saved"
 msgstr "kimlik bilgisi kaydedildi"
 
+#: src/pages/shell/bot-credentials.tsx
+msgid "Credentials"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Credentials are encrypted and never sent to the model."
 msgstr "Kimlik bilgileri şifrelenir ve modele asla gönderilmez."
@@ -1736,9 +1887,14 @@ msgstr "Cron"
 msgid "Cron expression"
 msgstr "Cron ifadesi"
 
+#: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
 msgstr "Mevcut parola"
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Custom header"
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "Customer support"
@@ -1752,6 +1908,7 @@ msgstr "Bot avatarını özelleştir"
 msgid "Dark"
 msgstr "Koyu"
 
+#: src/lib/billing.ts
 #: src/pages/RoutineSchedule.tsx
 msgid "day"
 msgstr "gün"
@@ -1770,6 +1927,7 @@ msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/shell/avatar-studio-popover.tsx
 msgid "Default"
 msgstr "Varsayılan"
 
@@ -1777,7 +1935,7 @@ msgstr "Varsayılan"
 #. placeholder {0}: thinkingLevelLabel("medium")
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Default ({0})"
-msgstr ""
+msgstr "Varsayılan ({0})"
 
 #. placeholder {0}: thinkingLevelLabel("medium")
 #. placeholder {0}: thinkingLevelLabel(defaultThinkingLevel)
@@ -1819,6 +1977,10 @@ msgstr "{0} sil"
 msgid "Delete {0}?"
 msgstr "{0} silinsin mi?"
 
+#: src/components/AccountAccess.tsx
+msgid "Delete account"
+msgstr "Hesabı sil"
+
 #: src/pages/GroupPanel.tsx
 msgid "Delete group"
 msgstr "Grubu sil"
@@ -1840,6 +2002,10 @@ msgstr "silindi"
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
 msgstr "Siliniyor…"
+
+#: src/components/AccountAccess.tsx
+msgid "Deletion code"
+msgstr "Silme kodu"
 
 #: src/components/AskCard.tsx
 msgid "Denied"
@@ -1875,6 +2041,10 @@ msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Direct MCP"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Disabled tools"
 msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
@@ -1920,6 +2090,10 @@ msgstr "Görünen ad"
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker"
 msgstr "Docker"
+
+#: src/components/ComputersUnavailableHint.tsx
+msgid "Docker is configured but computers are not responding. Confirm the sandbox supervisor is running, then recreate the stack after changing .env."
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
@@ -1993,10 +2167,6 @@ msgstr ""
 msgid "e.g. Hivenet Agent, Presales, Timesheets bot"
 msgstr "örn. Hivenet Agent, Presales, puantaj botu"
 
-#: src/pages/Shell.tsx
-msgid "Earlier message"
-msgstr ""
-
 #: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "Önce düzenle"
@@ -2013,6 +2183,18 @@ msgstr ""
 msgid "Email"
 msgstr "E-posta"
 
+#: src/lib/user-error.ts
+msgid "Email is not allowed to register"
+msgstr "Bu e-posta adresinin kaydolmasına izin verilmiyor"
+
+#: src/lib/user-error.ts
+msgid "Email verification required"
+msgstr "E-posta doğrulaması gerekiyor"
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Ends {day}"
+msgstr ""
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Engage when... Ignore..."
 msgstr ""
@@ -2020,6 +2202,18 @@ msgstr ""
 #: src/pages/BotLibraryOverlay.tsx
 msgid "Engineering"
 msgstr ""
+
+#: src/lib/user-error.ts
+msgid "Enter a password"
+msgstr "Bir parola girin"
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Enter a username and password"
+msgstr ""
+
+#: src/lib/user-error.ts
+msgid "Enter a valid email"
+msgstr "Geçerli bir e-posta girin"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
@@ -2121,7 +2315,7 @@ msgstr "Çok yüksek"
 #. js-lingui-explicit-id
 #: src/lib/model-catalog.ts
 msgid "Extra high"
-msgstr ""
+msgstr "Çok yüksek"
 
 #: src/components/CloudAgentCard.tsx
 msgid "failed"
@@ -2209,9 +2403,23 @@ msgstr "Parolanızı mı unuttunuz?"
 msgid "Free"
 msgstr ""
 
+#: src/pages/ActivityList.tsx
+msgid "From"
+msgstr ""
+
+#. placeholder {0}: filters.dateRange.from
+#: src/pages/ActivityList.tsx
+msgid "From {0}"
+msgstr ""
+
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "Tam ekran"
+
+#: src/pages/ModelSettingsOverlay.tsx
+#: src/pages/Onboarding.tsx
+msgid "Gateway ID"
+msgstr "Ağ geçidi kimliği"
 
 #: src/pages/SettingsOverlay.tsx
 msgid "General"
@@ -2270,8 +2478,13 @@ msgstr ""
 msgid "header"
 msgstr ""
 
+#: src/pages/shell/bot-credentials.tsx
+msgid "Header \"{header}\""
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/bot-credentials.tsx
 msgid "Header name"
 msgstr "Üstbilgi adı"
 
@@ -2307,7 +2520,7 @@ msgstr "Yüksek"
 #. js-lingui-explicit-id
 #: src/lib/model-catalog.ts
 msgid "High"
-msgstr ""
+msgstr "Yüksek"
 
 #: src/pages/RoutineSchedule.tsx
 msgid "hour"
@@ -2362,6 +2575,10 @@ msgstr "OpenAPI JSON içe aktar"
 #: src/pages/BotImportOverlay.tsx
 #: src/pages/BotLibraryOverlay.tsx
 msgid "Importing…"
+msgstr ""
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Inactive"
 msgstr ""
 
 #: src/pages/shell/message-cards.tsx
@@ -2463,19 +2680,9 @@ msgstr "Sohbeti, dosyaları ve rutinleri kalıcı olarak silinecek. Oluşturduğ
 msgid "Jump to latest"
 msgstr "En son mesaja git"
 
-#: src/pages/Shell.tsx
-msgid "Jump to replied message"
-msgstr "Yanıtlanan mesaja git"
-
-#. placeholder {0}: accessibleReplyExcerpt(message.replyQuote)
-#: src/pages/Shell.tsx
-msgid "Jump to replied message: “{0}”"
-msgstr ""
-
-#. placeholder {0}: accessibleReplyExcerpt(previewMessageText(replyPreview))
-#: src/pages/Shell.tsx
-msgid "Jump to replied message: {0}"
-msgstr ""
+#: src/pages/shell/chat-context.tsx
+msgid "Jump to replied message: {excerpt}"
+msgstr "Yanıtlanan mesaja git: {excerpt}"
 
 #: src/lib/relative-time.ts
 #: src/pages/ActivityList.tsx
@@ -2492,6 +2699,10 @@ msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "key"
+msgstr ""
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Keys and passwords this bot can use, each for one site only. Values are encrypted and never shown again."
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -2526,6 +2737,10 @@ msgstr ""
 msgid "Link a chat app"
 msgstr ""
 
+#: src/components/AccountAccess.tsx
+msgid "Link SSO"
+msgstr "SSO bağla"
+
 #: src/pages/Artifacts.tsx
 msgid "List view"
 msgstr ""
@@ -2549,6 +2764,14 @@ msgstr "Önceki mesajları yükle"
 #: src/pages/Artifacts.tsx
 msgid "Load more"
 msgstr ""
+
+#: src/pages/RoutineRunHistory.tsx
+msgid "Load older runs"
+msgstr "Daha eski çalıştırmaları yükle"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Load web images automatically"
+msgstr "Web görsellerini otomatik yükle"
 
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
@@ -2592,10 +2815,12 @@ msgstr "Ses sağlayıcıları yükleniyor…"
 
 #: src/App.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/Auth.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/ReactiveTriggerSection.tsx
+#: src/pages/RoutineRunHistory.tsx
 #: src/pages/Shell.tsx
 msgid "Loading…"
 msgstr "Yükleniyor…"
@@ -2612,6 +2837,7 @@ msgstr "Yerel erişim, botların sormadan komut çalıştırmasına izin verir. 
 msgid "Local Server Settings"
 msgstr ""
 
+#: src/pages/Paywall.tsx
 #: src/pages/Shell.tsx
 msgid "Log out"
 msgstr "Çıkış yap"
@@ -2624,11 +2850,23 @@ msgstr "Düşük"
 #. js-lingui-explicit-id
 #: src/lib/model-catalog.ts
 msgid "Low"
+msgstr "Düşük"
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr ""
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Make sure nothing is still running on this computer."
 msgstr "Bu bilgisayarda hâlâ çalışan bir şey olmadığından emin ol."
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Manage"
+msgstr ""
+
+#: src/pages/Paywall.tsx
+msgid "Manage billing"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Manage MCP servers"
@@ -2666,7 +2904,7 @@ msgstr "Maksimum"
 #. js-lingui-explicit-id
 #: src/lib/model-catalog.ts
 msgid "Max"
-msgstr ""
+msgstr "Maksimum"
 
 #: src/components/TrustPolicySettings.tsx
 msgid "Max tool calls per turn"
@@ -2706,7 +2944,7 @@ msgstr "Orta"
 #. js-lingui-explicit-id
 #: src/lib/model-catalog.ts
 msgid "Medium"
-msgstr ""
+msgstr "Orta"
 
 #: src/pages/GroupPanel.tsx
 msgid "Members ({GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX})"
@@ -2784,7 +3022,7 @@ msgstr "Minimal"
 #. js-lingui-explicit-id
 #: src/lib/model-catalog.ts
 msgid "Minimal"
-msgstr ""
+msgstr "Minimal"
 
 #: src/pages/WindowChrome.tsx
 msgid "Minimize"
@@ -2840,6 +3078,10 @@ msgstr ""
 msgid "Models from server"
 msgstr "Sunucudan gelen modeller"
 
+#: src/lib/billing.ts
+msgid "month"
+msgstr ""
+
 #: src/pages/RoutineSchedule.tsx
 msgid "Monthly"
 msgstr "Aylık"
@@ -2872,6 +3114,7 @@ msgstr "Sesi kapat"
 #: src/pages/Auth.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/RoutineEditor.tsx
+#: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Name"
@@ -2971,6 +3214,10 @@ msgstr ""
 msgid "No chat apps linked yet."
 msgstr ""
 
+#: src/pages/shell/bot-credentials.tsx
+msgid "No credentials saved for this bot."
+msgstr ""
+
 #: src/pages/MessagingSettingsOverlay.tsx
 msgid "No group chats yet."
 msgstr ""
@@ -3024,7 +3271,11 @@ msgstr ""
 msgid "No results"
 msgstr "Sonuç yok"
 
-#: src/pages/RoutineEditor.tsx
+#: src/pages/ActivityList.tsx
+msgid "No runs match these filters."
+msgstr ""
+
+#: src/pages/RoutineRunHistory.tsx
 msgid "No runs yet"
 msgstr ""
 
@@ -3147,6 +3398,10 @@ msgstr ""
 msgid "Open <0>{0}</0> to finish signing in."
 msgstr ""
 
+#: src/components/ComputersUnavailableHint.tsx
+msgid "Open computer settings"
+msgstr ""
+
 #: src/pages/Shell.tsx
 msgid "Open in full window"
 msgstr "Tam pencerede aç"
@@ -3214,6 +3469,10 @@ msgstr ""
 msgid "Organization API key"
 msgstr "Kuruluş API anahtarı"
 
+#: src/pages/shell/chat-context.tsx
+msgid "Original message unavailable"
+msgstr "Orijinal mesaj kullanılamıyor"
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Other model…"
@@ -3230,6 +3489,7 @@ msgstr "Beklet"
 #: src/components/AskCard.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
+#: src/pages/shell/bot-credentials.tsx
 msgid "Password"
 msgstr "Parola"
 
@@ -3247,6 +3507,11 @@ msgstr "Parola güncellendi"
 msgid "Passwords do not match"
 msgstr "Parolalar eşleşmiyor"
 
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Past due"
+msgstr ""
+
+#: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Paste a replacement key"
 msgstr "Yeni bir anahtar yapıştır"
@@ -3294,6 +3559,10 @@ msgstr ""
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Playing…"
 msgstr "Çalınıyor…"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Plugin"
+msgstr "Eklenti"
 
 #: src/pages/RoutineEditor.tsx
 msgid "POST to"
@@ -3390,10 +3659,6 @@ msgstr ""
 msgid "Read replies aloud"
 msgstr "Yanıtları sesli oku"
 
-#: src/pages/KnowledgeSection.tsx
-msgid "read-only"
-msgstr "salt okunur"
-
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Reasoning effort"
@@ -3447,6 +3712,10 @@ msgstr "Kayıt: {0}"
 msgid "Recover computer"
 msgstr ""
 
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Recover computer?"
+msgstr "Bilgisayar kurtarılsın mı?"
+
 #. placeholder {0}: update.name
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovering {0}’s Computer"
@@ -3468,13 +3737,24 @@ msgstr ""
 msgid "Recovery is unavailable until the previous operation has stopped."
 msgstr ""
 
+#: src/components/ComputerMaintenanceActions.tsx
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovery restores the last saved workspace. Unsaved work may be lost."
-msgstr ""
+msgstr "Kurtarma, son kaydedilen çalışma alanını geri yükler. Kaydedilmemiş çalışmalar kaybolabilir."
+
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Recreate a computer that is not working."
+msgstr "Çalışmayan bir bilgisayarı yeniden oluşturun."
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recreating the computer"
 msgstr ""
+
+#: src/App.tsx
+#: src/components/ErrorBoundary.tsx
+#: src/pages/RoutineRunHistory.tsx
+msgid "Refresh"
+msgstr "Yenile"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refresh view"
@@ -3483,6 +3763,10 @@ msgstr ""
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refreshing…"
 msgstr ""
+
+#: src/lib/user-error.ts
+msgid "Registration is closed"
+msgstr "Kayıt kapalı"
 
 #: src/pages/Shell.tsx
 msgid "Release"
@@ -3499,6 +3783,7 @@ msgstr ""
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/ScratchpadSection.tsx
+#: src/pages/shell/bot-credentials.tsx
 msgid "Remove"
 msgstr "Kaldır"
 
@@ -3506,6 +3791,10 @@ msgstr "Kaldır"
 #: src/pages/Shell.tsx
 msgid "Remove {0}"
 msgstr "{0} kaldır"
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Remove {secretName}? This bot will no longer be able to use it."
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Remove Git event"
@@ -3555,6 +3844,15 @@ msgstr "Kaldırılıyor…"
 msgid "Rename section"
 msgstr "Bölümü yeniden adlandır"
 
+#: src/pages/Shell.tsx
+#: src/pages/shell/dialogs.tsx
+msgid "Rename space"
+msgstr "Space'i yeniden adlandır"
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Renews {day}"
+msgstr ""
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Reopen"
 msgstr "Yeniden aç"
@@ -3566,6 +3864,10 @@ msgstr "API anahtarını değiştir"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "Anahtarı değiştir"
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Replace value"
+msgstr ""
 
 #: src/pages/Shell.tsx
 msgid "Reply"
@@ -3580,14 +3882,6 @@ msgstr ""
 msgid "Replying to {0}"
 msgstr ""
 
-#: src/pages/Shell.tsx
-msgid "Replying to {replyName}"
-msgstr "{replyName} yanıtlanıyor"
-
-#: src/pages/Shell.tsx
-msgid "Replying to {replyName}: “{replyQuote}”"
-msgstr ""
-
 #: src/pages/BotLibraryOverlay.tsx
 msgid "Research"
 msgstr ""
@@ -3599,6 +3893,10 @@ msgstr ""
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
+msgstr ""
+
+#: src/pages/ActivityList.tsx
+msgid "Reset all"
 msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
@@ -3634,12 +3932,21 @@ msgid "Restore"
 msgstr "Geri yükle"
 
 #: src/components/ComputerMaintenanceActions.tsx
+msgid "Restore the last saved workspace."
+msgstr "Son kaydedilen çalışma alanını geri yükleyin."
+
+#: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace. Unsaved work on the computer is lost."
 msgstr ""
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"
 msgstr ""
+
+#: src/components/AccountAccess.tsx
+#: src/pages/Auth.tsx
+msgid "Retry"
+msgstr "Yeniden dene"
 
 #: src/App.tsx
 #: src/pages/PeerMessagesOverlay.tsx
@@ -3684,11 +3991,15 @@ msgstr "Rutin"
 msgid "Routines"
 msgstr "Rutinler"
 
+#: src/pages/Paywall.tsx
+msgid "Routines that run while you're away"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Run at"
 msgstr ""
 
-#: src/pages/RoutineEditor.tsx
+#: src/pages/RoutineRunHistory.tsx
 msgid "Run history"
 msgstr ""
 
@@ -3732,9 +4043,21 @@ msgstr ""
 msgid "Save"
 msgstr "Kaydet"
 
+#: src/pages/shell/bot-credentials.tsx
+msgid "Save credential"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Save limits"
 msgstr ""
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Save new value"
+msgstr ""
+
+#: src/components/ComputerMaintenanceActions.tsx
+msgid "Save the workspace and install current software."
+msgstr "Çalışma alanını kaydedin ve güncel yazılımı yükleyin."
 
 #: src/components/AskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
@@ -3767,6 +4090,7 @@ msgstr ""
 #: src/pages/GroupPanel.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
+#: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Saving…"
 msgstr "Kaydediliyor…"
@@ -3782,6 +4106,10 @@ msgstr "Evet ya da hayır de veya bir cümleyle yanıtla."
 #: src/pages/shell/command-palette.tsx
 msgid "Search"
 msgstr "Ara"
+
+#: src/pages/ActivityList.tsx
+msgid "Search activity"
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -3816,6 +4144,15 @@ msgstr ""
 msgid "Search providers"
 msgstr "Sağlayıcı ara"
 
+#: src/pages/ActivityList.tsx
+msgid "Search runs"
+msgstr ""
+
+#. placeholder {0}: filters.query.trim()
+#: src/pages/ActivityList.tsx
+msgid "Search: {0}"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/SpaceSearch.tsx
 msgid "Searching…"
@@ -3844,6 +4181,10 @@ msgstr ""
 #: src/components/AskCard.tsx
 msgid "Send answer"
 msgstr "Yanıtı gönder"
+
+#: src/components/AccountAccess.tsx
+msgid "Send deletion code"
+msgstr "Silme kodu gönder"
 
 #: src/components/AskCard.tsx
 msgid "Send it"
@@ -3923,6 +4264,10 @@ msgstr ""
 msgid "Shared documents"
 msgstr "Paylaşılan belgeler"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Shared skills"
+msgstr "Paylaşılan beceriler"
+
 #: src/components/computer/TerminalApp.tsx
 msgid "Shell"
 msgstr "Kabuk"
@@ -3963,9 +4308,12 @@ msgstr "Dökümü göster"
 #: src/pages/Auth.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
+#: src/pages/Welcome.tsx
 msgid "Sign in"
 msgstr "Oturum aç"
 
+#: src/components/AccountAccess.tsx
+#: src/lib/user-error.ts
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Sign in again"
 msgstr ""
@@ -3974,19 +4322,23 @@ msgstr ""
 msgid "Sign in to Rakazo"
 msgstr "Rakazo'da oturum aç"
 
+#: src/lib/user-error.ts
+msgid "Sign in to your existing account to link SSO"
+msgstr "SSO bağlamak için mevcut hesabınıza giriş yapın"
+
 #: src/pages/Auth.tsx
 #: src/pages/Welcome.tsx
 msgid "Sign up"
 msgstr "Kaydol"
 
+#: src/pages/shell/bot-credentials.tsx
+msgid "Site"
+msgstr ""
+
 #. placeholder {0}: skill.name
 #: src/pages/Shell.tsx
 msgid "Skill {0}"
 msgstr "Beceri: {0}"
-
-#: src/pages/KnowledgeSection.tsx
-msgid "Skills"
-msgstr "Beceriler"
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/Shell.tsx
@@ -4013,6 +4365,11 @@ msgstr ""
 #: src/components/SoftwareUpdateSection.tsx
 msgid "Software update"
 msgstr ""
+
+#: src/App.tsx
+#: src/lib/user-error.ts
+msgid "Something went wrong. Try again."
+msgstr "Bir şeyler ters gitti. Tekrar deneyin."
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Space default"
@@ -4046,6 +4403,14 @@ msgstr "Konuşma modeli"
 msgid "Speichern"
 msgstr ""
 
+#: src/lib/user-error.ts
+msgid "SSO is temporarily unavailable. Try again."
+msgstr "SSO geçici olarak kullanılamıyor. Yeniden deneyin."
+
+#: src/pages/Paywall.tsx
+msgid "Start {trialDays}-day free trial"
+msgstr ""
+
 #: src/pages/BotLibraryOverlay.tsx
 msgid "Start from a bot the library ships."
 msgstr ""
@@ -4059,10 +4424,15 @@ msgid "Starting"
 msgstr "Başlıyor"
 
 #: src/components/teach/TeachComputerOverlay.tsx
+#: src/lib/roster-status.ts
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Starting…"
 msgstr "Başlatılıyor…"
+
+#: src/pages/ActivityList.tsx
+msgid "Status"
+msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Steps"
@@ -4105,6 +4475,14 @@ msgstr "alt ajan"
 #: src/pages/Onboarding.tsx
 msgid "Submit"
 msgstr "Gönder"
+
+#: src/pages/Paywall.tsx
+msgid "Subscribe"
+msgstr ""
+
+#: src/pages/Paywall.tsx
+msgid "Subscription required"
+msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
@@ -4195,6 +4573,10 @@ msgstr ""
 msgid "The selected memory provider is not available in this build."
 msgstr "Seçilen hafıza sağlayıcısı bu sürümde kullanılamıyor."
 
+#: src/pages/shell/bot-credentials.tsx
+msgid "These saved settings can't be read. Remove it and add it again."
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -4248,6 +4630,10 @@ msgstr "bu Mac"
 msgid "This month"
 msgstr ""
 
+#: src/components/AccountAccess.tsx
+msgid "This permanently deletes your account and data."
+msgstr "Bu işlem hesabınızı ve verilerinizi kalıcı olarak siler."
+
 #: src/pages/shell/dialogs.tsx
 msgid "This permanently removes every message and stops current work. The chat remains available."
 msgstr ""
@@ -4288,13 +4674,23 @@ msgstr "Günün saati"
 msgid "Title"
 msgstr "Başlık"
 
+#: src/pages/ActivityList.tsx
+msgid "To"
+msgstr ""
+
+#. placeholder {0}: filters.dateRange.to
+#: src/pages/ActivityList.tsx
+msgid "To {0}"
+msgstr ""
+
 #: src/pages/shell/bot-picker.tsx
 msgid "To:"
 msgstr "Kime:"
 
 #: src/pages/Artifacts.tsx
+#: src/pages/shell/chat-context.tsx
 msgid "Today"
-msgstr ""
+msgstr "Bugün"
 
 #: src/components/ai/RunReceiptRow.tsx
 msgid "Tokens"
@@ -4330,9 +4726,22 @@ msgstr "Treg token'ı"
 msgid "Trennen"
 msgstr ""
 
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Trial"
+msgstr ""
+
+#: src/pages/BillingSettingsPanel.tsx
+msgid "Trial ends {day}"
+msgstr ""
+
+#: src/pages/ActivityList.tsx
 #: src/pages/Onboarding.tsx
 msgid "Try again"
 msgstr "Tekrar dene"
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Type"
+msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Type without recording"
@@ -4356,6 +4765,10 @@ msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Uninstall"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Unknown tool"
 msgstr ""
 
 #: src/components/TrustPolicySettings.tsx
@@ -4414,6 +4827,10 @@ msgstr ""
 msgid "Updated"
 msgstr ""
 
+#: src/pages/shell/bot-credentials.tsx
+msgid "Updated {updated}"
+msgstr ""
+
 #: src/pages/SettingsOverlay.tsx
 msgid "Updates"
 msgstr "Güncellemeler"
@@ -4465,10 +4882,12 @@ msgid "Use this model"
 msgstr "Bu modeli kullan"
 
 #: src/components/AskCard.tsx
+#: src/pages/shell/bot-credentials.tsx
 msgid "Username"
 msgstr ""
 
 #: src/pages/ReactiveTriggerSection.tsx
+#: src/pages/shell/bot-credentials.tsx
 msgid "Value"
 msgstr ""
 
@@ -4492,6 +4911,10 @@ msgstr "Doğrulanıyor…"
 msgid "Version"
 msgstr ""
 
+#: src/pages/RoutineRunHistory.tsx
+msgid "View chat"
+msgstr "Sohbeti görüntüle"
+
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -4507,12 +4930,28 @@ msgstr "Sesli sohbet"
 msgid "Waiting for the API to come back…"
 msgstr ""
 
+#: src/lib/roster-status.ts
+msgid "Waiting in line…"
+msgstr "Sırada bekleniyor…"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Waiting…"
 msgstr "Bekleniyor…"
 
+#: src/pages/Paywall.tsx
+msgid "Web, desktop and mobile apps"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Webhook"
+msgstr ""
+
+#: src/pages/shell/bot-credentials.tsx
+msgid "Website login"
+msgstr ""
+
+#: src/lib/billing.ts
+msgid "week"
 msgstr ""
 
 #: src/pages/RoutineEditor.tsx
@@ -4564,6 +5003,7 @@ msgstr "Botlar nerede çalışsın?"
 msgid "Won't do"
 msgstr ""
 
+#: src/lib/roster-status.ts
 #: src/pages/Auth.tsx
 msgid "Working…"
 msgstr "Çalışıyor…"
@@ -4576,7 +5016,12 @@ msgstr ""
 msgid "Wrote {path}"
 msgstr ""
 
+#: src/lib/billing.ts
+msgid "year"
+msgstr ""
+
 #: src/pages/Shell.tsx
+#: src/pages/shell/chat-context.tsx
 msgid "Yesterday"
 msgstr "Dün"
 

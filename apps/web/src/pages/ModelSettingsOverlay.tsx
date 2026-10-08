@@ -2,6 +2,8 @@ import { i18n } from "@lingui/core";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import type { Me, ThinkingLevel } from "@rakazo/contracts";
 import {
+  CLOUDFLARE_AI_GATEWAY_PROVIDER_ID,
+  cloudflareGatewayRouting,
   DEFAULT_MODEL_CONTEXT_WINDOW,
   DEFAULT_MODEL_MAX_TOKENS,
   formatOpenAiCompatibleModelLabel,
@@ -60,6 +62,7 @@ import type { ModelCatalogEntry, ModelCredential } from "../lib/model-auth";
 import { thinkingLevelLabel } from "../lib/model-catalog";
 import { rpc } from "../lib/rpc";
 import { useModelOAuthSignIn } from "../lib/use-model-oauth-signin";
+import { errorText } from "../lib/user-error";
 
 function connectionMaxTokensField(providerId: string, stored: number | undefined): string {
   if (providerId === OPENAI_COMPATIBLE_PROVIDER_ID) {
@@ -86,6 +89,8 @@ export function ModelSettingsOverlay({
   const [providerQuery, setProviderQuery] = useState("");
   const [modelId, setModelId] = useState("");
   const [apiKey, setApiKey] = useState("");
+  const [accountId, setAccountId] = useState("");
+  const [gatewayId, setGatewayId] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
   const [reasoning, setReasoning] = useState(false);
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel | null>(null);
@@ -184,14 +189,14 @@ export function ModelSettingsOverlay({
         );
       }
       setMaxTokens(connectionMaxTokensField(nextProvider, nextCredential?.maxTokens));
+      setAccountId(nextCredential?.accountId ?? "");
+      setGatewayId(nextCredential?.gatewayId ?? "");
     }
   }
 
   useEffect(() => {
     void refresh()
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : t`Could not load model settings`),
-      )
+      .catch((err: unknown) => setError(errorText(err, t`Could not load model settings`)))
       .finally(() => setLoading(false));
     return () => {
       refreshRevisionRef.current += 1;
@@ -265,6 +270,9 @@ export function ModelSettingsOverlay({
   selectedLabelRef.current = selected?.label;
   const disconnectName = selected?.providerName ?? selected?.provider ?? "";
   const isOpenAiCompatible = provider === OPENAI_COMPATIBLE_PROVIDER_ID;
+  const isCloudflareGateway = provider === CLOUDFLARE_AI_GATEWAY_PROVIDER_ID;
+  const cloudflareRoutingReady =
+    !isCloudflareGateway || cloudflareGatewayRouting({ accountId, gatewayId }) !== undefined;
   const credential = credentials.find((entry) => entry.provider === provider);
   const currentEntry = catalog.find(
     (entry) => entry.provider === me?.defaultProvider && entry.id === me?.defaultModel,
@@ -358,6 +366,8 @@ export function ModelSettingsOverlay({
     );
     detailScrollRef.current?.scrollTo({ top: 0 });
     setApiKey("");
+    setAccountId(nextCredential?.accountId ?? "");
+    setGatewayId(nextCredential?.gatewayId ?? "");
     resetOpenAiCompatibleProbe();
     setError(null);
     setNotice(null);
@@ -378,8 +388,7 @@ export function ModelSettingsOverlay({
         else setModelId(next);
         setNotice(openAiCompatibleProbeSuccessMessage(models.length));
       },
-      onError: (err) =>
-        setError(err instanceof Error ? err.message : t`Could not reach this model server`),
+      onError: (err) => setError(errorText(err, t`Could not reach this model server`)),
     });
   }
 
@@ -408,7 +417,7 @@ export function ModelSettingsOverlay({
       await refresh();
       setNotice(isOpenAiCompatible ? t`Model updated.` : t`Now using ${selected.label}.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t`Could not change the default model`);
+      setError(errorText(err, t`Could not change the default model`));
     } finally {
       setPending(null);
     }
@@ -490,6 +499,9 @@ export function ModelSettingsOverlay({
           : {
               provider: selected.provider,
               ...(apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
+              ...(isCloudflareGateway
+                ? { accountId: accountId.trim(), gatewayId: gatewayId.trim() }
+                : {}),
               modelId: selected.id,
               // A limits-only save leaves the stored effort alone while the model
               // stays put. Changing the model sends the clamped level, including
@@ -508,7 +520,7 @@ export function ModelSettingsOverlay({
           : t`Connected and using ${selected.label}.`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : t`Could not connect this provider`);
+      setError(errorText(err, t`Could not connect this provider`));
     } finally {
       setPending(null);
     }
@@ -528,7 +540,7 @@ export function ModelSettingsOverlay({
       detailScrollRef.current?.scrollTo({ top: 0 });
       setNotice(t`Disconnected ${selected.providerName ?? selected.provider}.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t`Could not disconnect this provider`);
+      setError(errorText(err, t`Could not disconnect this provider`));
     } finally {
       setPending(null);
     }
@@ -826,8 +838,43 @@ export function ModelSettingsOverlay({
 
       {acceptsKey || builtinLimitSave ? (
         <div className="mt-5 first:mt-0">
+          {isCloudflareGateway ? (
+            <>
+              <label
+                className="block text-[13.5px] text-muted-foreground"
+                htmlFor="cloudflare-account-id"
+              >
+                <Trans>Account ID</Trans>
+                <Input
+                  id="cloudflare-account-id"
+                  value={accountId}
+                  onChange={(event) => setAccountId(event.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="mt-2 h-10 text-foreground"
+                />
+              </label>
+              <label
+                className="mt-4 block text-[13.5px] text-muted-foreground"
+                htmlFor="cloudflare-gateway-id"
+              >
+                <Trans>Gateway ID</Trans>
+                <Input
+                  id="cloudflare-gateway-id"
+                  value={gatewayId}
+                  onChange={(event) => setGatewayId(event.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="mt-2 h-10 text-foreground"
+                />
+              </label>
+            </>
+          ) : null}
           {acceptsKey ? (
-            <label className="block text-[13.5px] text-muted-foreground" htmlFor="model-api-key">
+            <label
+              className={`block text-[13.5px] text-muted-foreground ${isCloudflareGateway ? "mt-4" : ""}`}
+              htmlFor="model-api-key"
+            >
               {credential ? (
                 <Trans>Replace API key</Trans>
               ) : subscriptionSignIn ? (
@@ -839,7 +886,7 @@ export function ModelSettingsOverlay({
                 id="model-api-key"
                 value={apiKey}
                 onChange={(event) => updateApiKey(event.target.value)}
-                placeholder="sk-…"
+                placeholder={credential?.hasKey ? t`Paste a replacement key` : "sk-…"}
                 type="password"
                 autoComplete="new-password"
                 className="mt-2 h-10 text-foreground"
@@ -851,7 +898,9 @@ export function ModelSettingsOverlay({
             variant="secondary"
             className="mt-3 rounded-full"
             size="sm"
-            disabled={busy || (!builtinLimitSave && apiKey.trim().length < 8)}
+            disabled={
+              busy || !cloudflareRoutingReady || (!builtinLimitSave && apiKey.trim().length < 8)
+            }
             onClick={() => void connectKey()}
           >
             {pending === "connect" ? (
@@ -889,7 +938,7 @@ export function ModelSettingsOverlay({
           aria-label={t`API key`}
           value={apiKey}
           onChange={(event) => updateApiKey(event.target.value)}
-          placeholder={t`Optional`}
+          placeholder={credential?.hasKey ? t`Paste a replacement key` : t`Optional`}
           type="password"
           autoComplete="new-password"
           className="mt-2 h-10 text-foreground"

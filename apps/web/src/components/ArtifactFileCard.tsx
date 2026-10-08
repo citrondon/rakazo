@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
 import { artifactPreviewIsText, artifactPreviewKind } from "../lib/artifact-preview";
+import { errorText } from "../lib/user-error";
 import { ArtifactPreviewContent } from "./ArtifactPreviewContent";
 
 type ArtifactFileCardProps = {
@@ -143,7 +144,7 @@ function FilePreview({
         if (cancelled) return;
         setState({
           status: "error",
-          message: error instanceof Error ? error.message : t`Could not load this file.`,
+          message: errorText(error, t`Could not load this file.`),
         });
       });
     return () => {

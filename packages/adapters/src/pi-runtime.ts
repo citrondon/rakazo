@@ -28,20 +28,28 @@ import type {
   AgentSteeringMessage,
   AgentToolCompletion,
   AgentToolExecutionResult,
+  AgentUsage,
   ConnectorTool,
+  ModelCallObserver,
 } from "@rakazo/adapter-kit";
+import { DEFAULT_CONTEXT_STRATEGY } from "@rakazo/adapter-kit";
 import { parseToolCallLimit, resolveToolCallLimit, usableModelId } from "@rakazo/contracts";
 import { BUDGET_STOP_PREFIX } from "@rakazo/core";
 import { getLogger } from "@rakazo/logging";
 import { isToolPauseResult } from "./approval-effect.js";
 import { BOT_SAFETY_PREAMBLE } from "./bot-safety-preamble.js";
+import { connectionIdArgument, credentialArgument } from "./bot-secrets.js";
 import { builtinAgentTools, DELEGATION_TOOL_NAMES } from "./builtin-tools.js";
+import { withCloudflareGatewayAuth } from "./cloudflare-ai-gateway.js";
+import { shortenToolResultText } from "./context-selection.js";
 import { DEFAULT_OPENROUTER_MODEL_ID } from "./deployment-model.js";
 import {
   normalizeOpenAiToolParameters,
   openAiToolParametersNeedNormalization,
 } from "./openai-tool-parameters.js";
 import { PiRuntimeCredentialStore, toOAuthCredential } from "./pi-credentials.js";
+import { supplementPiModels } from "./pi-current-models.js";
+import { estimatePiImageTokens } from "./pi-image-context.js";
 import { registerLocalProvider } from "./pi-local-provider.js";
 import { codexComputeResidency } from "./pi-oauth.js";
 import {
@@ -54,8 +62,8 @@ import {
   clipToolResultContent,
   clipToolResultText,
   MODEL_STREAM_IDLE_TIMEOUT_MS,
-  MODEL_STREAM_MAX_RETRIES,
   MODEL_STREAM_TIMEOUT_MS,
+  modelStreamMaxRetries,
   REASONING_MODEL_MAX_TOKENS,
   resolveCompletionMaxTokens,
 } from "./pi-runtime-limits.js";
@@ -64,6 +72,9 @@ import {
   type PiSessionHandle,
   type PiSessionRecorder,
 } from "./pi-session.js";
+import { observedPiStream } from "./pi-usage.js";
+import type { RuntimeContextDecision } from "./runtime-context.js";
+import { createRuntimeContextPolicy } from "./runtime-context.js";
 import type { FinishedShellCommand } from "./shell-command-stream.js";
 import { deliverFinishedShells } from "./shell-command-stream.js";
 import { textContentArg } from "./tool-text.js";
@@ -82,7 +93,9 @@ const toolCallBudgetsByRun = new Map<string, ToolCallBudget>();
 // would run before .env is loaded and miss the local provider entirely.
 let catalogModelsCache: Models | undefined;
 function catalogModels(): Models {
-  catalogModelsCache ??= registerOpenAiCompatibleCatalog(registerLocalProvider(builtinModels()));
+  catalogModelsCache ??= registerOpenAiCompatibleCatalog(
+    registerLocalProvider(supplementPiModels(builtinModels())),
+  );
   return catalogModelsCache;
 }
 const MAX_PARALLEL_SUBAGENTS = 4;
@@ -94,8 +107,11 @@ const SILENT_TOOL_CONTINUATION_PROMPT =
   "Continue the original task from the latest tool result. Do not stop after a tool call; use any remaining tools needed, then give the user the final answer.";
 const SILENT_ALLOWED_TOOL_CONTINUATION_PROMPT =
   "Continue the original task from the latest tool result. If you were instructed to stay silent when there is nothing to report, follow that instruction for the entire final assistant reply. Otherwise use any remaining tools needed, then give the user the final answer.";
-const TOOL_FINAL_RESPONSE_FALLBACK =
-  "I completed the tool step but could not produce a final response. Please ask me to continue.";
+// Shown as a failed-run error, not an assistant message. Asking the user to
+// continue stores that sentence as the reply, and the next "continue" runs
+// tools and misses a final answer again.
+export const MISSING_TOOL_FINAL_RESPONSE_ERROR =
+  "The tools finished, but the model did not write a final answer. Rephrase the request and try again.";
 const DEFAULT_COMPUTER_SCREENSHOTS_TO_KEEP = 2;
 // Reasoning-capable models must not start at "off": for OpenRouter, pi-ai maps
 // that to reasoning.effort "none", which 400s on endpoints that mandate
@@ -124,12 +140,25 @@ export function maxToolCallsPerTurn(env: NodeJS.ProcessEnv = process.env): numbe
 export interface PiAgentRuntimeOptions {
   /** Directory where Pi JSONL sessions are written. Omit to disable recording. */
   sessionRoot?: string;
+  modelCallObserver?: ModelCallObserver;
+  /** Sanitized per-call selection telemetry; never includes prompt or credentials. */
+  onContextDecision?: (
+    decision: RuntimeContextDecision & {
+      runId: string;
+      agentId?: string;
+      usage: AgentUsage;
+    },
+  ) => void;
 }
 
 export class PiAgentRuntime implements AgentRuntime {
   private readonly sessionRecorder?: PiSessionRecorder;
+  private readonly modelCallObserver?: ModelCallObserver;
+  private readonly onContextDecision?: PiAgentRuntimeOptions["onContextDecision"];
 
   constructor(options: PiAgentRuntimeOptions = {}) {
+    this.modelCallObserver = options.modelCallObserver;
+    this.onContextDecision = options.onContextDecision;
     this.sessionRecorder = options.sessionRoot
       ? new PiJsonlSessionRecorder(options.sessionRoot)
       : undefined;
@@ -140,7 +169,12 @@ export class PiAgentRuntime implements AgentRuntime {
       id: "pi",
       contractVersion: "1",
       adapterVersion: "0.1.0",
-      capabilities: { streaming: true, compaction: true, tools: true, scripted: false },
+      capabilities: {
+        streaming: true,
+        compaction: true,
+        tools: true,
+        scripted: false,
+      },
     };
   }
 
@@ -198,7 +232,7 @@ export class PiAgentRuntime implements AgentRuntime {
           return;
         }
         const { models, model, apiKey } = selectedModel;
-        const toolDefs = request.tools.length ? request.tools : builtinAgentTools;
+        const toolDefs = request.tools;
         const nestedAgents = new Set<Agent>();
         const completionModel = modelForCompletion(model, request.model.maxTokens);
         const { limit: turnToolCallLimit, source: turnToolCallLimitSource } =
@@ -210,6 +244,9 @@ export class PiAgentRuntime implements AgentRuntime {
         trackedBudget = toolCallBudgetFor(request.runId, turnToolCallLimit);
         const host: ToolHost = {
           queue,
+          context,
+          onContextDecision: this.onContextDecision,
+          modelCallObserver: this.modelCallObserver,
           request,
           models,
           model: completionModel,
@@ -273,6 +310,10 @@ export class PiAgentRuntime implements AgentRuntime {
           }
         }
 
+        const contextPolicy = createRuntimeContextPolicy(request, context, {
+          credentialScope: apiKey,
+          imageTokens: estimatePiImageTokens,
+        });
         let agent: Agent;
         agent = new Agent({
           sessionId: conversationSessionId(request.threadId, request.botId),
@@ -282,9 +323,35 @@ export class PiAgentRuntime implements AgentRuntime {
               models,
               m,
               ctx,
-              options,
+              withCloudflareGatewayAuth(request.model, options),
               request.model.maxTokens,
               () => selectedModel.credentials?.accessToken ?? apiKey,
+              (preparedOptions) =>
+                observedPiStream(
+                  models,
+                  m,
+                  ctx,
+                  preparedOptions,
+                  (event) => queue.push(event),
+                  this.modelCallObserver,
+                  { operationKind: request.usageOperationKind ?? "answer" },
+                  {
+                    prepareContext: contextPolicy.prepareContext,
+                    imageTokens: estimatePiImageTokens,
+                    recordUsage: request.onUsage,
+                    onUsage: (usage) => {
+                      contextPolicy.onUsage(usage);
+                      const decision = contextPolicy.getDecision();
+                      if (decision)
+                        this.onContextDecision?.({
+                          ...decision,
+                          runId: request.runId,
+                          usage,
+                        });
+                    },
+                  },
+                ),
+              request.model.cacheCapabilities?.retentionMode,
             ),
           getApiKey: async () => apiKey,
           transformContext: async (messages) =>
@@ -295,7 +362,11 @@ export class PiAgentRuntime implements AgentRuntime {
           finishTurn: async (turn, turnSignal) => {
             await deliverFinishedShells(
               (text) => {
-                agent.followUp({ role: "user", content: text, timestamp: Date.now() });
+                agent.followUp({
+                  role: "user",
+                  content: text,
+                  timestamp: Date.now(),
+                });
               },
               host.pendingShells,
               turn,
@@ -338,6 +409,7 @@ export class PiAgentRuntime implements AgentRuntime {
         signal.addEventListener("abort", onAbort);
 
         let streamed = "";
+        let currentMessageStreamed = "";
         let toolCalls = 0;
         // Between-steps monthly budget. The executor checks the ceiling before the run;
         // this stops the turn once a model step pushes it past the ceiling, so one long
@@ -348,6 +420,9 @@ export class PiAgentRuntime implements AgentRuntime {
         let toolActivityShowing = false;
         let silentToolContinuations = 0;
         let toolWorkPendingFinal = false;
+        // Text streamed before this point is tool-turn narration. Only text after
+        // it counts as the final reply, including when the completed message omits it.
+        let streamedBeforePendingFinal = 0;
         agent.subscribe(async (event) => {
           if (event.type === "message_end") {
             await piSession?.appendMessage(event.message);
@@ -364,6 +439,9 @@ export class PiAgentRuntime implements AgentRuntime {
               activity: true,
             });
           }
+          if (event.type === "message_start" && event.message.role === "assistant") {
+            currentMessageStreamed = "";
+          }
           if (
             event.type === "message_update" &&
             event.assistantMessageEvent.type === "text_delta"
@@ -376,15 +454,14 @@ export class PiAgentRuntime implements AgentRuntime {
                 queue.push({ type: "progress", text: "", activity: true });
               }
               streamed += delta;
+              currentMessageStreamed += delta;
               queue.push({ type: "text", text: delta });
             }
           }
           if (event.type === "turn_end") {
             const messageText =
               event.message.role === "assistant" ? assistantText(event.message) : "";
-            const hasToolCalls =
-              event.message.role === "assistant" &&
-              event.message.content.some((part) => part.type === "toolCall");
+            const hasToolCalls = messageHasToolCall(event.message);
             const hasToolResults = event.toolResults.length > 0;
 
             // Text in a turn that also contains a tool call is narration, not a final
@@ -392,11 +469,22 @@ export class PiAgentRuntime implements AgentRuntime {
             if (hasToolCalls && hasToolResults && !host.pausePending) {
               toolWorkPendingFinal = true;
               silentToolContinuations = 0;
+              streamedBeforePendingFinal = streamed.length;
             } else if (toolWorkPendingFinal && !hasToolCalls && !hasToolResults) {
-              if (messageText.trim()) {
+              const streamedFinal = streamed.slice(streamedBeforePendingFinal).trim();
+              if (messageText.trim() || streamedFinal) {
                 toolWorkPendingFinal = false;
                 silentToolContinuations = 0;
+                // A provider can put the answer only on the completed message after
+                // narration already filled `streamed`, so message_end will not emit it.
+                if (messageText.trim() && !streamedFinal) {
+                  streamed += messageText;
+                  queue.push({ type: "text", text: messageText });
+                }
               } else if (
+                // A provider failure is not an empty success. Do not schedule
+                // another model turn that would hide the error.
+                !providerFailureText(event.message) &&
                 !host.pausePending &&
                 silentToolContinuations < MAX_SILENT_TOOL_CONTINUATIONS
               ) {
@@ -413,12 +501,26 @@ export class PiAgentRuntime implements AgentRuntime {
           }
           if (event.type === "message_end" && event.message.role === "assistant") {
             const text = assistantText(event.message);
-            if (text && !streamed) {
+            const streamedThisMessage = currentMessageStreamed;
+            currentMessageStreamed = "";
+            const continued =
+              streamedThisMessage.length > 0 && text.startsWith(streamedThisMessage);
+            const textToEmit = continued ? text.slice(streamedThisMessage.length) : text;
+            const sincePendingFinal = streamed.slice(streamedBeforePendingFinal);
+            const alreadyEmitted =
+              !continued &&
+              (streamedThisMessage.includes(text) || sincePendingFinal.endsWith(text));
+            if (textToEmit && !messageHasToolCall(event.message) && !alreadyEmitted) {
+              streamed += textToEmit;
+              queue.push({ type: "text", text: textToEmit });
+            } else if (text && !streamed) {
               streamed = text;
               queue.push({ type: "text", text });
             }
             if ("usage" in event.message && event.message.usage) {
               const usage = billedPromptTokens(event.message.usage);
+              // Only the between-steps monthly budget is computed here. The usage event
+              // itself comes from observedPiStream, so spend is recorded exactly once.
               if (remainingTokenBudget && remainingTokenBudget > 0 && !tokenBudgetStopped) {
                 runTokens +=
                   usage.inputTokens +
@@ -430,12 +532,6 @@ export class PiAgentRuntime implements AgentRuntime {
                   agent.abort();
                 }
               }
-              queue.push({
-                type: "usage",
-                ...usage,
-                provider: model.provider,
-                model: model.id,
-              });
               getLogger().debug("model usage", {
                 runId: request.runId,
                 provider: model.provider,
@@ -466,9 +562,38 @@ export class PiAgentRuntime implements AgentRuntime {
         // errorMessage set. Treat that as a soft stop so the turn still ends
         // with a durable assistant message instead of a failed run.
         const budgetExceeded = host.toolCallBudget.exceeded;
-        const error = agent.state.errorMessage;
+        const terminalMessage = agent.state.messages.at(-1);
+        // pi-agent-core records ordinary provider failures as an empty assistant
+        // message (stopReason "error" / "length") and still resolves the run.
+        // state.errorMessage covers the error stop; the message itself covers a
+        // length stop and any failure that never landed on state.
+        const providerFailure =
+          !budgetExceeded && !tokenBudgetStopped && terminalMessage
+            ? providerFailureText(terminalMessage)
+            : undefined;
+        const error = agent.state.errorMessage || providerFailure;
         if (error && !budgetExceeded && !tokenBudgetStopped) {
           throw new Error(sanitizeProviderError(model.provider, error));
+        }
+        if (
+          !budgetExceeded &&
+          !tokenBudgetStopped &&
+          terminalMessage &&
+          !messageHasToolCall(terminalMessage)
+        ) {
+          const terminalText = assistantText(terminalMessage);
+          const sincePendingFinal = streamed.slice(streamedBeforePendingFinal);
+          if (terminalText.trim() && !sincePendingFinal.includes(terminalText)) {
+            const missing =
+              sincePendingFinal && terminalText.startsWith(sincePendingFinal)
+                ? terminalText.slice(sincePendingFinal.length)
+                : terminalText;
+            if (missing) {
+              queue.push({ type: "text", text: missing });
+              streamed += missing;
+              toolWorkPendingFinal = false;
+            }
+          }
         }
         if (budgetExceeded || tokenBudgetStopped) {
           const budgetMessage = tokenBudgetStopped
@@ -487,10 +612,7 @@ export class PiAgentRuntime implements AgentRuntime {
             // Scheduled/FYI runs may finish after tools with no user-visible text.
             streamed = "";
           } else {
-            // Discard cumulative pre-tool narration from the terminal payload and make the
-            // missing final response visible to the user instead of silently completing.
-            streamed = TOOL_FINAL_RESPONSE_FALLBACK;
-            queue.push({ type: "text", text: streamed });
+            throw new Error(MISSING_TOOL_FINAL_RESPONSE_ERROR);
           }
         } else if (!streamed.trim() && !host.pausePending) {
           streamed = "";
@@ -500,9 +622,7 @@ export class PiAgentRuntime implements AgentRuntime {
             queue.push({ type: "text", text: fallback });
             streamed = fallback;
           } else if (toolWorkPendingFinal && !request.allowSilentEmpty) {
-            // A tool-bearing run must never finish with only a progress/narration message.
-            streamed = TOOL_FINAL_RESPONSE_FALLBACK;
-            queue.push({ type: "text", text: streamed });
+            throw new Error(MISSING_TOOL_FINAL_RESPONSE_ERROR);
           } else if (toolCalls === 0 && !request.allowSilentEmpty) {
             streamed = request.emptyResponseText?.trim() || "No response. Try again.";
             queue.push({ type: "text", text: streamed });
@@ -542,15 +662,16 @@ function toPiImages(images: AgentRunRequest["currentTurnImages"]) {
   }));
 }
 
-function configuredOpenRouterModel(id: string): Model<"openai-completions"> {
+function configuredOpenRouterModel(
+  id: string,
+  contextWindow = 16_384,
+): Model<"openai-completions"> {
   // A configured model can intentionally be newer than Pi's static catalog. Keep
   // pricing conservative, but enable reasoning: unknown OpenRouter endpoints
   // (e.g. gemini-3.7-flash before the snapshot catches up) often mandate it, and
   // thinkingLevel "off" becomes effort "none" which those endpoints reject.
-  // The output ceiling follows from that reasoning flag: a 4k placeholder would
-  // clamp the reasoning budget back to a size the thinking alone can consume.
-  // It cannot outgrow the conservative window this placeholder also assumes.
-  const contextWindow = 16_384;
+  // Reserve half the conservative fallback window for input. A model card's
+  // configured limits override this placeholder below.
   return {
     id,
     name: id,
@@ -561,7 +682,7 @@ function configuredOpenRouterModel(id: string): Model<"openai-completions"> {
     input: ["text"],
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     contextWindow,
-    maxTokens: Math.min(REASONING_MODEL_MAX_TOKENS, contextWindow),
+    maxTokens: Math.min(REASONING_MODEL_MAX_TOKENS, Math.max(1, Math.floor(contextWindow / 2))),
   };
 }
 
@@ -589,10 +710,20 @@ export function resolveRuntimeModel(modelConfig: AgentRunRequest["model"]): {
   if (
     !model &&
     provider === "openrouter" &&
-    envDefaultProvider === "openrouter" &&
-    modelId === envDefaultModel
+    modelId &&
+    ((envDefaultProvider === "openrouter" && modelId === envDefaultModel) ||
+      modelConfig.contextWindow !== undefined)
   ) {
-    model = configuredOpenRouterModel(modelId);
+    model = configuredOpenRouterModel(modelId, modelConfig.contextWindow);
+  }
+  if (model && (modelConfig.contextWindow !== undefined || modelConfig.maxTokens !== undefined)) {
+    model = {
+      ...model,
+      ...(modelConfig.contextWindow !== undefined
+        ? { contextWindow: modelConfig.contextWindow }
+        : {}),
+      ...(modelConfig.maxTokens !== undefined ? { maxTokens: modelConfig.maxTokens } : {}),
+    };
   }
   const apiKey = modelConfig.oauth
     ? undefined
@@ -628,7 +759,7 @@ export function modelsForRequest(
   const store = credentials ?? credentialStoreForRequest(request, provider);
   if (store) {
     return registerOpenAiCompatibleCatalog(
-      registerLocalProvider(builtinModels({ credentials: store })),
+      registerLocalProvider(supplementPiModels(builtinModels({ credentials: store }))),
     );
   }
   if (
@@ -636,7 +767,9 @@ export function modelsForRequest(
     request.model.baseUrl &&
     request.model.id.trim()
   ) {
-    const models = registerOpenAiCompatibleCatalog(registerLocalProvider(builtinModels()));
+    const models = registerOpenAiCompatibleCatalog(
+      registerLocalProvider(supplementPiModels(builtinModels())),
+    );
     return registerOpenAiCompatibleRuntime(models, {
       modelId: request.model.id,
       baseUrl: request.model.baseUrl,
@@ -650,8 +783,41 @@ export function modelsForRequest(
 }
 
 function toAgentTools(toolDefs: readonly ConnectorTool[], host: ToolHost): AgentTool[] {
-  const names = normalizeAgentToolNames(toolDefs);
-  return toolDefs.map((tool, index) => toAgentTool(tool, host, names[index]!));
+  // Registration order is incidental. Canonicalize before allocating collision suffixes
+  // so both provider-visible names and JSON schema serialization stay stable.
+  const canonicalJson = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(canonicalJson);
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value)
+          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+          .map(([key, item]) => [key, canonicalJson(item)]),
+      );
+    }
+    return value;
+  };
+  const ordered = toolDefs
+    .map((tool) => ({
+      tool: {
+        ...tool,
+        inputSchema: canonicalJson(tool.inputSchema) as Record<string, unknown>,
+      },
+      key: JSON.stringify(canonicalJson(tool)),
+    }))
+    .sort((a, b) =>
+      a.tool.name < b.tool.name
+        ? -1
+        : a.tool.name > b.tool.name
+          ? 1
+          : a.key < b.key
+            ? -1
+            : a.key > b.key
+              ? 1
+              : 0,
+    )
+    .map(({ tool }) => tool);
+  const names = normalizeAgentToolNames(ordered);
+  return ordered.map((tool, index) => toAgentTool(tool, host, names[index]!));
 }
 
 /**
@@ -701,6 +867,7 @@ export function describeToolActivity(toolName: string, args: unknown): string {
   if (toolName === "run_subagent") return `Delegating to helper: ${detail(record.name)}`;
   if (toolName === "create_space") return `Creating space: ${detail(record.name)}`;
   if (toolName === "remember") return "Saving a note to memory";
+  if (toolName === "save_shared_memory") return `Saving shared memory: ${detail(record.path)}`;
   if (toolName === "web_search") return `Searching the web: ${detail(record.query)}`;
   if (toolName === "web_fetch") return `Reading page: ${detail(redactActivityUrl(record.url))}`;
   if (toolName === "skill_read") return `Reading skill: ${detail(record.name)}`;
@@ -788,6 +955,9 @@ function toHistory(
         role: "user" as const,
         content: images.length ? [{ type: "text" as const, text }, ...images] : text,
         timestamp: Date.now(),
+        rakazoHistory: true,
+        rakazoMessageId: m.id,
+        rakazoCreatedAt: m.createdAt,
       };
     });
 }
@@ -827,7 +997,9 @@ function withoutSteeringMessages(
  * value only when `credential` is present, and it validates the destination
  * shape itself. An earlier version of this function listed only
  * label/purpose/connectionId, so every credential the model supplied was
- * dropped here and the saved value had nowhere to go.
+ * dropped here and the saved value had nowhere to go. Top-level destination
+ * fields and a JSON string credential are folded into `credential` so they
+ * are not dropped the same way.
  */
 export function prepareRequestSecretArguments(raw: Record<string, unknown>) {
   const label = raw.label == null ? "" : String(raw.label);
@@ -839,11 +1011,13 @@ export function prepareRequestSecretArguments(raw: Record<string, unknown>) {
       })`,
     );
   }
+  const credential = credentialArgument(raw);
+  const connectionId = connectionIdArgument(raw.connectionId);
   return {
     label,
     purpose,
-    ...(raw.connectionId ? { connectionId: String(raw.connectionId) } : {}),
-    ...(raw.credential ? { credential: raw.credential } : {}),
+    ...(connectionId ? { connectionId } : {}),
+    ...(credential !== undefined ? { credential } : {}),
     ...(raw.replace === true ? { replace: true } : {}),
   };
 }
@@ -864,7 +1038,10 @@ function toAgentTool(tool: ConnectorTool, host: ToolHost, exposedName: string): 
         };
       }
       if (tool.name === "remember") {
-        return { content: String(raw.content ?? ""), path: String(raw.path ?? "MEMORY.md") };
+        return {
+          content: String(raw.content ?? ""),
+          path: String(raw.path ?? "MEMORY.md"),
+        };
       }
       if (tool.name === "request_takeover") {
         return { reason: String(raw.reason ?? "I need you on the screen.") };
@@ -957,8 +1134,10 @@ function toAgentTool(tool: ConnectorTool, host: ToolHost, exposedName: string): 
     execute: async (toolCallId, params): Promise<AgentToolResult<unknown>> => {
       host.signal.throwIfAborted();
       const args = (params ?? {}) as Record<string, unknown>;
-      const executionId =
+      const rawCallId =
         toolCallId || `${host.request.runId}:${tool.name}:${host.toolCallSeq.value++}`;
+      // Backend idempotency includes the agent namespace; Pi wire IDs remain untouched.
+      const executionId = JSON.stringify(["pi-tool", host.agentNamespace ?? "main", rawCallId]);
       if (!beginToolCall(host)) {
         return {
           content: [{ type: "text", text: "Skipped: tool-call limit reached." }],
@@ -1018,7 +1197,17 @@ function toAgentTool(tool: ConnectorTool, host: ToolHost, exposedName: string): 
                 return result;
               }
               return {
-                content: [{ type: "text", text: summarizeToolResult(result) }],
+                content: [
+                  {
+                    type: "text",
+                    text: serializeToolResult(
+                      result,
+                      host.request.contextStrategy,
+                      tool.name,
+                      args,
+                    ),
+                  },
+                ],
                 details: result,
               };
             }
@@ -1053,12 +1242,22 @@ function toAgentTool(tool: ConnectorTool, host: ToolHost, exposedName: string): 
               return boundAgentToolResult(result);
             }
             return {
-              content: [{ type: "text", text: summarizeToolResult(result) }],
+              content: [
+                {
+                  type: "text",
+                  text: serializeToolResult(result, host.request.contextStrategy, tool.name, args),
+                },
+              ],
               details: result,
             };
           }
           return {
-            content: [{ type: "text", text: `${tool.name} is unavailable without an executor.` }],
+            content: [
+              {
+                type: "text",
+                text: `${tool.name} is unavailable without an executor.`,
+              },
+            ],
             details: { error: "no executor" },
           };
         })();
@@ -1120,7 +1319,14 @@ async function executeSubagent(host: ToolHost, executionId: string, args: Record
     }
   } catch (error) {
     const message = sanitizeError(error instanceof Error ? error.message : String(error));
-    host.queue.push({ type: "subagent", agentId, name, task, status: "failed", result: message });
+    host.queue.push({
+      type: "subagent",
+      agentId,
+      name,
+      task,
+      status: "failed",
+      result: message,
+    });
     host.subagentGate.release();
     return `Subagent failed: ${message}`;
   }
@@ -1128,29 +1334,50 @@ async function executeSubagent(host: ToolHost, executionId: string, args: Record
   const selectedModel = resolveRuntimeModel(requestModel);
   if (!selectedModel.model) {
     const message = `Unknown model ${selectedModel.provider}/${selectedModel.modelId}`;
-    host.queue.push({ type: "subagent", agentId, name, task, status: "failed", result: message });
+    host.queue.push({
+      type: "subagent",
+      agentId,
+      name,
+      task,
+      status: "failed",
+      result: message,
+    });
     host.subagentGate.release();
     return `Subagent failed: ${message}`;
   }
   const subagentModel = modelForCompletion(selectedModel.model, requestModel.maxTokens);
 
-  const childDefs = (host.request.tools.length ? host.request.tools : builtinAgentTools).filter(
-    (tool) => !DELEGATION_TOOL_NAMES.has(tool.name),
-  );
+  const childDefs = host.request.tools.filter((tool) => !DELEGATION_TOOL_NAMES.has(tool.name));
   const nestedHost: ToolHost = {
     ...host,
     models: selectedModel.models,
     model: subagentModel,
     apiKey: selectedModel.apiKey,
     depth: 1,
+    agentNamespace: agentId,
     pendingShells: [],
   };
+  const contextPolicy = createRuntimeContextPolicy(
+    {
+      ...host.request,
+      model: requestModel,
+      history: [],
+      prompt: task,
+      sourceMessageId: undefined,
+    },
+    host.context,
+    { credentialScope: selectedModel.apiKey, imageTokens: estimatePiImageTokens },
+  );
   let nested!: Agent;
   nested = new Agent({
     finishTurn: async (turn, turnSignal) => {
       await deliverFinishedShells(
         (text) => {
-          nested.followUp({ role: "user", content: text, timestamp: Date.now() });
+          nested.followUp({
+            role: "user",
+            content: text,
+            timestamp: Date.now(),
+          });
         },
         nestedHost.pendingShells,
         turn,
@@ -1163,9 +1390,36 @@ async function executeSubagent(host: ToolHost, executionId: string, args: Record
         selectedModel.models,
         m,
         ctx,
-        options,
+        withCloudflareGatewayAuth(requestModel, options),
         requestModel.maxTokens,
         () => selectedModel.credentials?.accessToken ?? selectedModel.apiKey,
+        (preparedOptions) =>
+          observedPiStream(
+            selectedModel.models,
+            m,
+            ctx,
+            preparedOptions,
+            (event) => host.queue.push(event),
+            host.modelCallObserver,
+            { operationKind: "subagent", agentId },
+            {
+              prepareContext: contextPolicy.prepareContext,
+              imageTokens: estimatePiImageTokens,
+              recordUsage: host.request.onUsage,
+              onUsage: (usage) => {
+                contextPolicy.onUsage(usage);
+                const decision = contextPolicy.getDecision();
+                if (decision)
+                  host.onContextDecision?.({
+                    ...decision,
+                    runId: host.request.runId,
+                    agentId,
+                    usage,
+                  });
+              },
+            },
+          ),
+        requestModel.cacheCapabilities?.retentionMode,
       ),
     getApiKey: async () => selectedModel.apiKey,
     transformContext: async (messages) =>
@@ -1226,21 +1480,6 @@ async function executeSubagent(host: ToolHost, executionId: string, args: Record
     if (event.type === "message_end" && event.message.role === "assistant") {
       const text = assistantText(event.message);
       if (text && !streamed) streamed = text;
-      if ("usage" in event.message && event.message.usage) {
-        const usage = billedPromptTokens(event.message.usage);
-        host.queue.push({
-          type: "usage",
-          ...usage,
-          provider: subagentModel.provider,
-          model: subagentModel.id,
-        });
-        getLogger().debug("model usage", {
-          runId: host.request.runId,
-          provider: subagentModel.provider,
-          model: subagentModel.id,
-          ...usage,
-        });
-      }
     }
   });
 
@@ -1273,10 +1512,17 @@ async function executeSubagent(host: ToolHost, executionId: string, args: Record
     // Shared-budget abort leaves errorMessage on the nested agent; surface it as a
     // completed stop rather than a failed subagent chip.
     const budgetExceeded = host.toolCallBudget.exceeded;
-    const error = nested.state.errorMessage;
+    const error = nested.state.errorMessage || providerFailureText(nested.state.messages.at(-1));
     if (error && !budgetExceeded) {
       const message = sanitizeProviderError(subagentModel.provider, error);
-      host.queue.push({ type: "subagent", agentId, name, task, status: "failed", result: message });
+      host.queue.push({
+        type: "subagent",
+        agentId,
+        name,
+        task,
+        status: "failed",
+        result: message,
+      });
       return `Subagent failed: ${message}`;
     }
     const budgetMessage = budgetExceeded
@@ -1298,7 +1544,14 @@ async function executeSubagent(host: ToolHost, executionId: string, args: Record
     return clipped;
   } catch (error) {
     const message = sanitizeError(error instanceof Error ? error.message : String(error));
-    host.queue.push({ type: "subagent", agentId, name, task, status: "failed", result: message });
+    host.queue.push({
+      type: "subagent",
+      agentId,
+      name,
+      task,
+      status: "failed",
+      result: message,
+    });
     return `Subagent failed: ${message}`;
   } finally {
     host.nestedAgents.delete(nested);
@@ -1714,11 +1967,19 @@ export function jsonField(spec: unknown): ReturnType<typeof Type.String> {
   return Type.String(options);
 }
 
-function summarizeToolResult(result: unknown) {
+function serializeToolResult(
+  result: unknown,
+  strategy: AgentRunRequest["contextStrategy"],
+  name: string,
+  args: Record<string, unknown>,
+) {
   try {
     const text = JSON.stringify(result);
     if (!text) return "ok";
-    return clipToolResultText(text);
+    if (text.length <= 12_000) return text;
+    return (strategy ?? DEFAULT_CONTEXT_STRATEGY) === "current"
+      ? clipToolResultText(text)
+      : shortenToolResultText(text, 12_000, { name, arguments: args });
   } catch {
     return "ok";
   }
@@ -1744,6 +2005,43 @@ function assistantText(message: unknown): string {
         : "",
     )
     .join("");
+}
+
+function messageHasToolCall(message: unknown): boolean {
+  if (!message || typeof message !== "object" || !("content" in message)) return false;
+  const content = (message as { content?: unknown }).content;
+  if (!Array.isArray(content)) return false;
+  return content.some(
+    (part) => !!part && typeof part === "object" && "type" in part && part.type === "toolCall",
+  );
+}
+
+/** Provider failure. Aborts stay on the existing cancel path. */
+export function providerFailureText(message: unknown): string | undefined {
+  if (!message || typeof message !== "object") return undefined;
+  if (!("role" in message) || message.role !== "assistant") return undefined;
+  const stopReason =
+    "stopReason" in message && typeof message.stopReason === "string"
+      ? message.stopReason
+      : undefined;
+  if (stopReason === "aborted") return undefined;
+  const errorMessage =
+    "errorMessage" in message &&
+    typeof message.errorMessage === "string" &&
+    message.errorMessage.trim()
+      ? message.errorMessage.trim()
+      : undefined;
+  const text = assistantText(message).trim();
+  if (stopReason === "error") {
+    if (errorMessage) return errorMessage;
+    if (text) return "The model failed after writing a response.";
+    return "The model failed before writing a response.";
+  }
+  if (stopReason === "length" && !text) {
+    return errorMessage || "The model hit its output limit before writing a response.";
+  }
+  if (errorMessage && !text) return errorMessage;
+  return undefined;
 }
 
 function sanitizeSensitiveText(message: string) {
@@ -1816,6 +2114,9 @@ interface EventQueue {
 }
 
 interface ToolHost {
+  context?: Partial<AdapterContext>;
+  onContextDecision?: PiAgentRuntimeOptions["onContextDecision"];
+  modelCallObserver?: ModelCallObserver;
   queue: EventQueue;
   request: AgentRunRequest;
   models: Models;
@@ -1829,6 +2130,7 @@ interface ToolHost {
   abortTurn(): void;
   signal: AbortSignal;
   depth: number;
+  agentNamespace?: string;
   pausePending: boolean;
   /** Shell commands that returned output and are still running. */
   pendingShells: Array<Promise<FinishedShellCommand>>;
@@ -2058,7 +2360,11 @@ export function codexStreamIdleWatchdog(
 
   const describeTimeout = (message: AssistantMessage): AssistantMessage =>
     timedOut && message.stopReason === "aborted"
-      ? { ...message, stopReason: "error", errorMessage: CODEX_STREAM_IDLE_TIMEOUT_MESSAGE }
+      ? {
+          ...message,
+          stopReason: "error",
+          errorMessage: CODEX_STREAM_IDLE_TIMEOUT_MESSAGE,
+        }
       : message;
 
   const rewrite = (event: AssistantMessageEvent): AssistantMessageEvent => {
@@ -2162,31 +2468,33 @@ export function reliableModelStream(
   options: ModelsSimpleStreamOptions | undefined,
   configuredMaxTokens: number | undefined,
   accessToken?: string | (() => string | undefined),
+  runStream?: (options: ModelsSimpleStreamOptions) => AssistantMessageEventStream,
+  cacheRetention?: ModelsSimpleStreamOptions["cacheRetention"],
 ): AssistantMessageEventStream {
   const watchdog = isCodexModel(model) ? codexStreamIdleWatchdog(options?.signal) : undefined;
   try {
-    const stream = models.streamSimple(
+    const preparedOptions = reliableStreamOptions(
       model,
-      context,
-      reliableStreamOptions(
-        model,
-        watchdog
-          ? {
-              ...options,
-              signal: watchdog.signal,
-              fetch: codexRequestFetch(options?.fetch, MODEL_STREAM_IDLE_TIMEOUT_MS),
-              // Only a 2xx arms the shared watchdog. Error bodies are bounded by
-              // the fetch wrapper, and a caller-supplied hook still sees every status.
-              onResponse: (response, requestModel) => {
-                if (response.status >= 200 && response.status < 300) watchdog.ping();
-                return options?.onResponse?.(response, requestModel);
-              },
-            }
-          : options,
-        configuredMaxTokens,
-        accessToken,
-      ),
+      watchdog
+        ? {
+            ...options,
+            signal: watchdog.signal,
+            fetch: codexRequestFetch(options?.fetch, MODEL_STREAM_IDLE_TIMEOUT_MS),
+            // Only a 2xx arms the shared watchdog. Error bodies are bounded by
+            // the fetch wrapper, and a caller-supplied hook still sees every status.
+            onResponse: (response, requestModel) => {
+              if (response.status >= 200 && response.status < 300) watchdog.ping();
+              return options?.onResponse?.(response, requestModel);
+            },
+          }
+        : options,
+      configuredMaxTokens,
+      accessToken,
+      cacheRetention,
     );
+    const stream = runStream
+      ? runStream(preparedOptions)
+      : models.streamSimple(model, context, preparedOptions);
     return watchdog ? watchdog.wrap(stream) : stream;
   } catch (error) {
     watchdog?.dispose();
@@ -2206,11 +2514,13 @@ export function reliableStreamOptions(
   options?: ModelsSimpleStreamOptions,
   configuredMaxTokens?: number,
   accessToken?: string | (() => string | undefined),
+  cacheRetention?: ModelsSimpleStreamOptions["cacheRetention"],
 ): ModelsSimpleStreamOptions {
   let next: ModelsSimpleStreamOptions = {
     ...options,
+    ...(cacheRetention ? { cacheRetention } : {}),
     timeoutMs: options?.timeoutMs ?? MODEL_STREAM_TIMEOUT_MS,
-    maxRetries: options?.maxRetries ?? MODEL_STREAM_MAX_RETRIES,
+    maxRetries: options?.maxRetries ?? modelStreamMaxRetries(),
     maxTokens: resolveCompletionMaxTokens(
       model.maxTokens,
       configuredMaxTokens,

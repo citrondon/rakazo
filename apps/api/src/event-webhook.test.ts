@@ -51,6 +51,7 @@ function createDeps(overrides: { triggers?: unknown[]; routines?: unknown[] } = 
       },
       secret: {
         findUnique: vi.fn(async () => ({
+          id: "secret-1",
           ciphertext: "cipher",
           kind: "webhook",
           userId: "user-1",
@@ -60,7 +61,7 @@ function createDeps(overrides: { triggers?: unknown[]; routines?: unknown[] } = 
       trigger: { findMany: vi.fn(async () => overrides.triggers ?? [triggerRow()]) },
       routine: { findMany: findRoutines },
     } as unknown as WebhookDeps["prisma"],
-    secrets: { load: () => SECRET } as unknown as WebhookDeps["secrets"],
+    secrets: { load: async () => SECRET } as unknown as WebhookDeps["secrets"],
     events: { sendUserMessage },
     jobs: { enqueue } as unknown as WebhookDeps["jobs"],
   } as WebhookDeps;
