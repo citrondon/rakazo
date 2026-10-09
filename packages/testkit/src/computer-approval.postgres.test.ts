@@ -219,6 +219,15 @@ describe.skipIf(!databaseAvailable)("offline Pi computer approval", () => {
           status: answer === "allow" ? "completed" : "denied",
           request: approvedArgs,
         });
+        const decisions = await handles.prisma.actionDecision.findMany({
+          where: { spaceId: storedBot.spaceId, toolName: "computer_act" },
+          orderBy: { createdAt: "asc" },
+        });
+        expect(decisions.length).toBeGreaterThan(0);
+        expect(decisions.at(-1)?.decision).toBe("ask");
+        expect(decisions.at(-1)?.source).toBe("require_approval");
+        expect(decisions.at(-1)?.enforced).toBe(false);
+        expect(decisions.at(-1)?.wouldDeny).toBe(false);
       } finally {
         try {
           await stop?.();

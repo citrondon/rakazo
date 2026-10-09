@@ -176,6 +176,7 @@ function fixture(runId = "run-1") {
       ),
     },
     actionApprovalRule: { findMany: vi.fn(async () => []) },
+    actionDecision: { create: vi.fn(async () => undefined) },
     actionAutoReviewPreference: { findUnique: vi.fn(async () => ({ enabled: false })) },
     externalEffect,
   };

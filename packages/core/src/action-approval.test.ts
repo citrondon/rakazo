@@ -4,6 +4,7 @@ import {
   applyJudgeDecision,
   connectorKindFromToolName,
   connectorToolRequiresApproval,
+  deploymentActionFailClosed,
   isApprovalAskBlock,
   isSecretAskBlock,
   planActionGate,
@@ -286,6 +287,35 @@ describe("resolveActionApproval", () => {
       }),
     ).toMatchObject({ decision: "allow", source: "default" });
   });
+
+  it("allows by default while the deployment runs fail-open", () => {
+    expect(resolveActionApprovalDetail({ toolName: "some_unruled_tool", rules: [] }).decision).toBe(
+      "allow",
+    );
+  });
+
+  it("asks instead of silently allowing when the deployment runs fail-closed", () => {
+    const resolved = resolveActionApprovalDetail({
+      toolName: "some_unruled_tool",
+      rules: [],
+      failClosed: true,
+    });
+    expect(resolved.decision).toBe("ask");
+    expect(resolved.source).toBe("default");
+  });
+
+  it("keeps an explicit always-allow rule above the fail-closed default", () => {
+    const rules: ActionApprovalRule[] = [
+      { effect: "always_allow", matchKind: "tool", matchValue: "some_unruled_tool" },
+    ];
+    const resolved = resolveActionApprovalDetail({
+      toolName: "some_unruled_tool",
+      rules,
+      failClosed: true,
+    });
+    expect(resolved.decision).toBe("allow");
+    expect(resolved.source).toBe("always_allow");
+  });
 });
 
 describe("planActionGate", () => {
@@ -372,5 +402,18 @@ describe("applyJudgeDecision", () => {
   it("fails closed on consequential checker errors and open on exempt", () => {
     expect(applyJudgeDecision({ decision: "error", consequential: true })).toBe("ask");
     expect(applyJudgeDecision({ decision: "error", consequential: false })).toBe("allow");
+  });
+});
+
+describe("deploymentActionFailClosed", () => {
+  it("is off unless the deployment turns it on", () => {
+    expect(deploymentActionFailClosed({})).toBe(false);
+    expect(deploymentActionFailClosed({ RAKAZO_ACTION_FAIL_CLOSED: "false" })).toBe(false);
+  });
+
+  it("reads the same spellings as the other deployment flags", () => {
+    for (const value of ["1", "true", "yes", "on"]) {
+      expect(deploymentActionFailClosed({ RAKAZO_ACTION_FAIL_CLOSED: value })).toBe(true);
+    }
   });
 });

@@ -72,6 +72,7 @@ import {
   containsSecret,
   createStreamingRedactor,
   currentMonthStart,
+  deploymentActionFailClosed,
   effectRisk,
   endsSentence,
   expandSkillReferencesInPrompt,
@@ -137,6 +138,7 @@ import {
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { parse as parseShellCommand } from "shell-quote";
+import { buildActionDecisionRow } from "./action-decision-row.js";
 import {
   connectAgent,
   messageConnectedAgent,
@@ -3829,6 +3831,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
             .then((rules) => rules as ActionApprovalRule[]);
           return approvalRulesPromise;
         };
+        // Read once per attempt: one attempt must not mix fail-closed and fail-open decisions.
+        const failClosedActions = deploymentActionFailClosed();
         let autoReviewPreferencePromise: Promise<boolean> | undefined;
         const loadAutoReviewPreference = () => {
           autoReviewPreferencePromise ??= deps.prisma.actionAutoReviewPreference
@@ -4275,6 +4279,11 @@ export function createRunExecutor(deps: ExecutorDeps) {
             name,
             connectedPlugins.map((plugin) => plugin.provider),
           );
+          // The gate holds an action by parking its effect record until the owner answers. A
+          // tool the name list keeps out of the effect table cannot be held, so it must not
+          // resolve to a held decision either — the audit would claim an enforcement that
+          // never happened. This is the gate's own list, not a connector's read-only hint.
+          const gateHoldsEffect = !READ_ONLY_AGENT_TOOLS.has(name);
           const approvalResolved = requiresMandatoryApproval
             ? {
                 decision: "ask" as const,
@@ -4286,6 +4295,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 connectorKind,
                 readOnly: declaredReadOnly,
                 rules: await loadApprovalRules(),
+                failClosed: gateHoldsEffect && failClosedActions,
               });
           const autoReviewPref = requiresMandatoryApproval
             ? false
@@ -4333,10 +4343,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
             usesApprovalKey && occurrence === 0
               ? approvalEffectKey(runId, replayEffectToolName, args)
               : toolEffectIdempotencyKey(runId, replayEffectToolName, args, occurrence);
-          // Connector read-only hints must not bypass approval, review, or replay decisions.
-          const applied = READ_ONLY_AGENT_TOOLS.has(name)
-            ? undefined
-            : await recordEffect(
+          const applied = gateHoldsEffect
+            ? await recordEffect(
                 deps,
                 run,
                 replayEffectToolName,
@@ -4344,7 +4352,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 effectRequest,
                 executionId,
                 consumedEffectIds,
-              );
+              )
+            : undefined;
 
           const runAutoReview = async () => {
             if (!injectedReview && !checker) return;
@@ -4498,6 +4507,23 @@ export function createRunExecutor(deps: ExecutorDeps) {
             gateDecision = "ask";
           }
           if (context.signal.aborted) return pauseForApproval();
+          // Record the final gate outcome before anything acts. No catch: an action that
+          // was not recorded did not happen.
+          await deps.prisma.actionDecision.create({
+            data: buildActionDecisionRow({
+              spaceId: run.spaceId,
+              botId: run.botId,
+              threadId: run.threadId,
+              runId: run.id,
+              effectId: applied?.effect.id,
+              toolName: name,
+              connectorKind,
+              resolved: approvalResolved,
+              gateDecision,
+              failClosed: failClosedActions,
+              gateHoldsEffect,
+            }),
+          });
 
           const needsApproval = gateDecision === "ask";
           const bypassApproval = gateDecision === "allow" && requiresApprovalByDefault;
