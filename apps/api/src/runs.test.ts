@@ -1,5 +1,5 @@
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { Actor } from "@bobbot/contracts";
+import type { PrismaClient } from "@bobbot/db";
 import { describe, expect, it } from "vitest";
 import { activityNotificationsEnabled, activityPromptSnippet, listSpaceRuns } from "./runs.js";
 

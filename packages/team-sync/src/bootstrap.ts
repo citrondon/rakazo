@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { BotRoleRegistry } from "@rakazo/contracts";
+import type { BotRoleRegistry } from "@bobbot/contracts";
 import * as yaml from "yaml";
 import type { TeamTemplate } from "./template.js";
 

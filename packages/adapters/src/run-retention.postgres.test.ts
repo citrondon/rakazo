@@ -1,5 +1,5 @@
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
-import { createDb, type PrismaClient } from "@rakazo/db";
+import { ACTIVE_RUN_STATUSES } from "@bobbot/core";
+import { createDb, type PrismaClient } from "@bobbot/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { pruneRunHistory } from "./run-retention.js";
 

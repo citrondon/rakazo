@@ -1,5 +1,5 @@
-import type { IntegrationSetupState } from "@rakazo/contracts";
-import { credentialIssue } from "@rakazo/core";
+import type { IntegrationSetupState } from "@bobbot/contracts";
+import { credentialIssue } from "@bobbot/core";
 import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {

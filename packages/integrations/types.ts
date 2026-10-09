@@ -4,7 +4,7 @@ import type {
   MessageBlock,
   ProductEventType,
   TrustEffect,
-} from "@rakazo/contracts"
+} from "@bobbot/contracts"
 
 // –––––––––––––––––––––––––––––––––––––––––––––––––––
 // 1. MessageBlock Mapping

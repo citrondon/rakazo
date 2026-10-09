@@ -1,6 +1,6 @@
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import { ACTIVE_RUN_STATUSES } from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 
 /**
  * How long finished runs stay queryable. Long enough that "what did the bot do in

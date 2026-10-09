@@ -3,14 +3,14 @@ import type {
   ConnectorCall,
   ManagedConnectorProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
+} from "@bobbot/adapter-kit";
 import {
   type IntegrationProviderConfig,
   IntegrationProviderConfigSchema,
   type IntegrationProviderId,
   IntegrationProviderIdSchema,
-} from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+} from "@bobbot/contracts";
+import type { PrismaClient } from "@bobbot/db";
 import { ComposioConnector } from "./composio-connector.js";
 import { describeCredentialCheckFailure } from "./connector-failures.js";
 import { credentialDigest } from "./credential-digest.js";

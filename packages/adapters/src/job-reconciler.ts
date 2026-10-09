@@ -1,10 +1,10 @@
-import type { JobPublisher, NotificationProvider } from "@rakazo/adapter-kit";
-import { messagingDeliverJob, routineWakeupJob, runContinueJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { stuckWorkStatusMessages } from "@rakazo/core";
-import type { Pool, PrismaClient, ThreadEvents } from "@rakazo/db";
-import { autoResumeQuietHoursRun } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { JobPublisher, NotificationProvider } from "@bobbot/adapter-kit";
+import { messagingDeliverJob, routineWakeupJob, runContinueJob } from "@bobbot/adapter-kit";
+import type { MessageBlock } from "@bobbot/contracts";
+import { stuckWorkStatusMessages } from "@bobbot/core";
+import type { Pool, PrismaClient, ThreadEvents } from "@bobbot/db";
+import { autoResumeQuietHoursRun } from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 import type { PoolClient } from "pg";
 import { returnBotMessageOutcome } from "./bot-messages.js";
 import { scheduleComputerControlExpiry } from "./computer-control.js";

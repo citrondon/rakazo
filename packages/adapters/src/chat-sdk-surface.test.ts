@@ -1,5 +1,5 @@
+import type { AdapterContext, MessagingInboundEvent } from "@bobbot/adapter-kit";
 import { createMockAdapter, createTestMessage } from "@chat-adapter/tests";
-import type { AdapterContext, MessagingInboundEvent } from "@rakazo/adapter-kit";
 import type { Adapter, ChatInstance } from "chat";
 import { describe, expect, it, vi } from "vitest";
 import {

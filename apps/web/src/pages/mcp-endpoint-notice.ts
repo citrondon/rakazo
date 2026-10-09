@@ -1,4 +1,4 @@
-import { isLocalMcpHost, isPrivateNetworkHost } from "@rakazo/contracts";
+import { isLocalMcpHost, isPrivateNetworkHost } from "@bobbot/contracts";
 
 /**
  * Which endpoint gate a typed server URL would hit: the two refusals

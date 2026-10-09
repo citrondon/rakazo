@@ -3,8 +3,7 @@ import { randomUUID } from "node:crypto";
 import { access, lstat, open, readFile, rename, unlink } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { serve } from "@hono/node-server";
-import type { ServerUpdateRun } from "@rakazo/contracts";
+import type { ServerUpdateRun } from "@bobbot/contracts";
 import {
   applyLegacyEnvAliases,
   type ComposeUpdateStep,
@@ -33,10 +32,11 @@ import {
   selectLatestRelease,
   upsertEnvAssignments,
   validateUpdateRequest,
-} from "@rakazo/core";
-import { type Logger, SERVICE_NAMES } from "@rakazo/logging";
-import { createRootLogger } from "@rakazo/logging/axiom";
-import { requestLogging } from "@rakazo/logging/hono";
+} from "@bobbot/core";
+import { type Logger, SERVICE_NAMES } from "@bobbot/logging";
+import { createRootLogger } from "@bobbot/logging/axiom";
+import { requestLogging } from "@bobbot/logging/hono";
+import { serve } from "@hono/node-server";
 import { type Context, Hono } from "hono";
 import {
   readTagState,

@@ -95,7 +95,7 @@ Startet API, Worker, Web und Sandbox-Supervisor via turbo. Danach: [http://127.0
 
 ```bash
 # in zweitem Terminal, während pnpm dev läuft:
-pnpm --filter @rakazo/desktop dev
+pnpm --filter @bobbot/desktop dev
 ```
 
 Kommt das `node_modules`-Verzeichnis von einem anderen Rechner, ist `electron` zwar installiert,
@@ -104,7 +104,7 @@ schlägt dann fehl. Nachholen:
 
 ```bash
 node node_modules/.pnpm/electron@*/node_modules/electron/install.js
-pnpm --filter @rakazo/desktop exec electron --version   # → v44.3.0
+pnpm --filter @bobbot/desktop exec electron --version   # → v44.3.0
 ```
 
 `ldd` auf `node_modules/.pnpm/electron@*/node_modules/electron/dist/electron` zeigt unter Nobara
@@ -113,7 +113,7 @@ keine fehlenden Bibliotheken; zusätzliche Systempakete sind dafür nicht nötig
 ## 7. Mobile (Expo, optional)
 
 ```bash
-pnpm --filter @rakazo/mobile android
+pnpm --filter @bobbot/mobile android
 ```
 
 Braucht Android SDK/adb auf dem Host — separates Thema, nicht Teil des Basis-Setups.
@@ -131,7 +131,7 @@ pnpm test:e2e           # braucht Docker + Playwright-Chromium
 ```
 
 Playwright-Browser einmalig installieren:
-`pnpm --filter @rakazo/web exec playwright install chromium`
+`pnpm --filter @bobbot/web exec playwright install chromium`
 
 Die Offline-Suite läuft hier in rund zwei Minuten gegen 456 Testdateien. Einige Adapter-Tests
 führen die Shell-Skripte der Sandboxes auf dem **Host** aus, und deren `/proc`-Durchläufe

@@ -1,6 +1,6 @@
+import type { CredentialField } from "@bobbot/core";
+import { authErrorMessage, userErrorMessage } from "@bobbot/core";
 import { t } from "@lingui/core/macro";
-import type { CredentialField } from "@rakazo/core";
-import { authErrorMessage, userErrorMessage } from "@rakazo/core";
 
 /** Text for a failure: human messages pass through; network and implementation detail become copy. */
 export function errorText(error: unknown, fallback = t`Something went wrong. Try again.`): string {

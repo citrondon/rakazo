@@ -1,7 +1,7 @@
+import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@bobbot/ui-web";
 import { i18n } from "@lingui/core";
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web";
 import { Code2, Download, FileText, X } from "lucide-react";
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";

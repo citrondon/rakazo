@@ -1,6 +1,6 @@
+import type { AccountSecurity, AvatarStyle, UsageMonth } from "@bobbot/contracts";
+import { BotAvatar, Button, Field, FieldLabel, Input, Label, Switch, Toggle } from "@bobbot/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { AccountSecurity, AvatarStyle, UsageMonth } from "@rakazo/contracts";
-import { BotAvatar, Button, Field, FieldLabel, Input, Label, Switch, Toggle } from "@rakazo/ui-web";
 import { ChevronDown, Download } from "lucide-react";
 import {
   type KeyboardEvent as ReactKeyboardEvent,

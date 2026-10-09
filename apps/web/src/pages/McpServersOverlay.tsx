@@ -1,7 +1,5 @@
-import { t } from "@lingui/core/macro";
-import { Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, BotMcpServer, McpServer, McpStdioStatus, McpTransport } from "@rakazo/contracts";
-import { deriveMcpSlug } from "@rakazo/core";
+import type { Bot, BotMcpServer, McpServer, McpStdioStatus, McpTransport } from "@bobbot/contracts";
+import { deriveMcpSlug } from "@bobbot/core";
 import {
   Badge,
   Button,
@@ -22,7 +20,9 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
-} from "@rakazo/ui-web";
+} from "@bobbot/ui-web";
+import { t } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   BookOpen,
   Check,

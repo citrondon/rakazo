@@ -1,5 +1,5 @@
+import type { MemoryDocument } from "@bobbot/contracts";
 import { expect, test } from "@playwright/test";
-import type { MemoryDocument } from "@rakazo/contracts";
 import { completeOnboarding, rpc, signup } from "./helpers";
 
 test("shared memory save writes without an approval card", async ({ page }) => {

@@ -1,4 +1,4 @@
-import type { TrustEffect, TrustEffectAction } from "@rakazo/contracts";
+import type { TrustEffect, TrustEffectAction } from "@bobbot/contracts";
 import { toolRequiresApproval, unattendedTriggerToolRequiresApproval } from "./action-approval.js";
 import { effectRisk } from "./trust-effects.js";
 

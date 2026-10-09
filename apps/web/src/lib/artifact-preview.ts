@@ -1,4 +1,4 @@
-import { isAttachmentImageMimeType } from "@rakazo/contracts";
+import { isAttachmentImageMimeType } from "@bobbot/contracts";
 
 /**
  * The one table that decides how an artifact's bytes are shown, from its mime type. The

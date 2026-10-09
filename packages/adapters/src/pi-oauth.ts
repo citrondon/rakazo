@@ -1,30 +1,30 @@
 import { randomUUID } from "node:crypto";
 import type {
+  ModelCredentialFailedState,
+  ModelCredentialRetireReason,
+  SecretStore,
+} from "@bobbot/adapter-kit";
+import type {
+  ModelContextLimits,
+  ModelOAuthBegin,
+  ModelOAuthSignInMode,
+  ThinkingLevel,
+} from "@bobbot/contracts";
+import {
+  MAX_MODEL_CONTEXT_WINDOW,
+  MAX_MODEL_MAX_TOKENS,
+  ModelContextLimitsSchema,
+  ThinkingLevelSchema,
+} from "@bobbot/contracts";
+import type { PrismaClient } from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
+import type {
   AuthInteraction,
   Credential,
   OAuthAuth,
   OAuthCredential,
 } from "@earendil-works/pi-ai";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
-import type {
-  ModelCredentialFailedState,
-  ModelCredentialRetireReason,
-  SecretStore,
-} from "@rakazo/adapter-kit";
-import type {
-  ModelContextLimits,
-  ModelOAuthBegin,
-  ModelOAuthSignInMode,
-  ThinkingLevel,
-} from "@rakazo/contracts";
-import {
-  MAX_MODEL_CONTEXT_WINDOW,
-  MAX_MODEL_MAX_TOKENS,
-  ModelContextLimitsSchema,
-  ThinkingLevelSchema,
-} from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
 import { createManualAnthropicOAuthLogin } from "./pi-anthropic-oauth.js";
 
 export const CHATGPT_OAUTH_PROVIDER = "openai-codex";

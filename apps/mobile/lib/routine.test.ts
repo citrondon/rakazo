@@ -1,4 +1,4 @@
-import type { Routine } from "@rakazo/contracts";
+import type { Routine } from "@bobbot/contracts";
 import { describe, expect, it } from "vitest";
 import { routineStatusLine } from "./routine.js";
 

@@ -3,11 +3,11 @@ import type {
   AgentRuntime,
   JobPublisher,
   SemanticMemoryResponse,
-} from "@rakazo/adapter-kit";
-import { historyCompactJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger, wrapJobPayload } from "@rakazo/logging";
+} from "@bobbot/adapter-kit";
+import { historyCompactJob } from "@bobbot/adapter-kit";
+import type { MessageBlock } from "@bobbot/contracts";
+import type { PrismaClient } from "@bobbot/db";
+import { createLogger, createTestSink, installLogger, wrapJobPayload } from "@bobbot/logging";
 import { describe, expect, it, vi } from "vitest";
 import {
   compactHistory,

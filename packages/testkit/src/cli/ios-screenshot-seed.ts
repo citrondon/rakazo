@@ -1,4 +1,4 @@
-import { createDb, createThreadMessage } from "@rakazo/db";
+import { createDb, createThreadMessage } from "@bobbot/db";
 import { sessionCookieHeader } from "../index.js";
 
 const MARKER = "marigold checklist";

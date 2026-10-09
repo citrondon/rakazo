@@ -4,7 +4,7 @@ import type {
   TrustEffectAction,
   TrustPolicy,
   TrustRisk,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 
 /**
  * The trust kit's arithmetic: how risky a planned effect is, whether that risk crosses the

@@ -1,5 +1,5 @@
-import { runContinueJob } from "@rakazo/adapter-kit";
-import { MessageBlock } from "@rakazo/contracts";
+import { runContinueJob } from "@bobbot/adapter-kit";
+import { MessageBlock } from "@bobbot/contracts";
 import {
   botMessageHopExhausted,
   buildHandoffWakePrompt,
@@ -8,7 +8,7 @@ import {
   nextBotMessageHop,
   normalizeHandoffBrief,
   renderGroupMembersContext,
-} from "@rakazo/core";
+} from "@bobbot/core";
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
@@ -16,8 +16,8 @@ import {
   lockOwnedGroup,
   type PrismaClient,
   touchGroupUpdatedAt,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 import type { ExecutorDeps } from "./executor.js";
 
 export async function handoffToGroupBot(

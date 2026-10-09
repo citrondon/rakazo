@@ -3,17 +3,17 @@ import {
   resolveDeploymentModel,
   resolveSandboxProvider,
   secretStoreOptionsFromEnv,
-} from "@rakazo/adapters";
-import type { OidcConfig } from "@rakazo/auth";
-import { parseToolCallLimit } from "@rakazo/contracts";
+} from "@bobbot/adapters";
+import type { OidcConfig } from "@bobbot/auth";
+import { parseToolCallLimit } from "@bobbot/contracts";
 import {
   resolveAuthSecret,
   resolveEncryptionKey,
   resolveScreenProxySecret,
   resolveSupervisorToken,
-} from "@rakazo/core";
+} from "@bobbot/core";
 
-export { resolveCloudAgentProvider, resolveSandboxProvider } from "@rakazo/adapters";
+export { resolveCloudAgentProvider, resolveSandboxProvider } from "@bobbot/adapters";
 
 export interface AppEnv {
   passwordAuth?: boolean;

@@ -1,8 +1,8 @@
+import type { RunActivityRow, SearchHit, SpaceBot, SpaceGroup } from "@bobbot/contracts";
+import { normalizeCreateBotProfile } from "@bobbot/contracts";
+import { ACTIVE_RUN_STATUSES } from "@bobbot/core";
+import { botColors } from "@bobbot/ui-tokens";
 import { MenuView } from "@expo/ui/community/menu";
-import type { RunActivityRow, SearchHit, SpaceBot, SpaceGroup } from "@rakazo/contracts";
-import { normalizeCreateBotProfile } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
-import { botColors } from "@rakazo/ui-tokens";
 import { Redirect, useFocusEffect, useNavigation, useRouter } from "expo-router";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";

@@ -1,4 +1,4 @@
-import type { Trigger, TriggerEvent } from "@rakazo/contracts";
+import type { Trigger, TriggerEvent } from "@bobbot/contracts";
 import { describe, expect, it } from "vitest";
 import { selectTriggeredRoutines, type TriggerCandidate } from "../src/trigger-engine";
 

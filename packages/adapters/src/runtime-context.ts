@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
+import type { AdapterContext, AgentRunRequest, AgentUsage } from "@bobbot/adapter-kit";
+import { DEFAULT_CONTEXT_STRATEGY } from "@bobbot/adapter-kit";
 import type { Api, Context, Message, Model } from "@earendil-works/pi-ai";
-import type { AdapterContext, AgentRunRequest, AgentUsage } from "@rakazo/adapter-kit";
-import { DEFAULT_CONTEXT_STRATEGY } from "@rakazo/adapter-kit";
 import type { CacheRequest, ContextBudget } from "./context-selection.js";
 import {
   ContextCacheTracker,

@@ -1,5 +1,4 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { createMemoryState } from "@chat-adapter/state-memory";
 import type {
   AdapterContext,
   AdapterDescriptor,
@@ -11,7 +10,8 @@ import type {
   MessagingSendRequest,
   MessagingSendResult,
   MessagingSurface,
-} from "@rakazo/adapter-kit";
+} from "@bobbot/adapter-kit";
+import { createMemoryState } from "@chat-adapter/state-memory";
 import type { Adapter, Message, Thread } from "chat";
 import { Chat } from "chat";
 

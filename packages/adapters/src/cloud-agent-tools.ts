@@ -1,4 +1,4 @@
-import { cloudAgentHttpsUrl } from "@rakazo/core";
+import { cloudAgentHttpsUrl } from "@bobbot/core";
 import { z } from "zod";
 
 const image = z.union([

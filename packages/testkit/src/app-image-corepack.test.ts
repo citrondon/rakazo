@@ -66,7 +66,7 @@ describe("app image package manager", () => {
   it("keeps the api entrypoint unchanged", () => {
     for (const dockerfile of APP_DOCKERFILES) {
       expect(
-        read(dockerfile).trimEnd().endsWith('CMD ["pnpm", "--filter", "@rakazo/api", "start"]'),
+        read(dockerfile).trimEnd().endsWith('CMD ["pnpm", "--filter", "@bobbot/api", "start"]'),
       ).toBe(true);
     }
   });

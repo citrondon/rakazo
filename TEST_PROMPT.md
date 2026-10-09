@@ -94,7 +94,7 @@ dieselbe API wie das Web.
 adb devices -l
 adb reverse tcp:3100 tcp:3100
 adb shell 'toybox nc -w 3 127.0.0.1 3100 </dev/null && echo OPEN || echo CLOSED'   # muss OPEN sein
-EXPO_PUBLIC_API_URL=http://127.0.0.1:3100 pnpm --filter @rakazo/mobile android   # baut + installiert
+EXPO_PUBLIC_API_URL=http://127.0.0.1:3100 pnpm --filter @bobbot/mobile android   # baut + installiert
 # Nach jedem adb-Neustart: adb reverse tcp:3100 tcp:3100 erneut ausführen.
 
 # Weg B — WLAN (nur wenn das Handy die API direkt erreichen soll). Achtung: der Port ist
@@ -102,18 +102,18 @@ EXPO_PUBLIC_API_URL=http://127.0.0.1:3100 pnpm --filter @rakazo/mobile android  
 ip route get 1.1.1.1 | awk '{print $7; exit}'   # z. B. 192.168.0.42 — NICHT hostname -I,
                                                 # das liefert zuerst die docker0-Bridge 172.17.0.1
 adb shell 'toybox nc -w 3 <LAN-IP> 3100 </dev/null && echo OPEN || echo CLOSED'
-EXPO_PUBLIC_API_URL=http://<LAN-IP>:3100 pnpm --filter @rakazo/mobile start
+EXPO_PUBLIC_API_URL=http://<LAN-IP>:3100 pnpm --filter @bobbot/mobile start
 ```
 
 Beleg für die Schleife (Stand 2026-10-01, Commit 2a7b7906, Pixel 10 Pro / Android 17):
 `nc 10.241.46.111 3100` → `CLOSED`, nach `adb reverse` → `OPEN`.
 
 1. Auf dem Handy **Expo Go** öffnen und den QR-Code scannen. (Für SDK-57-Module oder wenn Expo Go
-   die App nicht lädt: `pnpm --filter @rakazo/mobile android` an einem USB-Handy mit `adb`.)
+   die App nicht lädt: `pnpm --filter @bobbot/mobile android` an einem USB-Handy mit `adb`.)
 2. In der App anmelden (bestehendes Konto), einen Bot öffnen, den Modell-Status prüfen.
 3. Eine harmlose Testnachricht senden und die Antwort abwarten.
-4. Mobile-Unit-Tests im Repo laufen lassen: `pnpm --filter @rakazo/mobile test`.
-   Optional der Geräte-Smoke: `pnpm --filter @rakazo/mobile test:e2e` (Maestro, braucht ein Gerät).
+4. Mobile-Unit-Tests im Repo laufen lassen: `pnpm --filter @bobbot/mobile test`.
+   Optional der Geräte-Smoke: `pnpm --filter @bobbot/mobile test:e2e` (Maestro, braucht ein Gerät).
 5. Nur wenn Push eingerichtet ist: eine Benachrichtigung auslösen und den Eingang prüfen.
 
 ## 7. Bericht

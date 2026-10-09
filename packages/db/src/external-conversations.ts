@@ -3,7 +3,7 @@ import {
   AutomatedSenderPoliciesSchema,
   type ExternalConversation,
   type ExternalConversationPolicy,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import type { PrismaClient } from "./client.js";
 import { IsolationError } from "./scope.js";
 import { previewFromBlocks } from "./thread-listing.js";

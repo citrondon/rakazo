@@ -1,6 +1,5 @@
-import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, ImportPreview } from "@rakazo/contracts";
-import { BotImportInputSchema } from "@rakazo/contracts";
+import type { Bot, ImportPreview } from "@bobbot/contracts";
+import { BotImportInputSchema } from "@bobbot/contracts";
 import {
   Button,
   Dialog,
@@ -9,7 +8,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@rakazo/ui-web";
+} from "@bobbot/ui-web";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { Upload, X } from "lucide-react";
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { PresetBoundaries } from "../components/PresetBoundaries";

@@ -177,7 +177,7 @@ The Electron and Expo apps are clients of the same BobBot API used by the web ap
 With the development stack running, launch Electron with:
 
 ```bash
-pnpm --filter @rakazo/desktop dev
+pnpm --filter @bobbot/desktop dev
 ```
 
 On first run the desktop app asks whether to run BobBot on this computer or connect to an existing

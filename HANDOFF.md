@@ -54,7 +54,7 @@ Windows-specific fixes, if needed:
   (`scripts/sync-workspace.mjs`). The old `sync-workspace.ps1` is gone — no PowerShell needed; run
   it from WSL.
 
-Alternative (no WSL): build the desktop app on Windows (`pnpm --filter @rakazo/desktop dev`) and
+Alternative (no WSL): build the desktop app on Windows (`pnpm --filter @bobbot/desktop dev`) and
 pick **This computer**, which runs the published images via Docker Compose itself
 (`docs/desktop-release.md`); or connect it to a server with **Existing instance**. Use this to
 *use* BobBot on Windows; for *source development* prefer WSL.
@@ -123,9 +123,9 @@ pnpm exec vitest run packages/contracts/src/triggers.test.ts \
   packages/adapters/src/event-catalog.test.ts packages/db/src/triggers.test.ts \
   apps/api/src/triggers.test.ts packages/testkit/src/trust-conformance.test.ts \
   apps/web/src/pages/ReactiveTriggerSection.test.tsx
-pnpm --filter @rakazo/contracts check && pnpm --filter @rakazo/core check \
-  && pnpm --filter @rakazo/adapters check && pnpm --filter @rakazo/db check \
-  && pnpm --filter @rakazo/api check && pnpm --filter @rakazo/web check
+pnpm --filter @bobbot/contracts check && pnpm --filter @bobbot/core check \
+  && pnpm --filter @bobbot/adapters check && pnpm --filter @bobbot/db check \
+  && pnpm --filter @bobbot/api check && pnpm --filter @bobbot/web check
 pnpm lint
 ```
 
@@ -151,8 +151,8 @@ pnpm lint
 - Sprint branch state, integrator support, 2026-10-01 04:47 — `sprint/library` merged to `main`
   and clean at origin. `sprint/reach` and `sprint/ux` were both aligned with `main`, merge commits
   `3fd09505` and `e87b2fd1` (revert points `496b25c5` and `8aca4ee1`), each verified green in its own
-  worktree: `sprint/reach` with `pnpm --filter @rakazo/adapters check`, `pnpm lint`, and three
-  adapter test files (35 tests); `sprint/ux` with `pnpm --filter @rakazo/web check`, `pnpm lint`, and
+  worktree: `sprint/reach` with `pnpm --filter @bobbot/adapters check`, `pnpm lint`, and three
+  adapter test files (35 tests); `sprint/ux` with `pnpm --filter @bobbot/web check`, `pnpm lint`, and
   three test files (8 tests). Both are now `behind=0`, so neither merge into `main` needs conflict
   work. Neither is fully pushed: `sprint/reach` sits 12 commits ahead of `origin/sprint/reach`, and
   `sprint/ux` has no `origin` tracking at all — A and C should push their own branches.

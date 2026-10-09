@@ -1,7 +1,6 @@
-import { ORPCError } from "@orpc/server";
-import type { BillingPrice, BillingProvider } from "@rakazo/adapter-kit";
-import type { Actor, BillingStatus } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { BillingPrice, BillingProvider } from "@bobbot/adapter-kit";
+import type { Actor, BillingStatus } from "@bobbot/contracts";
+import type { PrismaClient } from "@bobbot/db";
 import {
   billingAccountForOrganization,
   createBillingAccount,
@@ -10,8 +9,9 @@ import {
   organizationSeatCount,
   ownedBillingAccounts,
   syncBillingSnapshot,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
+import { ORPCError } from "@orpc/server";
 
 export const TRIAL_DAYS = 7;
 const PRICE_CACHE_MS = 60 * 60 * 1000;

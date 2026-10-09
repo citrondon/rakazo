@@ -1,4 +1,4 @@
-import { GateRequirementSchema, MergeGateInputSchema } from "@rakazo/contracts";
+import { GateRequirementSchema, MergeGateInputSchema } from "@bobbot/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createJevMergeGate, JevMergeGate } from "./merge-gate.js";
 

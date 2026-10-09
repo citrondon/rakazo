@@ -1,13 +1,13 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { BotPresetSummary, ExportManifest, Identity, TeamTemplate } from "@rakazo/contracts";
+import type { BotPresetSummary, ExportManifest, Identity, TeamTemplate } from "@bobbot/contracts";
 import {
   BOT_INSTRUCTIONS_MAX_LENGTH,
   ExportManifestSchema,
   IdentitySchema,
   TeamTemplateSchema,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import type { PreparedBotImport } from "./bot-import.js";
 import { prepareBotImport } from "./bot-import.js";
 

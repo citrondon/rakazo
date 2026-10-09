@@ -19,8 +19,8 @@ import type {
   RunsListOutput,
   ThreadMessage,
   ThreadMessagePage,
-} from "@rakazo/contracts";
-import { isTerminal } from "@rakazo/core";
+} from "@bobbot/contracts";
+import { isTerminal } from "@bobbot/core";
 
 function apiBaseUrl(): string {
   return (process.env.BOBBOT_API_URL ?? "http://127.0.0.1:3100").replace(/\/+$/, "");

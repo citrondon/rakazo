@@ -1,5 +1,5 @@
-import type { AdapterContext, SecretStore } from "@rakazo/adapter-kit";
-import { createLogger, createTestSink, getLogger, installLogger } from "@rakazo/logging";
+import type { AdapterContext, SecretStore } from "@bobbot/adapter-kit";
+import { createLogger, createTestSink, getLogger, installLogger } from "@bobbot/logging";
 import { describe, expect, it, vi } from "vitest";
 import { InfisicalSecretStore, SecretStoreUnavailableError } from "./infisical-secret-store.js";
 import { InMemoryRealtimeFanout } from "./realtime.js";

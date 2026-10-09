@@ -1,4 +1,3 @@
-import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import {
   CLOUDFLARE_AI_GATEWAY_PROVIDER_ID,
   cloudflareGatewayRouting,
@@ -16,14 +15,14 @@ import {
   parseModelMaxTokens,
   sortProbedModels,
   type ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   COMPATIBLE_THINKING_LEVELS,
   clampCatalogThinkingLevel,
   createModelProbe,
   initialModelProbeState,
   pickCatalogModelId,
-} from "@rakazo/core";
+} from "@bobbot/core";
 import {
   Button,
   Input,
@@ -33,7 +32,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@rakazo/ui-web";
+} from "@bobbot/ui-web";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { Check, Copy } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";

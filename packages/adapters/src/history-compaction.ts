@@ -1,10 +1,10 @@
-import type { AgentRunRequest, AgentRuntime, JobPublisher } from "@rakazo/adapter-kit";
-import { historyCompactJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { blocksToAgentHistoryText } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { recordUsage } from "@rakazo/db";
-import { getLogger, unwrapJobPayload } from "@rakazo/logging";
+import type { AgentRunRequest, AgentRuntime, JobPublisher } from "@bobbot/adapter-kit";
+import { historyCompactJob } from "@bobbot/adapter-kit";
+import type { MessageBlock } from "@bobbot/contracts";
+import { blocksToAgentHistoryText } from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
+import { recordUsage } from "@bobbot/db";
+import { getLogger, unwrapJobPayload } from "@bobbot/logging";
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import type {

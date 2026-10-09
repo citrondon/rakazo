@@ -1,4 +1,3 @@
-import { type CommandResult, Sandbox, TimeoutError } from "@e2b/desktop";
 import type {
   AdapterContext,
   CommandRequest,
@@ -14,8 +13,9 @@ import type {
   ScreenRequest,
   ScreenSession,
   TerminalRequest,
-} from "@rakazo/adapter-kit";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
+} from "@bobbot/adapter-kit";
+import { boundedSandboxCommandTimeoutMs } from "@bobbot/core";
+import { type CommandResult, Sandbox, TimeoutError } from "@e2b/desktop";
 import { sandboxIdleMs } from "./computer-idle.js";
 import { normalizeWorkspacePath, shellQuote, workspacePath } from "./computer-support.js";
 import {

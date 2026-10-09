@@ -3,9 +3,9 @@ import {
   type BotUsageSummary,
   countedTokens,
   type UsageMonth,
-} from "@rakazo/contracts";
-import { budgetUsedPercent, currentMonthStart } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+} from "@bobbot/contracts";
+import { budgetUsedPercent, currentMonthStart } from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
 
 interface TokenSums {
   inputTokens: number | null;

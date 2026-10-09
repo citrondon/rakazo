@@ -1,5 +1,4 @@
-import { Trans, useLingui } from "@lingui/react/macro";
-import type { Artifact, ArtifactVersion, Bot } from "@rakazo/contracts";
+import type { Artifact, ArtifactVersion, Bot } from "@bobbot/contracts";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +14,8 @@ import {
   NativeSelectOption,
   parseBotAvatar,
   resolvePersonaColorDef,
-} from "@rakazo/ui-web";
+} from "@bobbot/ui-web";
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   ChevronLeft,
   Download,

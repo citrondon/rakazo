@@ -1,4 +1,4 @@
-import { selectedAskActionLabel } from "@rakazo/core";
+import { selectedAskActionLabel } from "@bobbot/core";
 import type { ComponentProps, ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
@@ -14,10 +14,10 @@ vi.mock("@lingui/react/macro", () => ({
       parts.reduce((text, part, index) => `${text}${part}${String(values[index] ?? "")}`, ""),
   }),
 }));
-vi.mock("@rakazo/chat-ui/web", () => ({
+vi.mock("@bobbot/chat-ui/web", () => ({
   ChatMarkdown: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@bobbot/ui-web", () => ({
   Button: ({ variant: _variant, ...props }: ComponentProps<"button"> & { variant?: string }) => (
     <button {...props} />
   ),

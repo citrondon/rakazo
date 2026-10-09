@@ -1,7 +1,7 @@
+import type { TrustPolicyView, TrustRisk } from "@bobbot/contracts";
+import { resolveToolCallLimit, toolCallLimitFromDraft } from "@bobbot/contracts";
+import { Input, Label, NativeSelect, NativeSelectOption, Switch } from "@bobbot/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { TrustPolicyView, TrustRisk } from "@rakazo/contracts";
-import { resolveToolCallLimit, toolCallLimitFromDraft } from "@rakazo/contracts";
-import { Input, Label, NativeSelect, NativeSelectOption, Switch } from "@rakazo/ui-web";
 import { useEffect, useId, useState } from "react";
 import { rpc } from "../lib/rpc";
 

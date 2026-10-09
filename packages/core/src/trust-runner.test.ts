@@ -1,4 +1,4 @@
-import type { TrustEffect, TrustPolicy } from "@rakazo/contracts";
+import type { TrustEffect, TrustPolicy } from "@bobbot/contracts";
 import { describe, expect, it } from "vitest";
 import { effectRisk, isMutating } from "./trust-effects.js";
 import {

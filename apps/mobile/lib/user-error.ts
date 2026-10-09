@@ -1,5 +1,5 @@
-import type { CredentialField } from "@rakazo/core";
-import { authErrorMessage, userErrorMessage } from "@rakazo/core";
+import type { CredentialField } from "@bobbot/core";
+import { authErrorMessage, userErrorMessage } from "@bobbot/core";
 import { t } from "./i18n";
 
 /** Text for a failure: human messages pass through; network and implementation detail become copy. */

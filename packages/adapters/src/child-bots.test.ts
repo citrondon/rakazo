@@ -20,9 +20,9 @@ import type {
   CommandRequest,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { browserProfilePathForScreen } from "@rakazo/core/node/desktop-runtime";
-import type { createRepos, PrismaClient } from "@rakazo/db";
+} from "@bobbot/adapter-kit";
+import { browserProfilePathForScreen } from "@bobbot/core/node/desktop-runtime";
+import type { createRepos, PrismaClient } from "@bobbot/db";
 import { describe, expect, it, vi } from "vitest";
 import {
   archiveBot,
@@ -138,7 +138,7 @@ describe("spawned bot creation", () => {
       title: "",
       threadId: "thread-2",
     });
-    const createReposSpy = vi.spyOn(await import("@rakazo/db"), "createRepos").mockReturnValue({
+    const createReposSpy = vi.spyOn(await import("@bobbot/db"), "createRepos").mockReturnValue({
       createBot,
     } as unknown as ReturnType<typeof createRepos>);
 

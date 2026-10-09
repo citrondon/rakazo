@@ -1,5 +1,5 @@
-import type { SecretMigrationRepository, SecretMigrationRow } from "@rakazo/adapters";
-import type { PrismaClient } from "@rakazo/db";
+import type { SecretMigrationRepository, SecretMigrationRow } from "@bobbot/adapters";
+import type { PrismaClient } from "@bobbot/db";
 
 const tables = ["secret", "botSecret", "integrationProviderConfig"] as const;
 

@@ -1,6 +1,6 @@
+import type { AgentRunRequest } from "@bobbot/adapter-kit";
+import { DEFAULT_CONTEXT_STRATEGY } from "@bobbot/adapter-kit";
 import type { Api, Context, Message, Model } from "@earendil-works/pi-ai";
-import type { AgentRunRequest } from "@rakazo/adapter-kit";
-import { DEFAULT_CONTEXT_STRATEGY } from "@rakazo/adapter-kit";
 import { describe, expect, it } from "vitest";
 import { ContextBudgetError, ContextCacheTracker } from "./context-selection.js";
 import { createRuntimeContextPolicy } from "./runtime-context.js";

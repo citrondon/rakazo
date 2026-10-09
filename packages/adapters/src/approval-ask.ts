@@ -1,5 +1,5 @@
-import type { MessageBlock, TrustEffect } from "@rakazo/contracts";
-import { redactSecrets } from "@rakazo/core";
+import type { MessageBlock, TrustEffect } from "@bobbot/contracts";
+import { redactSecrets } from "@bobbot/core";
 
 const MAX_APPROVAL_SUMMARY_LENGTH = 500;
 const MAX_APPROVAL_DETAIL_LENGTH = 4_000;

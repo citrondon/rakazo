@@ -5,10 +5,10 @@
  * These are the most commonly used helper functions.
  */
 
+import type { AdapterContext } from "@bobbot/adapter-kit";
+import type { Actor, McpServer } from "@bobbot/contracts";
+import { ComputerLimitError, SpaceDeletionInProgressError } from "@bobbot/db";
 import { ORPCError } from "@orpc/server";
-import type { AdapterContext } from "@rakazo/adapter-kit";
-import type { Actor, McpServer } from "@rakazo/contracts";
-import { ComputerLimitError, SpaceDeletionInProgressError } from "@rakazo/db";
 
 // ============================================================================
 // SIMPLE HELPERS (No dependencies)

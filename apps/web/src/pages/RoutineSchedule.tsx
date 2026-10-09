@@ -1,13 +1,13 @@
-import { t } from "@lingui/core/macro";
-import { Trans, useLingui } from "@lingui/react/macro";
 import {
   CRON_FREQS,
   type CronFreq,
   type CronPreset,
   type CronUnit,
   cronFromPreset,
-} from "@rakazo/core";
-import { Input, NativeSelect, NativeSelectOption } from "@rakazo/ui-web";
+} from "@bobbot/core";
+import { Input, NativeSelect, NativeSelectOption } from "@bobbot/ui-web";
+import { t } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Clock } from "lucide-react";
 
 const UNITS: CronUnit[] = ["minutes", "hours", "days"];

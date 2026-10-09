@@ -1,7 +1,7 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import { CLOUDFLARE_AI_GATEWAY_CONFIG_MESSAGE } from "@rakazo/contracts";
-import { ONCE_ROUTINE_CRON } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+import type { MessageBlock } from "@bobbot/contracts";
+import { CLOUDFLARE_AI_GATEWAY_CONFIG_MESSAGE } from "@bobbot/contracts";
+import { ONCE_ROUTINE_CRON } from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
 import { describe, expect, it, vi } from "vitest";
 import {
   appendToolCompletionAudit,

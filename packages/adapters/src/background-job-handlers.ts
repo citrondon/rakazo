@@ -6,10 +6,10 @@ import type {
   MessagingSurface,
   SandboxProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { messagingDeliverJob } from "@rakazo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/adapter-kit";
+import { messagingDeliverJob } from "@bobbot/adapter-kit";
+import type { PrismaClient, ThreadEvents } from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
 import { pollCloudAgent } from "./cloud-agent-poll.js";
 import { expireComputerControl } from "./computer-control.js";

@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
-import type { SecretStore } from "@rakazo/adapter-kit";
-import type { BotSecretDestination } from "@rakazo/contracts";
+import type { SecretStore } from "@bobbot/adapter-kit";
+import type { BotSecretDestination } from "@bobbot/contracts";
 import {
   BotSecretAuth,
   BotSecretName,
@@ -8,9 +8,9 @@ import {
   decodeLoginSecret,
   isPrivateNetworkHost,
   SecretHttpRequest,
-} from "@rakazo/contracts";
-import type { Prisma, PrismaClient } from "@rakazo/db";
-import { withTransactionRetry } from "@rakazo/db";
+} from "@bobbot/contracts";
+import type { Prisma, PrismaClient } from "@bobbot/db";
+import { withTransactionRetry } from "@bobbot/db";
 import { combineSignals, redactConnectorPayload } from "./connector-safety.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";
 import { createPrivateNetworkFetch, createSafeRemoteFetch } from "./remote-mcp.js";

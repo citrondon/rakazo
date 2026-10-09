@@ -5,11 +5,11 @@ import type {
   ConnectorProvider,
   ConnectorTool,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
-import { isLocalMcpHost } from "@rakazo/contracts";
-import type { McpServer, PrismaClient, ThreadEvents } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/adapter-kit";
+import { SecretStoreUnavailableError } from "@bobbot/adapter-kit";
+import { isLocalMcpHost } from "@bobbot/contracts";
+import type { McpServer, PrismaClient, ThreadEvents } from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 import { catalogToolPrefix } from "./approval-effect.js";
 import { describeMcpFailure } from "./connector-failures.js";
 import { redactConnectorPayload } from "./connector-safety.js";

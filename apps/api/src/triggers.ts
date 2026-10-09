@@ -1,8 +1,8 @@
-import { listEventDefinitions } from "@rakazo/adapters";
-import type { Actor, CreateTriggerInput, UpdateTriggerInput } from "@rakazo/contracts";
-import { planRoutineEffects } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { createRoutineToolRepos, createTriggerRepos, IsolationError } from "@rakazo/db";
+import { listEventDefinitions } from "@bobbot/adapters";
+import type { Actor, CreateTriggerInput, UpdateTriggerInput } from "@bobbot/contracts";
+import { planRoutineEffects } from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
+import { createRoutineToolRepos, createTriggerRepos, IsolationError } from "@bobbot/db";
 
 export type TriggerDeps = { prisma: PrismaClient };
 

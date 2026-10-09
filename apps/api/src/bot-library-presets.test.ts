@@ -1,9 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { BUILTIN_AGENT_SKILLS } from "@rakazo/adapters";
-import { type BotImportInput, type ExportManifest, ExportManifestSchema } from "@rakazo/contracts";
-import { extractRoutineSkillMentions } from "@rakazo/core";
+import { BUILTIN_AGENT_SKILLS } from "@bobbot/adapters";
+import { type BotImportInput, type ExportManifest, ExportManifestSchema } from "@bobbot/contracts";
+import { extractRoutineSkillMentions } from "@bobbot/core";
 import { describe, expect, it } from "vitest";
 import { prepareBotImport } from "./bot-import.js";
 

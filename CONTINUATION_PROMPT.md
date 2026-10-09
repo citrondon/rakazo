@@ -16,7 +16,7 @@
 ## Verification Status
 | Component | Tests | Status |
 |-----------|-------|--------|
-| Contracts (`@rakazo/contracts`) | 145 | ✅ PASS |
+| Contracts (`@bobbot/contracts`) | 145 | ✅ PASS |
 | Delegation Queue | 6 | ✅ PASS |
 | Jev Merge Gate | 6 | ✅ PASS |
 | Team Sync | 3 | ✅ PASS |

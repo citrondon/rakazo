@@ -3,9 +3,9 @@ import type {
   TrustPolicy,
   TrustPolicyView,
   UpdateTrustPolicyInput,
-} from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { createTrustPolicyRepos } from "@rakazo/db";
+} from "@bobbot/contracts";
+import type { PrismaClient } from "@bobbot/db";
+import { createTrustPolicyRepos } from "@bobbot/db";
 
 export type TrustPolicyDeps = { prisma: PrismaClient; maxToolCallsPerTurn?: number };
 

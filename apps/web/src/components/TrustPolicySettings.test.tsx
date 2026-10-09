@@ -11,7 +11,7 @@ vi.mock("@lingui/react/macro", () => {
   const t = (parts: TemplateStringsArray) => parts.join("");
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@bobbot/ui-web", () => ({
   Input: (props: ComponentProps<"input">) => <input {...props} />,
   Label: ({ htmlFor, children, ...props }: ComponentProps<"label">) => (
     <label htmlFor={htmlFor} {...props}>

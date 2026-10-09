@@ -1,6 +1,4 @@
-import { i18n } from "@lingui/core";
-import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import type { Me, ThinkingLevel } from "@rakazo/contracts";
+import type { Me, ThinkingLevel } from "@bobbot/contracts";
 import {
   CLOUDFLARE_AI_GATEWAY_PROVIDER_ID,
   cloudflareGatewayRouting,
@@ -16,7 +14,7 @@ import {
   parseModelMaxImagesPerPrompt,
   parseModelMaxTokens,
   sortProbedModels,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   COMPATIBLE_THINKING_LEVELS,
   clampCatalogThinkingLevel,
@@ -24,7 +22,7 @@ import {
   filterModelCatalog,
   initialModelProbeState,
   pickCatalogModelId,
-} from "@rakazo/core";
+} from "@bobbot/core";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,7 +43,9 @@ import {
   ModelThinkingOptions,
   NativeSelect,
   NativeSelectOption,
-} from "@rakazo/ui-web";
+} from "@bobbot/ui-web";
+import { i18n } from "@lingui/core";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { Check, ChevronDown, Copy, X } from "lucide-react";
 import {
   type KeyboardEvent as ReactKeyboardEvent,

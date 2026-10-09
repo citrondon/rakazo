@@ -1,6 +1,6 @@
+import { type Bot, GROUP_MEMBER_MAX, GROUP_MEMBER_MIN, type Group } from "@bobbot/contracts";
+import { BotAvatar, Button, Input } from "@bobbot/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { type Bot, GROUP_MEMBER_MAX, GROUP_MEMBER_MIN, type Group } from "@rakazo/contracts";
-import { BotAvatar, Button, Input } from "@rakazo/ui-web";
 import { Check, X } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { errorText } from "../lib/user-error";

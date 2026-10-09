@@ -5,7 +5,7 @@ import type {
   BillingProvider,
   BillingSubscriptionSnapshot,
   BillingSubscriptionStatus,
-} from "@rakazo/adapter-kit";
+} from "@bobbot/adapter-kit";
 import { z } from "zod";
 
 export const STRIPE_API_VERSION = "2025-08-27.basil";

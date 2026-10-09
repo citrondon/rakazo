@@ -1,4 +1,4 @@
-import type { RunReceipt } from "@rakazo/contracts";
+import type { RunReceipt } from "@bobbot/contracts";
 import { t } from "./i18n";
 
 function formatDuration(ms: number): string {

@@ -65,9 +65,9 @@ pnpm exec vitest run packages/contracts/src/triggers.test.ts \
   packages/testkit/src/trust-conformance.test.ts \
   apps/web/src/pages/ReactiveTriggerSection.test.tsx \
   apps/web/src/components/TrustPolicySettings.test.tsx
-pnpm --filter @rakazo/contracts check && pnpm --filter @rakazo/core check \
-  && pnpm --filter @rakazo/adapters check && pnpm --filter @rakazo/db check \
-  && pnpm --filter @rakazo/api check && pnpm --filter @rakazo/web check
+pnpm --filter @bobbot/contracts check && pnpm --filter @bobbot/core check \
+  && pnpm --filter @bobbot/adapters check && pnpm --filter @bobbot/db check \
+  && pnpm --filter @bobbot/api check && pnpm --filter @bobbot/web check
 pnpm db:migrate            # if the database is behind
 VERIFY_DATABASE=1 pnpm test:integration   # Postgres trigger journey
 ```

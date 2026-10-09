@@ -6,8 +6,7 @@
  */
 
 import { randomBytes } from "node:crypto";
-import { ORPCError } from "@orpc/server";
-import type { CodexLiveCatalog } from "@rakazo/adapters";
+import type { CodexLiveCatalog } from "@bobbot/adapters";
 // Import from adapters
 import {
   archiveBot,
@@ -19,16 +18,17 @@ import {
   scriptedCatalogEntry,
   toComputerRef,
   validateStoredModelAuth,
-} from "@rakazo/adapters";
+} from "@bobbot/adapters";
 // Types
-import type { Actor, Bot, Me } from "@rakazo/contracts";
+import type { Actor, Bot, Me } from "@bobbot/contracts";
 // Import from contracts
-import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
-import type { createRepos, Prisma } from "@rakazo/db";
+import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@bobbot/contracts";
+import { ACTIVE_RUN_STATUSES } from "@bobbot/core";
+import type { createRepos, Prisma } from "@bobbot/db";
 // Import from db
-import { findModelCredential, IsolationError, restoreBotUnderComputerQuota } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import { findModelCredential, IsolationError, restoreBotUnderComputerQuota } from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
+import { ORPCError } from "@orpc/server";
 import type { AgentSkillsService } from "../agent-skills.js";
 import type { PreparedBotImport } from "../bot-import.js";
 import { prepareBotImport } from "../bot-import.js";

@@ -1,8 +1,8 @@
+import type { LinkFavicons } from "@bobbot/chat-ui/web";
+import { LinkFaviconsContext, RemoteImagesContext } from "@bobbot/chat-ui/web";
+import { LOCAL_SETTINGS_PAGE } from "@bobbot/contracts";
+import { Button, Skeleton } from "@bobbot/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { LinkFavicons } from "@rakazo/chat-ui/web";
-import { LinkFaviconsContext, RemoteImagesContext } from "@rakazo/chat-ui/web";
-import { LOCAL_SETTINGS_PAGE } from "@rakazo/contracts";
-import { Button, Skeleton } from "@rakazo/ui-web";
 import {
   lazy,
   Suspense,

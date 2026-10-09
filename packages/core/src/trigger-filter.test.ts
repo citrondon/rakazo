@@ -1,4 +1,4 @@
-import type { TriggerEvent, TriggerFilter } from "@rakazo/contracts";
+import type { TriggerEvent, TriggerFilter } from "@bobbot/contracts";
 import { describe, expect, it } from "vitest";
 import {
   applyTriggerMappings,

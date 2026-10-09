@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { BotRoleRegistry } from "@rakazo/contracts";
+import { BotRoleRegistry } from "@bobbot/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TeamBootstrapper } from "./bootstrap.js";
 

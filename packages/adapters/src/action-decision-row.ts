@@ -1,4 +1,4 @@
-import type { ActionApprovalResolved, ActionApprovalSource } from "@rakazo/core";
+import type { ActionApprovalResolved, ActionApprovalSource } from "@bobbot/core";
 
 export interface ActionGateOutcome {
   spaceId: string;

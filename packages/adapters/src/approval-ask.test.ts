@@ -1,4 +1,4 @@
-import { MessageBlock } from "@rakazo/contracts";
+import { MessageBlock } from "@bobbot/contracts";
 import { describe, expect, it } from "vitest";
 import { buildApprovalAskBlock } from "./approval-ask.js";
 

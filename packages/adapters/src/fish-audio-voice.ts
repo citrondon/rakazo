@@ -8,8 +8,8 @@ import type {
   VoiceSynthesizeRequest,
   VoiceTranscribeRequest,
   VoiceVerifyResult,
-} from "@rakazo/adapter-kit";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/adapter-kit";
+import { getLogger } from "@bobbot/logging";
 import {
   readVoiceAudio,
   readVoiceJson,

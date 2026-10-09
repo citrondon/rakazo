@@ -1,4 +1,4 @@
-import type { TrustEffect, TrustPhase, TrustPolicy } from "@rakazo/contracts";
+import type { TrustEffect, TrustPhase, TrustPolicy } from "@bobbot/contracts";
 import {
   isMutating,
   planQuietHours,

@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { PiAgentRuntime } from "@rakazo/adapters";
+import { PiAgentRuntime } from "@bobbot/adapters";
 import { describe, expect, it } from "vitest";
 import { HISTORY_EVAL_CASES } from "./evals/cases.js";
 import { runTrial } from "./evals/runner.js";

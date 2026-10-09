@@ -1,13 +1,13 @@
+import type * as Adapters from "@bobbot/adapters";
+import type { Actor, Bot } from "@bobbot/contracts";
 import { RPCHandler } from "@orpc/server/fetch";
-import type * as Adapters from "@rakazo/adapters";
-import type { Actor, Bot } from "@rakazo/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { readBotPreset } from "../bot-library.js";
 import { createAuthenticatedRouter } from "../router.js";
 import { createBotsRouter } from "./bots.js";
 
 const lifecycle = vi.hoisted(() => ({ archive: vi.fn(), destroy: vi.fn() }));
-vi.mock("@rakazo/adapters", async (original) => ({
+vi.mock("@bobbot/adapters", async (original) => ({
   ...(await original<typeof Adapters>()),
   archiveBot: lifecycle.archive,
   destroyBot: lifecycle.destroy,

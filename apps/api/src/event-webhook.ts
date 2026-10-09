@@ -1,6 +1,6 @@
-import type { TriggerEvent } from "@rakazo/contracts";
-import { hasValidBearerToken, selectTriggeredRoutines } from "@rakazo/core";
-import { createTriggerRepos } from "@rakazo/db";
+import type { TriggerEvent } from "@bobbot/contracts";
+import { hasValidBearerToken, selectTriggeredRoutines } from "@bobbot/core";
+import { createTriggerRepos } from "@bobbot/db";
 import type { Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
 import {

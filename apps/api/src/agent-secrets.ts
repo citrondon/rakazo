@@ -1,9 +1,9 @@
+import type { SecretStore } from "@bobbot/adapter-kit";
+import { persistPreparedSecret } from "@bobbot/adapters";
+import type { Actor } from "@bobbot/contracts";
+import type { PrismaClient } from "@bobbot/db";
+import { Prisma, withTransactionRetry } from "@bobbot/db";
 import { ORPCError } from "@orpc/server";
-import type { SecretStore } from "@rakazo/adapter-kit";
-import { persistPreparedSecret } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { Prisma, withTransactionRetry } from "@rakazo/db";
 
 type AgentSecretDeps = {
   prisma: PrismaClient;

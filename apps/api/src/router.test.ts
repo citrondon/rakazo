@@ -1,7 +1,5 @@
-import { createRouterClient } from "@orpc/server";
-import { RPCHandler } from "@orpc/server/fetch";
-import type { ManagedConnectorProvider } from "@rakazo/adapter-kit";
-import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
+import type { ManagedConnectorProvider } from "@bobbot/adapter-kit";
+import { SecretStoreUnavailableError } from "@bobbot/adapter-kit";
 import {
   COMPUTER_SCREEN_UNAVAILABLE,
   CodexCatalogCache,
@@ -9,12 +7,14 @@ import {
   EncryptedSecretStore,
   IntegrationProviderSettings,
   screenLeaseIdForRun,
-} from "@rakazo/adapters";
-import type { Actor, Bot, ProductEvent } from "@rakazo/contracts";
-import { REPLY_QUOTE_MAX_LENGTH } from "@rakazo/contracts";
-import { openScreenCapability } from "@rakazo/core/node/screen-capability";
-import type { PrismaClient } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+} from "@bobbot/adapters";
+import type { Actor, Bot, ProductEvent } from "@bobbot/contracts";
+import { REPLY_QUOTE_MAX_LENGTH } from "@bobbot/contracts";
+import { openScreenCapability } from "@bobbot/core/node/screen-capability";
+import type { PrismaClient } from "@bobbot/db";
+import { createLogger, createTestSink, installLogger } from "@bobbot/logging";
+import { createRouterClient } from "@orpc/server";
+import { RPCHandler } from "@orpc/server/fetch";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { teamPresetManifestPath } from "./bot-library.js";
 import type { RouterDeps } from "./router.js";

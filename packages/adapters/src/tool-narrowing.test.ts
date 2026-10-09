@@ -1,4 +1,4 @@
-import { declaredSkillTools } from "@rakazo/core";
+import { declaredSkillTools } from "@bobbot/core";
 import { describe, expect, it } from "vitest";
 import {
   MAX_SELECTED_SKILLS,

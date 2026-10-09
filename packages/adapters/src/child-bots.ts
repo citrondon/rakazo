@@ -6,10 +6,10 @@ import type {
   ArtifactStore,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { routineJobKey, runContinueJob, runJobKey } from "@rakazo/adapter-kit";
-import { type Actor, type Bot, type ComputerMode, GROUP_MEMBER_MIN } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
+} from "@bobbot/adapter-kit";
+import { routineJobKey, runContinueJob, runJobKey } from "@bobbot/adapter-kit";
+import { type Actor, type Bot, type ComputerMode, GROUP_MEMBER_MIN } from "@bobbot/contracts";
+import { ACTIVE_RUN_STATUSES } from "@bobbot/core";
 import {
   cancelRunsInTransaction,
   computerScopeKey,
@@ -19,8 +19,8 @@ import {
   type Prisma,
   type PrismaClient,
   withTransactionRetry,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 import { BrowserStoppedReleaseError } from "./computer-screens.js";
 import { toComputerRef } from "./computer-support.js";
 import {

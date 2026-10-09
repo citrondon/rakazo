@@ -1,5 +1,5 @@
-import { runStopKind } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+import { runStopKind } from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
 import { describe, expect, it, vi } from "vitest";
 import {
   claimBudgetWarning,

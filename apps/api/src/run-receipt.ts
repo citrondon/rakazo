@@ -1,6 +1,6 @@
-import { type Actor, MessageBlock, type RunReceipt } from "@rakazo/contracts";
-import { buildRunReceipt } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+import { type Actor, MessageBlock, type RunReceipt } from "@bobbot/contracts";
+import { buildRunReceipt } from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
 
 const TOOL_EVENT_TYPES = ["agent.tool.called", "agent.tool.completed"];
 

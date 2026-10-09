@@ -1,5 +1,4 @@
 import { createHash, randomUUID } from "node:crypto";
-import { implement, ORPCError } from "@orpc/server";
 import type {
   AdapterContext,
   AgentHomeStore,
@@ -10,7 +9,7 @@ import type {
   SandboxProvider,
   SecretStore,
   UsageOperationKind,
-} from "@rakazo/adapter-kit";
+} from "@bobbot/adapter-kit";
 import {
   computerControlExpireJobKey,
   messagingDeliverJob,
@@ -19,7 +18,7 @@ import {
   runContinueJob,
   runJobKey,
   SecretStoreUnavailableError,
-} from "@rakazo/adapter-kit";
+} from "@bobbot/adapter-kit";
 import type {
   CloudAgentConnection,
   CodexLiveCatalog,
@@ -32,7 +31,7 @@ import type {
   MemoryProviderResolver,
   PiOAuthLogins,
   RemoteConnectorDependencies,
-} from "@rakazo/adapters";
+} from "@bobbot/adapters";
 import {
   acquireComputerExecutionLease,
   applyCodexLiveCatalog,
@@ -113,8 +112,8 @@ import {
   UNAVAILABLE_MODEL_FOR_AUTH_MESSAGE,
   validateModelAuthAvailability,
   verifyMcpInstall,
-} from "@rakazo/adapters";
-import type { Auth } from "@rakazo/auth";
+} from "@bobbot/adapters";
+import type { Auth } from "@bobbot/auth";
 import type {
   Actor,
   Bot,
@@ -125,7 +124,7 @@ import type {
   Me,
   ProductEvent,
   SpaceNavigation,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   ATTACHMENT_MAX_BYTES,
   appContract,
@@ -136,7 +135,7 @@ import {
   IntegrationProviderIdSchema,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   usableModelId,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   ACTIVE_RUN_STATUSES,
   AttachmentValidationError,
@@ -149,8 +148,8 @@ import {
   isOneShotRoutineCrons,
   nextCronDateAcrossStrict,
   selectReferencedSkills,
-} from "@rakazo/core";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@bobbot/core";
+import type { PrismaClient, ThreadEvents } from "@bobbot/db";
 import {
   appendEventInTransaction,
   BotSectionNameConflictError,
@@ -193,8 +192,9 @@ import {
   selectSpaceModelPreference,
   selectSpaceVoicePreference,
   touchGroupUpdatedAt,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
+import { implement, ORPCError } from "@orpc/server";
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "./agent-secrets.js";
 import { createAgentSkillsService } from "./agent-skills.js";
 import { aiConsentStatus, allowAiConsent } from "./ai-consent.js";

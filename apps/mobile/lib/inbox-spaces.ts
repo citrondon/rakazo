@@ -1,5 +1,5 @@
-import type { SpaceBot, SpaceGroup } from "@rakazo/contracts";
-import { groupBotsForSidebar, nestRosterByParent } from "@rakazo/core";
+import type { SpaceBot, SpaceGroup } from "@bobbot/contracts";
+import { groupBotsForSidebar, nestRosterByParent } from "@bobbot/core";
 import {
   adoptDeletedSpaceFallback,
   type MobileBot,

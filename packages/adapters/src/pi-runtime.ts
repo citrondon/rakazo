@@ -1,4 +1,20 @@
 import { randomUUID } from "node:crypto";
+import type {
+  AdapterContext,
+  AgentRunRequest,
+  AgentRuntime,
+  AgentRuntimeEvent,
+  AgentSteeringMessage,
+  AgentToolCompletion,
+  AgentToolExecutionResult,
+  AgentUsage,
+  ConnectorTool,
+  ModelCallObserver,
+} from "@bobbot/adapter-kit";
+import { DEFAULT_CONTEXT_STRATEGY } from "@bobbot/adapter-kit";
+import { parseToolCallLimit, resolveToolCallLimit, usableModelId } from "@bobbot/contracts";
+import { BUDGET_STOP_PREFIX } from "@bobbot/core";
+import { getLogger } from "@bobbot/logging";
 import {
   Agent,
   type AgentMessage,
@@ -20,22 +36,6 @@ import {
 } from "@earendil-works/pi-ai";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
-import type {
-  AdapterContext,
-  AgentRunRequest,
-  AgentRuntime,
-  AgentRuntimeEvent,
-  AgentSteeringMessage,
-  AgentToolCompletion,
-  AgentToolExecutionResult,
-  AgentUsage,
-  ConnectorTool,
-  ModelCallObserver,
-} from "@rakazo/adapter-kit";
-import { DEFAULT_CONTEXT_STRATEGY } from "@rakazo/adapter-kit";
-import { parseToolCallLimit, resolveToolCallLimit, usableModelId } from "@rakazo/contracts";
-import { BUDGET_STOP_PREFIX } from "@rakazo/core";
-import { getLogger } from "@rakazo/logging";
 import { isToolPauseResult } from "./approval-effect.js";
 import { BOT_SAFETY_PREAMBLE } from "./bot-safety-preamble.js";
 import { connectionIdArgument, credentialArgument } from "./bot-secrets.js";

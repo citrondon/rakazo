@@ -1,6 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { ORPCError, onError } from "@orpc/server";
-import { RPCHandler } from "@orpc/server/fetch";
 import type {
   AgentContextStrategy,
   AgentRuntime,
@@ -11,13 +9,13 @@ import type {
   RealtimeFanout,
   SandboxProvider,
   TransactionalEmailProvider,
-} from "@rakazo/adapter-kit";
+} from "@bobbot/adapter-kit";
 import type {
   ComposioProvider,
   ConnectorRegistry,
   DestinationEmulator,
   RemoteConnectorDependencies,
-} from "@rakazo/adapters";
+} from "@bobbot/adapters";
 import {
   applyMessagingOutboundStatus,
   ChatSdkMessagingSurface,
@@ -69,11 +67,11 @@ import {
   stripeBillingConfigFromEnv,
   toTeamChatInbound,
   withSecretPersistence,
-} from "@rakazo/adapters";
-import { createAuth, isBlockedAuthPath, loopbackTwinOrigins } from "@rakazo/auth";
-import type { Actor, AuthCapabilities } from "@rakazo/contracts";
-import { signupAllowlistBootUpdate, signupPolicyFromEnv } from "@rakazo/core";
-import type { Pool, PrismaClient } from "@rakazo/db";
+} from "@bobbot/adapters";
+import { createAuth, isBlockedAuthPath, loopbackTwinOrigins } from "@bobbot/auth";
+import type { Actor, AuthCapabilities } from "@bobbot/contracts";
+import { signupAllowlistBootUpdate, signupPolicyFromEnv } from "@bobbot/core";
+import type { Pool, PrismaClient } from "@bobbot/db";
 import {
   createDb,
   createPool,
@@ -83,17 +81,19 @@ import {
   provisionMessagingIdentity,
   pushSessionExpiresAt,
   requireMembership,
-} from "@rakazo/db";
-import type { Logger } from "@rakazo/logging";
+} from "@bobbot/db";
+import type { Logger } from "@bobbot/logging";
 import {
   createServiceLogger,
   enrichLogContext,
   getLogger,
   installLogger,
   SERVICE_NAMES,
-} from "@rakazo/logging";
-import { requestLogging } from "@rakazo/logging/hono";
-import { MarkdownMemoryStore } from "@rakazo/memory";
+} from "@bobbot/logging";
+import { requestLogging } from "@bobbot/logging/hono";
+import { MarkdownMemoryStore } from "@bobbot/memory";
+import { ORPCError, onError } from "@orpc/server";
+import { RPCHandler } from "@orpc/server/fetch";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { createBillingService } from "./billing.js";

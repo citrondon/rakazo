@@ -1,6 +1,6 @@
-import type { JobPublisher, JobWorkerHost } from "@rakazo/adapter-kit";
-import { ComposioConnector, IntegrationProviderSettings, pruneRunHistory } from "@rakazo/adapters";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
+import type { JobPublisher, JobWorkerHost } from "@bobbot/adapter-kit";
+import { ComposioConnector, IntegrationProviderSettings, pruneRunHistory } from "@bobbot/adapters";
+import { loadRootEnv } from "@bobbot/core/node/load-root-env";
 import { createWorkerSecretStore } from "./secret-store.js";
 
 loadRootEnv();
@@ -48,18 +48,18 @@ import {
   SpaceMemoryProviderResolver,
   sandboxProviderOptionsFromEnv,
   withSecretPersistence,
-} from "@rakazo/adapters";
-import { resolveEncryptionKey, resolveSupervisorToken } from "@rakazo/core";
+} from "@bobbot/adapters";
+import { resolveEncryptionKey, resolveSupervisorToken } from "@bobbot/core";
 import {
   createDb,
   createThreadEvents,
   isTooManyDatabaseConnections,
   parsePositiveInteger,
   pushSessionExpiresAt,
-} from "@rakazo/db";
-import { SERVICE_NAMES } from "@rakazo/logging";
-import { createRootLogger } from "@rakazo/logging/axiom";
-import { MarkdownMemoryStore } from "@rakazo/memory";
+} from "@bobbot/db";
+import { SERVICE_NAMES } from "@bobbot/logging";
+import { createRootLogger } from "@bobbot/logging/axiom";
+import { MarkdownMemoryStore } from "@bobbot/memory";
 
 const logger = createRootLogger(SERVICE_NAMES.worker);
 

@@ -1,4 +1,4 @@
-import type { BotImportInput } from "@rakazo/contracts";
+import type { BotImportInput } from "@bobbot/contracts";
 import { describe, expect, it } from "vitest";
 import { prepareBotImport } from "./bot-import.js";
 

@@ -1,4 +1,4 @@
-import type { ActionApprovalRule } from "@rakazo/core";
+import type { ActionApprovalRule } from "@bobbot/core";
 import { describe, expect, it } from "vitest";
 import { buildActionDecisionRow } from "./action-decision-row.js";
 

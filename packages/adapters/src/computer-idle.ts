@@ -5,9 +5,9 @@ import {
   computerSleepJob,
   type JobPublisher,
   type SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@bobbot/adapter-kit";
+import { ACTIVE_RUN_STATUSES } from "@bobbot/core";
+import type { PrismaClient, ThreadEvents } from "@bobbot/db";
 import { expireComputerControl, hasActiveComputerControl } from "./computer-control.js";
 import { toComputerRef } from "./computer-lifecycle.js";
 import { checkpointComputerWorkspace } from "./computer-workspace.js";

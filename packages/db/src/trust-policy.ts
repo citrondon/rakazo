@@ -1,5 +1,5 @@
-import type { Actor, TrustPolicy, UpdateTrustPolicyInput } from "@rakazo/contracts";
-import { resolveTrustPolicy } from "@rakazo/core";
+import type { Actor, TrustPolicy, UpdateTrustPolicyInput } from "@bobbot/contracts";
+import { resolveTrustPolicy } from "@bobbot/core";
 import { Prisma, type PrismaClient } from "./client.js";
 
 type TrustPolicyRecord = {

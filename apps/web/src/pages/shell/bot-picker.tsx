@@ -1,5 +1,4 @@
-import { Trans, useLingui } from "@lingui/react/macro";
-import type { Bot } from "@rakazo/contracts";
+import type { Bot } from "@bobbot/contracts";
 import {
   BotAvatar,
   Command,
@@ -8,7 +7,8 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@rakazo/ui-web";
+} from "@bobbot/ui-web";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Info, Library, Lock, Plus, Upload, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 

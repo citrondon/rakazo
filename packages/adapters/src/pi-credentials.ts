@@ -1,16 +1,16 @@
 import type {
+  AgentModelOAuthCredential,
+  ModelCredentialFailedState,
+  ModelCredentialRetireReason,
+} from "@bobbot/adapter-kit";
+import { getLogger } from "@bobbot/logging";
+import type {
   AuthOperationOptions,
   Credential,
   CredentialInfo,
   CredentialStore,
   OAuthCredential,
 } from "@earendil-works/pi-ai";
-import type {
-  AgentModelOAuthCredential,
-  ModelCredentialFailedState,
-  ModelCredentialRetireReason,
-} from "@rakazo/adapter-kit";
-import { getLogger } from "@rakazo/logging";
 import {
   OAUTH_ACCOUNT_CHANGED_ERROR,
   oauthCredentialAccountId,

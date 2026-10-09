@@ -1,4 +1,4 @@
-import type { ModelOAuthBegin, ThinkingLevel } from "@rakazo/contracts";
+import type { ModelOAuthBegin, ThinkingLevel } from "@bobbot/contracts";
 import {
   CLOUDFLARE_AI_GATEWAY_PROVIDER_ID,
   cloudflareGatewayRouting,
@@ -14,7 +14,7 @@ import {
   parseModelMaxImagesPerPrompt,
   parseModelMaxTokens,
   sortProbedModels,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   COMPATIBLE_THINKING_LEVELS,
   clampCatalogThinkingLevel,
@@ -23,7 +23,7 @@ import {
   filterModelCatalog,
   initialModelProbeState,
   pickCatalogModelId,
-} from "@rakazo/core";
+} from "@bobbot/core";
 import * as Clipboard from "expo-clipboard";
 import { useFocusEffect } from "expo-router";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";

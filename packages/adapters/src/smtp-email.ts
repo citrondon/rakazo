@@ -1,4 +1,4 @@
-import type { TransactionalEmail, TransactionalEmailProvider } from "@rakazo/adapter-kit";
+import type { TransactionalEmail, TransactionalEmailProvider } from "@bobbot/adapter-kit";
 import nodemailer, { type Transporter } from "nodemailer";
 
 export interface SmtpEmailConfig {

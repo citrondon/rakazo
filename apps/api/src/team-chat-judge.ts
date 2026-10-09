@@ -5,22 +5,22 @@ import type {
   ModelCredentialFailedState,
   ModelCredentialRetireReason,
   SecretStore,
-} from "@rakazo/adapter-kit";
+} from "@bobbot/adapter-kit";
 import {
   formatCurrentTimeInstruction,
   matchesFailedOAuthSecret,
   resolveModelAuth,
   serializeModelSecret,
   toOAuthCredential,
-} from "@rakazo/adapters";
-import type { PrismaClient } from "@rakazo/db";
+} from "@bobbot/adapters";
+import type { PrismaClient } from "@bobbot/db";
 import {
   findDefaultModelCredential,
   findModelCredential,
   recordUsage,
   retireModelCredential,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 
 const MAX_RULES_CHARS = 4_000;
 const MAX_MESSAGES = 20;

@@ -1,4 +1,3 @@
-import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import type {
   CapabilityInstall,
   Connection,
@@ -7,7 +6,7 @@ import type {
   IntegrationCatalogSurface,
   McpServer,
   McpStdioStatus,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   abortableDelay,
   buildFeaturedConnectorTiles,
@@ -15,7 +14,7 @@ import {
   filterConnectionCatalogItems,
   groupConnectionCatalogItems,
   humanizeToolName,
-} from "@rakazo/core";
+} from "@bobbot/core";
 import {
   Badge,
   Button,
@@ -31,7 +30,8 @@ import {
   Input,
   NativeSelect,
   NativeSelectOption,
-} from "@rakazo/ui-web";
+} from "@bobbot/ui-web";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import {
   BookOpen,
   Check,

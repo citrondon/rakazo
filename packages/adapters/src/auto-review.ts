@@ -9,9 +9,9 @@ import type {
   AutoReviewRequest,
   AutoReviewResult,
   CacheCapabilities,
-} from "@rakazo/adapter-kit";
-import type { AutoReviewJudgeDecision } from "@rakazo/core";
-import { redactSecrets } from "@rakazo/core";
+} from "@bobbot/adapter-kit";
+import type { AutoReviewJudgeDecision } from "@bobbot/core";
+import { redactSecrets } from "@bobbot/core";
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import { LOCAL_PROVIDER_ID } from "./pi-local-provider.js";

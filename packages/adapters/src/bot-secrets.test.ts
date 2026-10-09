@@ -1,6 +1,6 @@
-import type { BotSecretDestination } from "@rakazo/contracts";
-import { encodeLoginSecret } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { BotSecretDestination } from "@bobbot/contracts";
+import { encodeLoginSecret } from "@bobbot/contracts";
+import type { PrismaClient } from "@bobbot/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   credentialArgument,

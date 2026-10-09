@@ -142,7 +142,7 @@ try {
 
 if (problems.length > 0) {
   console.error(`Locale catalogs are out of date:\n\n${problems.join("\n\n")}\n`);
-  console.error("Run `pnpm --filter @rakazo/web intl:extract` and commit the updated catalogs.");
+  console.error("Run `pnpm --filter @bobbot/web intl:extract` and commit the updated catalogs.");
   process.exit(1);
 }
 

@@ -12,8 +12,8 @@ WORKDIR /app
 # leave the copied tree unreadable to USER node at runtime.
 COPY --chmod=755 . .
 RUN pnpm install --frozen-lockfile
-RUN pnpm --filter @rakazo/db generate
-RUN BOBBOT_ALLOW_DEV_SECRETS=1 pnpm --filter @rakazo/web build
+RUN pnpm --filter @bobbot/db generate
+RUN BOBBOT_ALLOW_DEV_SECRETS=1 pnpm --filter @bobbot/web build
 RUN install -d -m 750 -o node -g node /data /app/apps/web/node_modules/.vite-temp
 ARG GIT_SHA
 ENV NODE_ENV=production
@@ -23,4 +23,4 @@ ENV GIT_SHA=$GIT_SHA
 ENV COREPACK_ENABLE_NETWORK=0
 EXPOSE 3100 5173 7091
 USER node
-CMD ["pnpm", "--filter", "@rakazo/api", "start"]
+CMD ["pnpm", "--filter", "@bobbot/api", "start"]

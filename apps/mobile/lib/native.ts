@@ -1,4 +1,4 @@
-import { tokensForAppearance } from "@rakazo/ui-tokens";
+import { tokensForAppearance } from "@bobbot/ui-tokens";
 import { useMemo, useSyncExternalStore } from "react";
 import type { ColorValue } from "react-native";
 import { AccessibilityInfo, Platform, PlatformColor } from "react-native";

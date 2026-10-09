@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
-import { createTriggerRepos } from "@rakazo/db";
+import { SecretStoreUnavailableError } from "@bobbot/adapter-kit";
+import { createTriggerRepos } from "@bobbot/db";
 import type { Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
 import {

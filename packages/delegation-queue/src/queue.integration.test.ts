@@ -1,4 +1,4 @@
-import type { DelegationRequest, DelegationResult, QueueEntry } from "@rakazo/contracts";
+import type { DelegationRequest, DelegationResult, QueueEntry } from "@bobbot/contracts";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DelegationQueue, type QueuePersister } from "./queue";
 

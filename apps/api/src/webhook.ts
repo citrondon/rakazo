@@ -1,6 +1,6 @@
-import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
-import { hasValidBearerToken } from "@rakazo/core";
-import { createTriggerRepos } from "@rakazo/db";
+import { SecretStoreUnavailableError } from "@bobbot/adapter-kit";
+import { hasValidBearerToken } from "@bobbot/core";
+import { createTriggerRepos } from "@bobbot/db";
 import type { Hono } from "hono";
 import { mountEventWebhookRoute } from "./event-webhook.js";
 import { mountGithubWebhookRoute } from "./github-webhook.js";

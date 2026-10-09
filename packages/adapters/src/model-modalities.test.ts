@@ -1,4 +1,4 @@
-import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo/contracts";
+import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@bobbot/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const VISION_ENV = "BOBBOT_OPENAI_COMPATIBLE_VISION_MODELS";

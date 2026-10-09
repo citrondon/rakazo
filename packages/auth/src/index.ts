@@ -1,5 +1,5 @@
 import { expo } from "@better-auth/expo";
-import type { TransactionalEmail, TransactionalEmailProvider } from "@rakazo/adapter-kit";
+import type { TransactionalEmail, TransactionalEmailProvider } from "@bobbot/adapter-kit";
 import {
   allowlistedSignupAdmission,
   emailAllowed,
@@ -7,9 +7,9 @@ import {
   isMessagingEmail,
   parseAllowlist,
   signupPolicyFromEnv,
-} from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { bootstrapUserSpace } from "@rakazo/db";
+} from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
+import { bootstrapUserSpace } from "@bobbot/db";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import {

@@ -1,8 +1,8 @@
+import { ChatMarkdown } from "@bobbot/chat-ui/web";
+import type { ProductEvent, ThreadMessage, ThreadSnapshot } from "@bobbot/contracts";
+import { isToolActivityBlock, withLiveStreamingProgress } from "@bobbot/core";
+import { DEFAULT_GROK_BOT_COLOR } from "@bobbot/ui-web";
 import { I18nProvider } from "@lingui/react";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
-import type { ProductEvent, ThreadMessage, ThreadSnapshot } from "@rakazo/contracts";
-import { isToolActivityBlock, withLiveStreamingProgress } from "@rakazo/core";
-import { DEFAULT_GROK_BOT_COLOR } from "@rakazo/ui-web";
 import { createRoot } from "react-dom/client";
 import { ActiveBotGlyph } from "../../src/components/ai/CollaborationMarker";
 import { bootstrapI18n, i18n } from "../../src/lib/i18n";

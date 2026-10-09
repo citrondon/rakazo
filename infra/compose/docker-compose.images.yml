@@ -53,7 +53,7 @@ services:
   supervisor:
     image: ${BOBBOT_IMAGE:-${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}}:${BOBBOT_IMAGE_TAG:-${RAKAZO_IMAGE_TAG:-edge}}
     restart: unless-stopped
-    command: ["pnpm", "--filter", "@rakazo/sandbox-supervisor", "start"]
+    command: ["pnpm", "--filter", "@bobbot/sandbox-supervisor", "start"]
     init: true
     user: root
     security_opt:
@@ -106,7 +106,7 @@ services:
     command:
       - bash
       - -lc
-      - pnpm --filter @rakazo/db exec prisma migrate deploy && pnpm --filter @rakazo/api start
+      - pnpm --filter @bobbot/db exec prisma migrate deploy && pnpm --filter @bobbot/api start
     init: true
     security_opt:
       - no-new-privileges:true
@@ -184,7 +184,7 @@ services:
   worker:
     image: ${BOBBOT_IMAGE:-${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}}:${BOBBOT_IMAGE_TAG:-${RAKAZO_IMAGE_TAG:-edge}}
     restart: unless-stopped
-    command: ["pnpm", "--filter", "@rakazo/worker", "start"]
+    command: ["pnpm", "--filter", "@bobbot/worker", "start"]
     init: true
     security_opt:
       - no-new-privileges:true
@@ -247,7 +247,7 @@ services:
   web:
     image: ${BOBBOT_IMAGE:-${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}}:${BOBBOT_IMAGE_TAG:-${RAKAZO_IMAGE_TAG:-edge}}
     restart: unless-stopped
-    command: ["pnpm", "--filter", "@rakazo/web", "preview", "--host", "0.0.0.0", "--port", "5173"]
+    command: ["pnpm", "--filter", "@bobbot/web", "preview", "--host", "0.0.0.0", "--port", "5173"]
     init: true
     security_opt:
       - no-new-privileges:true

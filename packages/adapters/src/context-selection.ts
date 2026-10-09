@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { AgentContextStrategy, CacheCapabilities } from "@rakazo/adapter-kit";
+import type { AgentContextStrategy, CacheCapabilities } from "@bobbot/adapter-kit";
 
 export type ContextStrategy = AgentContextStrategy;
 export interface ContextMessage {

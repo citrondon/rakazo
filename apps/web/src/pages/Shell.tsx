@@ -1,7 +1,4 @@
-import { i18n } from "@lingui/core";
-import { t } from "@lingui/core/macro";
-import { Trans, useLingui } from "@lingui/react/macro";
-import { ChatMarkdown, LinkifiedText } from "@rakazo/chat-ui/web";
+import { ChatMarkdown, LinkifiedText } from "@bobbot/chat-ui/web";
 import type {
   AgentSkillCatalogEntry,
   Bot,
@@ -23,7 +20,7 @@ import type {
   ThreadSnapshot,
   UsageMonth,
   VoiceStatus,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   ATTACHMENT_ALLOWED_MIME_TYPES,
   ATTACHMENT_MAX_BYTES,
@@ -32,7 +29,7 @@ import {
   MESSAGE_REACTIONS,
   type MessageReaction,
   normalizeCreateBotProfile,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   attachmentsForThread,
   buildComposerMentionOptions,
@@ -65,7 +62,7 @@ import {
   truncateSlashDescription,
   userVisibleMessages,
   withLiveStreamingProgress,
-} from "@rakazo/core";
+} from "@bobbot/core";
 import {
   AvatarStyleProvider,
   BotAvatar,
@@ -84,7 +81,10 @@ import {
   PopoverContent,
   PopoverTrigger,
   resolvePersonaColorDef,
-} from "@rakazo/ui-web";
+} from "@bobbot/ui-web";
+import { i18n } from "@lingui/core";
+import { t } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   ArrowDown,
   ArrowUp,

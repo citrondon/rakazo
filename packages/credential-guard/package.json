@@ -1,5 +1,5 @@
 {
-  "name": "@rakazo/credential-guard",
+  "name": "@bobbot/credential-guard",
   "version": "0.1.0",
   "type": "module",
   "main": "./src/guard.ts",
@@ -8,7 +8,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@rakazo/contracts": "workspace:*",
+    "@bobbot/contracts": "workspace:*",
     "yaml": "2.7.0"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
+import type { ComputerStatus } from "@bobbot/contracts";
+import { Button, cn } from "@bobbot/ui-web";
 import { useLingui } from "@lingui/react/macro";
-import type { ComputerStatus } from "@rakazo/contracts";
-import { Button, cn } from "@rakazo/ui-web";
 import { Folder, Globe, SquareTerminal, X } from "lucide-react";
 import type { PointerEvent, ReactNode, RefObject } from "react";
 import { lazy, Suspense, useCallback, useRef, useState } from "react";

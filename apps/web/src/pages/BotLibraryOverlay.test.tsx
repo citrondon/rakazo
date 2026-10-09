@@ -30,7 +30,7 @@ vi.mock("@lingui/react/macro", () => {
     }) => (value === 0 ? (zero ?? other) : value === 1 ? one : other).replace("#", String(value)),
   };
 });
-vi.mock("@rakazo/ui-web", () => {
+vi.mock("@bobbot/ui-web", () => {
   const Container = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   return {
     BotAvatar: ({ identity }: { identity: string }) => <span data-testid={`avatar-${identity}`} />,

@@ -1,4 +1,3 @@
-import { Composio } from "@composio/core";
 import type {
   AdapterContext,
   ConnectedConnector,
@@ -8,8 +7,9 @@ import type {
   ConnectorProvider,
   ConnectorTool,
   ManagedConnectorProvider,
-} from "@rakazo/adapter-kit";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/adapter-kit";
+import { getLogger } from "@bobbot/logging";
+import { Composio } from "@composio/core";
 import {
   composioToolkitDirectory,
   mergeCatalogWithConnected,

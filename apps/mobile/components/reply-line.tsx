@@ -1,5 +1,5 @@
-import type { ReplyPreview } from "@rakazo/contracts";
-import { replyLineText } from "@rakazo/core";
+import type { ReplyPreview } from "@bobbot/contracts";
+import { replyLineText } from "@bobbot/core";
 import { Pressable, Text } from "react-native";
 import { mobileTokens } from "../lib/appearance";
 import { t } from "../lib/i18n";

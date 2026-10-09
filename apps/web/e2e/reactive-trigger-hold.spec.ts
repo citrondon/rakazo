@@ -1,5 +1,5 @@
+import type { Routine, Trigger } from "@bobbot/contracts";
 import { expect, type Page, test } from "@playwright/test";
-import type { Routine, Trigger } from "@rakazo/contracts";
 import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
 
 /**

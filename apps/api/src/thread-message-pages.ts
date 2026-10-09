@@ -1,8 +1,8 @@
-import type { MessageBlock, ThreadMessage, ThreadMessagePage } from "@rakazo/contracts";
-import { MessageBlock as MessageBlockSchema } from "@rakazo/contracts";
-import { callIdFromClientNonce, isPeerReceiptBlocks } from "@rakazo/core";
-import { messageReplyExcerpt } from "@rakazo/core/message-quote";
-import type { Prisma, PrismaClient } from "@rakazo/db";
+import type { MessageBlock, ThreadMessage, ThreadMessagePage } from "@bobbot/contracts";
+import { MessageBlock as MessageBlockSchema } from "@bobbot/contracts";
+import { callIdFromClientNonce, isPeerReceiptBlocks } from "@bobbot/core";
+import { messageReplyExcerpt } from "@bobbot/core/message-quote";
+import type { Prisma, PrismaClient } from "@bobbot/db";
 
 type MessageDb = PrismaClient | Prisma.TransactionClient;
 

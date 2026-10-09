@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { HistorySearchInput } from "@rakazo/contracts";
+import type { HistorySearchInput } from "@bobbot/contracts";
 import { describe, expect, it } from "vitest";
 import { historyFixture } from "./evals/history-fixtures.js";
 import { runTrial } from "./evals/runner.js";

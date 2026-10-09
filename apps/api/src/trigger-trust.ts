@@ -1,11 +1,11 @@
-import { planRoutineEffects, planRunTrust } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { createRoutineToolRepos, createTrustPolicyRepos } from "@rakazo/db";
+import { planRoutineEffects, planRunTrust } from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
+import { createRoutineToolRepos, createTrustPolicyRepos } from "@bobbot/db";
 import type { WebhookRunTrust, WebhookTrustPlanner } from "./webhook-inbound.js";
 
 /**
  * Resolve a wake's trust plan from the bot's reachable tools and the space policy. All planning
- * is pure in @rakazo/core; this only reads storage and calls it, so the wake path stays a thin
+ * is pure in @bobbot/core; this only reads storage and calls it, so the wake path stays a thin
  * boundary. A space with no policy gets the safe default, so an unconfigured space still asks
  * before a connected integration writes.
  */

@@ -5,16 +5,16 @@ import http from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { serve } from "@hono/node-server";
 import {
   boundedSandboxCommandTimeoutMs,
   readBoundedJsonResponse,
   resolveSupervisorToken,
-} from "@rakazo/core";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
-import { getLogger, SERVICE_NAMES } from "@rakazo/logging";
-import { createRootLogger } from "@rakazo/logging/axiom";
-import { requestLogging } from "@rakazo/logging/hono";
+} from "@bobbot/core";
+import { loadRootEnv } from "@bobbot/core/node/load-root-env";
+import { getLogger, SERVICE_NAMES } from "@bobbot/logging";
+import { createRootLogger } from "@bobbot/logging/axiom";
+import { requestLogging } from "@bobbot/logging/hono";
+import { serve } from "@hono/node-server";
 import Docker from "dockerode";
 import { Hono, type MiddlewareHandler } from "hono";
 import { bodyLimit } from "hono/body-limit";

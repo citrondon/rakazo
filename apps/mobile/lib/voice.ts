@@ -1,4 +1,4 @@
-import { ensureAiDataConsent, readBoundedResponseBytes, toUtterances } from "@rakazo/core";
+import { ensureAiDataConsent, readBoundedResponseBytes, toUtterances } from "@bobbot/core";
 import { File, Paths } from "expo-file-system";
 import type * as ExpoSpeech from "expo-speech";
 import { Platform } from "react-native";

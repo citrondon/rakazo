@@ -14,7 +14,7 @@ services:
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
-    command: ["bash", "-lc", "pnpm --filter @rakazo/db exec prisma migrate deploy && pnpm --filter @rakazo/api start"]
+    command: ["bash", "-lc", "pnpm --filter @bobbot/db exec prisma migrate deploy && pnpm --filter @bobbot/api start"]
     env_file:
       - ../../.env
     extra_hosts:
@@ -64,7 +64,7 @@ services:
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
-    command: ["pnpm", "--filter", "@rakazo/worker", "start"]
+    command: ["pnpm", "--filter", "@bobbot/worker", "start"]
     env_file:
       - ../../.env
     extra_hosts:
@@ -173,7 +173,7 @@ services:
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
-    command: ["pnpm", "--filter", "@rakazo/web", "preview", "--host", "0.0.0.0", "--port", "5173"]
+    command: ["pnpm", "--filter", "@bobbot/web", "preview", "--host", "0.0.0.0", "--port", "5173"]
     security_opt:
       - no-new-privileges:true
     cap_drop:

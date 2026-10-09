@@ -1,6 +1,6 @@
-import type { BillingProvider } from "@rakazo/adapter-kit";
-import type { Actor } from "@rakazo/contracts";
-import { getLogger } from "@rakazo/logging";
+import type { BillingProvider } from "@bobbot/adapter-kit";
+import type { Actor } from "@bobbot/contracts";
+import { getLogger } from "@bobbot/logging";
 import type { Hono } from "hono";
 import type { BillingService } from "./billing.js";
 import { BILLING_RETURN_PATH } from "./billing.js";

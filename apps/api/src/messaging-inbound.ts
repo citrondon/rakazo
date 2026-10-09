@@ -1,7 +1,7 @@
-import type { JobPublisher, MessagingInboundMessage } from "@rakazo/adapter-kit";
-import { messagingDeliverJob, runContinueJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { parseMessagingCommand, sanitizeMessagingLabel } from "@rakazo/core";
+import type { JobPublisher, MessagingInboundMessage } from "@bobbot/adapter-kit";
+import { messagingDeliverJob, runContinueJob } from "@bobbot/adapter-kit";
+import type { MessageBlock } from "@bobbot/contracts";
+import { parseMessagingCommand, sanitizeMessagingLabel } from "@bobbot/core";
 import type {
   MessagingIdentityRequest,
   Prisma,
@@ -9,14 +9,14 @@ import type {
   ProvisionedMessagingIdentity,
   SignupPolicyEnv,
   ThreadEvents,
-} from "@rakazo/db";
+} from "@bobbot/db";
 import {
   createThreadMessage,
   createTriggerRepos,
   normalizeMessagingLinkCode,
   redeemMessagingLinkCode,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 import {
   MESSAGE_ROUTING_REARMED_REASON,
   MESSAGE_ROUTING_REASON,

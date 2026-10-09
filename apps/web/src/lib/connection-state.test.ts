@@ -1,4 +1,4 @@
-import type { Connection, ConnectionCatalogItem } from "@rakazo/contracts";
+import type { Connection, ConnectionCatalogItem } from "@bobbot/contracts";
 import { describe, expect, it } from "vitest";
 import {
   canReconnect,

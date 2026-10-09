@@ -1,4 +1,4 @@
-import type { EventDefinition } from "@rakazo/contracts";
+import type { EventDefinition } from "@bobbot/contracts";
 
 /**
  * The events a routine can react to, described provider-neutrally. Each entry names the

@@ -8,11 +8,11 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { BotRoleRegistry, DelegationRequestSchema } from "@rakazo/contracts";
-import { CredentialGuard } from "@rakazo/credential-guard";
-import { DelegationQueue } from "@rakazo/delegation-queue";
-import { createJevMergeGate, JevMergeGate } from "@rakazo/jev-gate";
-import { TeamBootstrapper } from "@rakazo/team-sync";
+import { BotRoleRegistry, DelegationRequestSchema } from "@bobbot/contracts";
+import { CredentialGuard } from "@bobbot/credential-guard";
+import { DelegationQueue } from "@bobbot/delegation-queue";
+import { createJevMergeGate, JevMergeGate } from "@bobbot/jev-gate";
+import { TeamBootstrapper } from "@bobbot/team-sync";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 /**

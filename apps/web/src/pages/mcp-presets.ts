@@ -1,4 +1,4 @@
-import type { McpStdioStatus } from "@rakazo/contracts";
+import type { McpStdioStatus } from "@bobbot/contracts";
 
 export interface McpPreset {
   id: string;

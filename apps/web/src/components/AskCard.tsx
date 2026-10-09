@@ -1,9 +1,9 @@
+import { ChatMarkdown } from "@bobbot/chat-ui/web";
+import type { ThreadMessage } from "@bobbot/contracts";
+import { isApprovalAskBlock, isSecretAskBlock, selectedAskActionLabel } from "@bobbot/core";
+import { Button, Input } from "@bobbot/ui-web";
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
-import type { ThreadMessage } from "@rakazo/contracts";
-import { isApprovalAskBlock, isSecretAskBlock, selectedAskActionLabel } from "@rakazo/core";
-import { Button, Input } from "@rakazo/ui-web";
 import { useState } from "react";
 import { errorText } from "../lib/user-error";
 

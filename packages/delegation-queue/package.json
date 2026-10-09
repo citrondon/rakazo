@@ -1,5 +1,5 @@
 {
-  "name": "@rakazo/delegation-queue",
+  "name": "@bobbot/delegation-queue",
   "version": "0.1.0",
   "type": "module",
   "main": "./src/queue.ts",
@@ -8,7 +8,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@rakazo/contracts": "workspace:*"
+    "@bobbot/contracts": "workspace:*"
   },
   "devDependencies": {
     "vitest": "4.1.11",

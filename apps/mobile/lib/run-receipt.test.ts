@@ -1,4 +1,4 @@
-import type { RunReceipt } from "@rakazo/contracts";
+import type { RunReceipt } from "@bobbot/contracts";
 import { describe, expect, it } from "vitest";
 import { receiptLines } from "./run-receipt";
 

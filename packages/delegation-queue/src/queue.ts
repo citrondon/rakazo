@@ -1,4 +1,4 @@
-import type { DelegationRequest, DelegationResult, QueueEntry } from "@rakazo/contracts";
+import type { DelegationRequest, DelegationResult, QueueEntry } from "@bobbot/contracts";
 
 export class DelegationQueue {
   private entries = new Map<string, QueueEntry>();

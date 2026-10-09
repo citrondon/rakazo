@@ -22,10 +22,10 @@ importers:
       '@biomejs/biome':
         specifier: 2.5.13
         version: 2.5.13
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:packages/contracts
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:packages/core
       '@types/node':
@@ -55,28 +55,28 @@ importers:
       '@orpc/server':
         specifier: 1.15.0
         version: 1.15.0(@opentelemetry/api@1.9.1)(crossws@0.3.5)(ws@8.21.3)
-      '@rakazo/adapter-kit':
+      '@bobbot/adapter-kit':
         specifier: workspace:*
         version: link:../../packages/adapter-kit
-      '@rakazo/adapters':
+      '@bobbot/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
-      '@rakazo/auth':
+      '@bobbot/auth':
         specifier: workspace:*
         version: link:../../packages/auth
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@rakazo/db':
+      '@bobbot/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@rakazo/logging':
+      '@bobbot/logging':
         specifier: workspace:*
         version: link:../../packages/logging
-      '@rakazo/memory':
+      '@bobbot/memory':
         specifier: workspace:*
         version: link:../../packages/memory
       hono:
@@ -92,7 +92,7 @@ importers:
 
   apps/desktop:
     dependencies:
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
       electron-updater:
@@ -102,7 +102,7 @@ importers:
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
-      '@rakazo/ui-tokens':
+      '@bobbot/ui-tokens':
         specifier: workspace:*
         version: link:../../packages/ui-tokens
       electron:
@@ -126,16 +126,16 @@ importers:
       '@expo/ui':
         specifier: 57.0.22
         version: 57.0.22(@babel/core@7.29.7)(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(expo@57.0.27)(react-dom@19.2.3(react@19.2.3))(react-native-worklets@0.10.1(@babel/core@7.29.7)(@react-native/metro-config@0.86.3(@babel/core@7.29.7))(react-native@0.86.3(@babel/core@7.29.7)(@react-native/metro-config@0.86.3(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7)(@react-native/metro-config@0.86.3(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)
-      '@rakazo/chat-ui':
+      '@bobbot/chat-ui':
         specifier: workspace:*
         version: link:../../packages/chat-ui
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@rakazo/ui-tokens':
+      '@bobbot/ui-tokens':
         specifier: workspace:*
         version: link:../../packages/ui-tokens
       '@react-native-vector-icons/ionicons':
@@ -289,19 +289,19 @@ importers:
       '@orpc/contract':
         specifier: 1.15.0
         version: 1.15.0(@opentelemetry/api@1.9.1)
-      '@rakazo/chat-ui':
+      '@bobbot/chat-ui':
         specifier: workspace:*
         version: link:../../packages/chat-ui
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@rakazo/ui-tokens':
+      '@bobbot/ui-tokens':
         specifier: workspace:*
         version: link:../../packages/ui-tokens
-      '@rakazo/ui-web':
+      '@bobbot/ui-web':
         specifier: workspace:*
         version: link:../../packages/ui-web
       '@xterm/addon-fit':
@@ -386,22 +386,22 @@ importers:
 
   apps/worker:
     dependencies:
-      '@rakazo/adapter-kit':
+      '@bobbot/adapter-kit':
         specifier: workspace:*
         version: link:../../packages/adapter-kit
-      '@rakazo/adapters':
+      '@bobbot/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@rakazo/db':
+      '@bobbot/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@rakazo/logging':
+      '@bobbot/logging':
         specifier: workspace:*
         version: link:../../packages/logging
-      '@rakazo/memory':
+      '@bobbot/memory':
         specifier: workspace:*
         version: link:../../packages/memory
     devDependencies:
@@ -420,10 +420,10 @@ importers:
       '@astrojs/sitemap':
         specifier: 3.7.4
         version: 3.7.4
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@rakazo/ui-web':
+      '@bobbot/ui-web':
         specifier: workspace:*
         version: link:../../packages/ui-web
       '@vercel/functions':
@@ -472,10 +472,10 @@ importers:
       '@hono/node-server':
         specifier: 2.1.1
         version: 2.1.1(hono@4.13.7)
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../../../packages/core
-      '@rakazo/logging':
+      '@bobbot/logging':
         specifier: workspace:*
         version: link:../../../packages/logging
       dockerode:
@@ -506,13 +506,13 @@ importers:
       '@hono/node-server':
         specifier: 2.1.1
         version: 2.1.1(hono@4.13.7)
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@rakazo/logging':
+      '@bobbot/logging':
         specifier: workspace:*
         version: link:../../packages/logging
       hono:
@@ -534,7 +534,7 @@ importers:
 
   packages/adapter-kit:
     dependencies:
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../contracts
       zod:
@@ -589,22 +589,22 @@ importers:
       '@observablehq/plot':
         specifier: 0.6.17
         version: 0.6.17
-      '@rakazo/adapter-kit':
+      '@bobbot/adapter-kit':
         specifier: workspace:*
         version: link:../adapter-kit
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../core
-      '@rakazo/credential-guard':
+      '@bobbot/credential-guard':
         specifier: workspace:*
         version: link:../credential-guard
-      '@rakazo/db':
+      '@bobbot/db':
         specifier: workspace:*
         version: link:../db
-      '@rakazo/logging':
+      '@bobbot/logging':
         specifier: workspace:*
         version: link:../logging
       chat:
@@ -677,13 +677,13 @@ importers:
       '@better-auth/expo':
         specifier: 1.7.4
         version: 1.7.4(3vd3tfqycm266qydpkfn66ckpi)
-      '@rakazo/adapter-kit':
+      '@bobbot/adapter-kit':
         specifier: workspace:*
         version: link:../adapter-kit
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../core
-      '@rakazo/db':
+      '@bobbot/db':
         specifier: workspace:*
         version: link:../db
       better-auth:
@@ -699,13 +699,13 @@ importers:
 
   packages/chat-ui:
     dependencies:
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@rakazo/ui-tokens':
+      '@bobbot/ui-tokens':
         specifier: workspace:*
         version: link:../ui-tokens
-      '@rakazo/ui-web':
+      '@bobbot/ui-web':
         specifier: workspace:*
         version: link:../ui-web
       '@ronradtke/react-native-markdown-display':
@@ -764,7 +764,7 @@ importers:
       '@observablehq/plot':
         specifier: 0.6.17
         version: 0.6.17
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../contracts
       croner:
@@ -807,7 +807,7 @@ importers:
 
   packages/credential-guard:
     dependencies:
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../contracts
       yaml:
@@ -829,16 +829,16 @@ importers:
       '@prisma/client':
         specifier: 7.10.0
         version: 7.10.0(prisma@7.10.0(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2)
-      '@rakazo/adapter-kit':
+      '@bobbot/adapter-kit':
         specifier: workspace:*
         version: link:../adapter-kit
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../core
-      '@rakazo/logging':
+      '@bobbot/logging':
         specifier: workspace:*
         version: link:../logging
       dotenv:
@@ -863,7 +863,7 @@ importers:
 
   packages/delegation-queue:
     dependencies:
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../contracts
     devDependencies:
@@ -876,10 +876,10 @@ importers:
 
   packages/jev-gate:
     dependencies:
-      '@rakazo/adapters':
+      '@bobbot/adapters':
         specifier: workspace:*
         version: link:../adapters
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../contracts
     devDependencies:
@@ -908,10 +908,10 @@ importers:
 
   packages/memory:
     dependencies:
-      '@rakazo/adapter-kit':
+      '@bobbot/adapter-kit':
         specifier: workspace:*
         version: link:../adapter-kit
-      '@rakazo/db':
+      '@bobbot/db':
         specifier: workspace:*
         version: link:../db
     devDependencies:
@@ -924,7 +924,7 @@ importers:
 
   packages/team-sync:
     dependencies:
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../contracts
       yaml:
@@ -943,31 +943,31 @@ importers:
       '@hono/node-server':
         specifier: 2.1.1
         version: 2.1.1(hono@4.13.7)
-      '@rakazo/adapter-kit':
+      '@bobbot/adapter-kit':
         specifier: workspace:*
         version: link:../adapter-kit
-      '@rakazo/adapters':
+      '@bobbot/adapters':
         specifier: workspace:*
         version: link:../adapters
-      '@rakazo/contracts':
+      '@bobbot/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../core
-      '@rakazo/credential-guard':
+      '@bobbot/credential-guard':
         specifier: workspace:*
         version: link:../credential-guard
-      '@rakazo/db':
+      '@bobbot/db':
         specifier: workspace:*
         version: link:../db
-      '@rakazo/delegation-queue':
+      '@bobbot/delegation-queue':
         specifier: workspace:*
         version: link:../delegation-queue
-      '@rakazo/jev-gate':
+      '@bobbot/jev-gate':
         specifier: workspace:*
         version: link:../jev-gate
-      '@rakazo/team-sync':
+      '@bobbot/team-sync':
         specifier: workspace:*
         version: link:../team-sync
       '@testcontainers/postgresql':
@@ -1004,10 +1004,10 @@ importers:
       '@base-ui/react':
         specifier: 1.8.0
         version: 1.8.0(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@rakazo/core':
+      '@bobbot/core':
         specifier: workspace:*
         version: link:../core
-      '@rakazo/ui-tokens':
+      '@bobbot/ui-tokens':
         specifier: workspace:*
         version: link:../ui-tokens
       class-variance-authority:

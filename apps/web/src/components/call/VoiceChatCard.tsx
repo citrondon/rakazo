@@ -1,7 +1,7 @@
+import type { VoiceChatGroup } from "@bobbot/core";
+import { speechFromBlocks, voiceChatDuration, voiceChatSummary } from "@bobbot/core";
+import { buttonVariants, cn } from "@bobbot/ui-web";
 import { useLingui } from "@lingui/react/macro";
-import type { VoiceChatGroup } from "@rakazo/core";
-import { speechFromBlocks, voiceChatDuration, voiceChatSummary } from "@rakazo/core";
-import { buttonVariants, cn } from "@rakazo/ui-web";
 import { AudioLines, ChevronDown } from "lucide-react";
 import { useState } from "react";
 

@@ -1,5 +1,4 @@
-import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import type { TeamTemplate } from "@rakazo/contracts";
+import type { TeamTemplate } from "@bobbot/contracts";
 import {
   Button,
   Dialog,
@@ -8,7 +7,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@rakazo/ui-web";
+} from "@bobbot/ui-web";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { rpc } from "../lib/rpc";

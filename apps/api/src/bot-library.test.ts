@@ -1,5 +1,5 @@
-import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo/contracts";
-import { nextCronDateAcrossStrict } from "@rakazo/core";
+import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@bobbot/contracts";
+import { nextCronDateAcrossStrict } from "@bobbot/core";
 import { describe, expect, it } from "vitest";
 import {
   composeTeamInstructions,

@@ -1,5 +1,5 @@
-import type { ConnectorEvent } from "@rakazo/adapter-kit";
-import { createLogger, createTestSink, getLogger, installLogger } from "@rakazo/logging";
+import type { ConnectorEvent } from "@bobbot/adapter-kit";
+import { createLogger, createTestSink, getLogger, installLogger } from "@bobbot/logging";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { InfisicalSecretStore } from "./infisical-secret-store.js";
 import { allowlistDrift, McpConnector } from "./mcp-connector.js";

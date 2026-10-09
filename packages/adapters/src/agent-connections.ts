@@ -1,16 +1,16 @@
-import type { JobPublisher } from "@rakazo/adapter-kit";
-import { messagingDeliverJob, runContinueJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
+import type { JobPublisher } from "@bobbot/adapter-kit";
+import { messagingDeliverJob, runContinueJob } from "@bobbot/adapter-kit";
+import type { MessageBlock } from "@bobbot/contracts";
 import {
   botMessageHopExhausted,
   buildBotMessageWakePrompt,
   clampBotMessage,
   nextBotMessageHop,
   sanitizeMessagingLabel,
-} from "@rakazo/core";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { appendEventInTransaction, createThreadMessageInTransaction } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/core";
+import type { PrismaClient, ThreadEvents } from "@bobbot/db";
+import { appendEventInTransaction, createThreadMessageInTransaction } from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 import { currentBotMessageHop } from "./bot-messages.js";
 
 export interface AgentConnectionDeps {

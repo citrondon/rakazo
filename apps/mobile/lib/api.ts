@@ -13,14 +13,14 @@ import type {
   ReplyPreview,
   Space,
   SpaceNavigation,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   accountSecuritySchema,
   authCapabilitiesSchema,
   legacyAccountSecurity,
   legacyAuthCapabilitiesSchema,
-} from "@rakazo/contracts";
-import type { ThreadHistory } from "@rakazo/core";
+} from "@bobbot/contracts";
+import type { ThreadHistory } from "@bobbot/core";
 import {
   aiConsentTarget,
   aiDataUsesForProcedure,
@@ -38,7 +38,7 @@ import {
   takeLiveMessage,
   updateCloudAgentMessages,
   upsertMessageById,
-} from "@rakazo/core";
+} from "@bobbot/core";
 import * as SecureStore from "expo-secure-store";
 import { promptAiConsent } from "./ai-consent";
 import { getCachedAvatarStyle, saveAvatarStyle } from "./avatar-style";

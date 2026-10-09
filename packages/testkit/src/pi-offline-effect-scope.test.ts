@@ -1,4 +1,4 @@
-import { PiAgentRuntime } from "@rakazo/adapters";
+import { PiAgentRuntime } from "@bobbot/adapters";
 import { expect, it, vi } from "vitest";
 import { builtinAgentTools } from "../../adapters/src/builtin-tools.js";
 import { recordEffect, runScopedToolExecutionId } from "../../adapters/src/executor.js";

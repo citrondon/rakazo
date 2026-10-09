@@ -27,8 +27,8 @@ import type {
   SandboxProvider,
   ScreenRequest,
   ScreenSession,
-} from "@rakazo/adapter-kit";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
+} from "@bobbot/adapter-kit";
+import { boundedSandboxCommandTimeoutMs } from "@bobbot/core";
 import {
   applyPlaceholderAction,
   boundedComputerActions,

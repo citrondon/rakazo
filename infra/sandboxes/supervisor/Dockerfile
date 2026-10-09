@@ -7,6 +7,6 @@ COPY packages/core packages/core
 COPY packages/logging packages/logging
 COPY infra/sandboxes/supervisor infra/sandboxes/supervisor
 COPY infra/sandboxes/computer infra/sandboxes/computer
-RUN corepack enable && pnpm install --frozen-lockfile --prod --filter "@rakazo/sandbox-supervisor..."
+RUN corepack enable && pnpm install --frozen-lockfile --prod --filter "@bobbot/sandbox-supervisor..."
 WORKDIR /app/infra/sandboxes/supervisor
 CMD ["pnpm", "exec", "tsx", "src/index.ts"]

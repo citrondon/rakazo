@@ -1,5 +1,5 @@
-import type { LinkFavicons } from "@rakazo/chat-ui/native";
-import { LinkFaviconsContext, RemoteImagesContext } from "@rakazo/chat-ui/native";
+import type { LinkFavicons } from "@bobbot/chat-ui/native";
+import { LinkFaviconsContext, RemoteImagesContext } from "@bobbot/chat-ui/native";
 import { DarkTheme, router, Stack, ThemeProvider } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import * as SplashScreen from "expo-splash-screen";

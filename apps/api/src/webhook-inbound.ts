@@ -1,16 +1,16 @@
 import { createHash } from "node:crypto";
-import type { JobPublisher, SecretStore } from "@rakazo/adapter-kit";
-import { runContinueJob, SecretStoreUnavailableError } from "@rakazo/adapter-kit";
+import type { JobPublisher, SecretStore } from "@bobbot/adapter-kit";
+import { runContinueJob, SecretStoreUnavailableError } from "@bobbot/adapter-kit";
 import type {
   MessageBlock,
   Trigger,
   TriggerEvent,
   TrustEffect,
   TrustPhase,
-} from "@rakazo/contracts";
-import { dryRunPreview, selectTriggeredRoutines, type TriggerCandidate } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/contracts";
+import { dryRunPreview, selectTriggeredRoutines, type TriggerCandidate } from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 
 export const WEBHOOK_MAX_BODY_BYTES = 64 * 1024;
 export const WEBHOOK_SECRET_KIND = "webhook";

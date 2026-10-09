@@ -1,6 +1,6 @@
+import type { DesktopUpdateState } from "@bobbot/contracts";
+import { Button } from "@bobbot/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { DesktopUpdateState } from "@rakazo/contracts";
-import { Button } from "@rakazo/ui-web";
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { desktopBridge } from "../lib/desktop";
 

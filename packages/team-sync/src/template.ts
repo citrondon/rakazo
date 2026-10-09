@@ -3,7 +3,7 @@ import {
   type BotRole,
   type McpServerConfigInput,
   type Routine,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 
 export interface TeamTemplate {
   version: string;

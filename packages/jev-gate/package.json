@@ -1,5 +1,5 @@
 {
-  "name": "@rakazo/jev-gate",
+  "name": "@bobbot/jev-gate",
   "version": "0.1.0",
   "type": "module",
   "main": "./src/merge-gate.ts",
@@ -8,8 +8,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@rakazo/contracts": "workspace:*",
-    "@rakazo/adapters": "workspace:*"
+    "@bobbot/contracts": "workspace:*",
+    "@bobbot/adapters": "workspace:*"
   },
   "devDependencies": {
     "vitest": "4.1.11",

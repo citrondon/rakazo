@@ -1,12 +1,12 @@
-import { Trans, useLingui } from "@lingui/react/macro";
 import type {
   EventDefinition,
   Trigger,
   TriggerOperator,
   TriggerPredicate,
   TrustEffect,
-} from "@rakazo/contracts";
-import { Badge, Button, Input, NativeSelect, NativeSelectOption } from "@rakazo/ui-web";
+} from "@bobbot/contracts";
+import { Badge, Button, Input, NativeSelect, NativeSelectOption } from "@bobbot/ui-web";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { rpc } from "../lib/rpc";

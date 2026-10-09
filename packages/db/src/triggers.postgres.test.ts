@@ -1,5 +1,5 @@
-import type { TriggerEvent } from "@rakazo/contracts";
-import { selectTriggeredRoutines } from "@rakazo/core";
+import type { TriggerEvent } from "@bobbot/contracts";
+import { selectTriggeredRoutines } from "@bobbot/core";
 import { afterAll, describe, expect, it } from "vitest";
 import { createDb, type PrismaClient } from "./client.js";
 import { createTriggerRepos } from "./triggers.js";

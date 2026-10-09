@@ -1,16 +1,16 @@
-import type { CopilotKitAdapter as BaseCopilotKitAdapter } from "@copilotkit/adaptor";
 import type {
   AgentRuntime,
   MessagingSurface,
   SandboxProvider,
   TriggerEvent,
-} from "@rakazo/adapter-kit";
+} from "@bobbot/adapter-kit";
 import type {
   BotMessageIntent,
   ComputerCommand,
   MessageBlock,
   ProductEventType,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
+import type { CopilotKitAdapter as BaseCopilotKitAdapter } from "@copilotkit/adaptor";
 
 // Importiere die Typen aus diesem Modul
 import type { CopilotKitMessageBlock } from "./types";

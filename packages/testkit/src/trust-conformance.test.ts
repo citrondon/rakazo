@@ -4,7 +4,7 @@ import type {
   TrustEffect,
   TrustEffectAction,
   TrustPolicy,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   dryRunAppliedEffects,
   dryRunPreview,
@@ -19,7 +19,7 @@ import {
   selectTriggeredRoutines,
   TRUST_PHASE_TRANSITIONS,
   withinQuietHours,
-} from "@rakazo/core";
+} from "@bobbot/core";
 import { describe, expect, it } from "vitest";
 
 /**

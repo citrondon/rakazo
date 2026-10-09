@@ -1,4 +1,4 @@
-import { parseSkillMd } from "@rakazo/core";
+import { parseSkillMd } from "@bobbot/core";
 import { describe, expect, it } from "vitest";
 import { BUILTIN_AGENT_SKILLS } from "./builtin-skills.js";
 import { builtinAgentTools } from "./builtin-tools.js";

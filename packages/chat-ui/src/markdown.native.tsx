@@ -1,5 +1,5 @@
-import type { ColorTokens, ResolvedAppearance } from "@rakazo/ui-tokens";
-import { darkTokens } from "@rakazo/ui-tokens";
+import type { ColorTokens, ResolvedAppearance } from "@bobbot/ui-tokens";
+import { darkTokens } from "@bobbot/ui-tokens";
 import type {
   ASTNode,
   MarkdownStyleMap,

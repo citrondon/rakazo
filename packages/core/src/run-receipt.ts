@@ -4,7 +4,7 @@ import type {
   RunReceiptEffect,
   RunReceiptTool,
   RunTokenTotals,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 
 /**
  * Everything a receipt needs, already read from storage. The builder stays pure so the

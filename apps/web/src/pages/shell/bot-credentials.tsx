@@ -1,7 +1,7 @@
+import type { BotSecretMetadata } from "@bobbot/contracts";
+import { BotSecretName, encodeLoginSecret } from "@bobbot/contracts";
+import { Button, Input, NativeSelect, NativeSelectOption } from "@bobbot/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotSecretMetadata } from "@rakazo/contracts";
-import { BotSecretName, encodeLoginSecret } from "@rakazo/contracts";
-import { Button, Input, NativeSelect, NativeSelectOption } from "@rakazo/ui-web";
 import { useEffect, useId, useState } from "react";
 import { rpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";

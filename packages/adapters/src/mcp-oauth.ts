@@ -1,4 +1,10 @@
 import { randomUUID } from "node:crypto";
+import type { SecretStore } from "@bobbot/adapter-kit";
+import { SecretStoreUnavailableError } from "@bobbot/adapter-kit";
+import { isLocalMcpHost } from "@bobbot/contracts";
+import { readBoundedResponseBytes } from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 import type {
   OAuthClientProvider,
   OAuthDiscoveryState,
@@ -10,12 +16,6 @@ import type {
   OAuthClientMetadata,
   OAuthTokens,
 } from "@modelcontextprotocol/sdk/shared/auth.js";
-import type { SecretStore } from "@rakazo/adapter-kit";
-import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
-import { isLocalMcpHost } from "@rakazo/contracts";
-import { readBoundedResponseBytes } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
 import { sanitizeConnectorError } from "./connector-safety.js";
 import { secureFetch, validateUrl, withEndpointOriginFallback } from "./mcp-transport.js";
 import { actorMayUsePrivateEndpoint } from "./private-endpoint.js";

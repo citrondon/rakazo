@@ -3,8 +3,8 @@ import type {
   ProductEvent,
   ThreadMessage,
   ThreadSnapshot,
-} from "@rakazo/contracts";
-import { withLiveStreamingProgress } from "@rakazo/core";
+} from "@bobbot/contracts";
+import { withLiveStreamingProgress } from "@bobbot/core";
 import { describe, expect, it } from "vitest";
 import {
   activeThreadRuns,

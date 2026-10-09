@@ -26,7 +26,7 @@ import type {
   SecretStore,
   SemanticMemoryProvider,
   WebProvider,
-} from "@rakazo/adapter-kit";
+} from "@bobbot/adapter-kit";
 import {
   DEFAULT_CONTEXT_STRATEGY,
   historyCompactJob,
@@ -34,14 +34,14 @@ import {
   routineJobKey,
   routineWakeupJob,
   runContinueJob,
-} from "@rakazo/adapter-kit";
+} from "@bobbot/adapter-kit";
 import type {
   ComputerCommand,
   MessageBlock,
   RunStatus,
   TrustEffect,
   TrustPolicy,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   ATTACHMENT_MAX_BYTES,
   BOT_DESCRIPTION_MAX_LENGTH,
@@ -56,7 +56,7 @@ import {
   HistorySearchInputSchema,
   isAttachmentImageMimeType,
   OPENAI_COMPATIBLE_PROVIDER_ID,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   type ActionApprovalRule,
   appendTextSegment,
@@ -105,15 +105,15 @@ import {
   truncatedPlainText,
   unattendedTriggerToolRequiresApproval,
   userTurnMessageForRun,
-} from "@rakazo/core";
+} from "@bobbot/core";
 import {
   approvalEffectKey,
   isToolEffectIdempotencyKey,
   legacyScopedToolEffectIdempotencyKey,
   stableJsonValue,
   toolEffectIdempotencyKey,
-} from "@rakazo/core/node/approval-effect-key";
-import { CredentialGuard } from "@rakazo/credential-guard";
+} from "@bobbot/core/node/approval-effect-key";
+import { CredentialGuard } from "@bobbot/credential-guard";
 import {
   appendEventInTransaction,
   createSpaceForMember,
@@ -135,8 +135,8 @@ import {
   SpaceLimitError,
   searchHistory,
   type ThreadEvents,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 import { parse as parseShellCommand } from "shell-quote";
 import { buildActionDecisionRow } from "./action-decision-row.js";
 import {

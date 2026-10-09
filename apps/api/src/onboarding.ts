@@ -1,12 +1,12 @@
-import type { ConnectorRegistry } from "@rakazo/adapters";
-import type { Actor, MessageBlock } from "@rakazo/contracts";
-import { featuredConnectorProvidersMatch } from "@rakazo/core";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
+import type { ConnectorRegistry } from "@bobbot/adapters";
+import type { Actor, MessageBlock } from "@bobbot/contracts";
+import { featuredConnectorProvidersMatch } from "@bobbot/core";
+import type { Prisma, PrismaClient, ThreadEvents } from "@bobbot/db";
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
   IsolationError,
-} from "@rakazo/db";
+} from "@bobbot/db";
 import { listTeamTemplates } from "./bot-library.js";
 import { requireBotThread, updateBlocks } from "./bot-thread.js";
 

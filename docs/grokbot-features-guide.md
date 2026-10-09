@@ -141,7 +141,7 @@ pnpm workspace:push
 pnpm workspace:watch
 
 # Desktop-App gegen den laufenden Stack
-pnpm --filter @rakazo/desktop dev
+pnpm --filter @bobbot/desktop dev
 ```
 
 ## 8. Verifikation

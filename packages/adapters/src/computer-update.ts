@@ -1,9 +1,9 @@
-import type { AdapterContext } from "@rakazo/adapter-kit";
-import { computerControlExpireJobKey } from "@rakazo/adapter-kit";
-import { type ComputerUpdate, ComputerUpdateSchema } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { AdapterContext } from "@bobbot/adapter-kit";
+import { computerControlExpireJobKey } from "@bobbot/adapter-kit";
+import { type ComputerUpdate, ComputerUpdateSchema } from "@bobbot/contracts";
+import { ACTIVE_RUN_STATUSES } from "@bobbot/core";
+import type { Prisma, PrismaClient, ThreadEvents } from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 import {
   enqueueTakeoverContinuation,
   isIdleOwnComputerTakeover,

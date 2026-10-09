@@ -1,4 +1,4 @@
-import { declaredSkillTools } from "@rakazo/core";
+import { declaredSkillTools } from "@bobbot/core";
 
 /**
  * What a run is offered, narrowed to the skills the prompt actually asks for.

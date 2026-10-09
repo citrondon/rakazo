@@ -1,6 +1,6 @@
+import { credentialIssue, signupRequiresEmailVerification } from "@bobbot/core";
+import { Button, Input, Label } from "@bobbot/ui-web";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { credentialIssue, signupRequiresEmailVerification } from "@rakazo/core";
-import { Button, Input, Label } from "@rakazo/ui-web";
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";

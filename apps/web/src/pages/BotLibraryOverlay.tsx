@@ -1,6 +1,5 @@
-import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, BotPresetSummary, ExportManifest, ImportPreview } from "@rakazo/contracts";
-import { BotImportInputSchema } from "@rakazo/contracts";
+import type { Bot, BotPresetSummary, ExportManifest, ImportPreview } from "@bobbot/contracts";
+import { BotImportInputSchema } from "@bobbot/contracts";
 import {
   BotAvatar,
   Button,
@@ -11,7 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
   GROK_BOT_COLORS,
-} from "@rakazo/ui-web";
+} from "@bobbot/ui-web";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { Library, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PresetBoundaries } from "../components/PresetBoundaries";

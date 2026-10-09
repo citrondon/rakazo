@@ -1,5 +1,5 @@
-import type { AiConsentStatus } from "@rakazo/contracts";
-import { AI_DATA_DISCLOSURES, AI_PRIVACY_URL } from "@rakazo/contracts";
+import type { AiConsentStatus } from "@bobbot/contracts";
+import { AI_DATA_DISCLOSURES, AI_PRIVACY_URL } from "@bobbot/contracts";
 import { useEffect, useState } from "react";
 import { Alert, Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { NativeActionButton } from "../components/native-action-button";

@@ -1,4 +1,4 @@
-import type { Trigger, TriggerEvent } from "@rakazo/contracts";
+import type { Trigger, TriggerEvent } from "@bobbot/contracts";
 import { applyTriggerMappings, matchesTriggerFilter } from "./trigger-filter.js";
 
 /**

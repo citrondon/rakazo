@@ -2,8 +2,8 @@ import { execFileSync } from "node:child_process";
 import { access, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { CommandRequest, ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
+import type { CommandRequest, ComputerRef, SandboxProvider } from "@bobbot/adapter-kit";
+import type { PrismaClient } from "@bobbot/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   checkpointComputerWorkspace,

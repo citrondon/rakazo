@@ -1,8 +1,8 @@
 import "@xterm/xterm/css/xterm.css";
+import type { ComputerCommand } from "@bobbot/contracts";
+import { encodeTerminalInput, encodeTerminalResize } from "@bobbot/contracts";
+import { Button, cn, Tabs, TabsList, TabsTrigger } from "@bobbot/ui-web";
 import { useLingui } from "@lingui/react/macro";
-import type { ComputerCommand } from "@rakazo/contracts";
-import { encodeTerminalInput, encodeTerminalResize } from "@rakazo/contracts";
-import { Button, cn, Tabs, TabsList, TabsTrigger } from "@rakazo/ui-web";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import { type RefObject, useEffect, useRef, useState } from "react";

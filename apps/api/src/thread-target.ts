@@ -1,7 +1,6 @@
-import { ORPCError } from "@orpc/server";
-import type { JobPublisher, SandboxProvider } from "@rakazo/adapter-kit";
-import { runContinueJob } from "@rakazo/adapter-kit";
-import { cancelComputerRunWork, screenLeaseIdForRun, toComputerRef } from "@rakazo/adapters";
+import type { JobPublisher, SandboxProvider } from "@bobbot/adapter-kit";
+import { runContinueJob } from "@bobbot/adapter-kit";
+import { cancelComputerRunWork, screenLeaseIdForRun, toComputerRef } from "@bobbot/adapters";
 import type {
   Actor,
   GroupMember,
@@ -10,8 +9,8 @@ import type {
   ReplyPreview,
   RunStatus,
   ThreadSnapshot,
-} from "@rakazo/contracts";
-import { GROUP_MEMBER_MIN, MessageBlock as MessageBlockSchema } from "@rakazo/contracts";
+} from "@bobbot/contracts";
+import { GROUP_MEMBER_MIN, MessageBlock as MessageBlockSchema } from "@bobbot/contracts";
 import {
   ACTIVE_RUN_STATUSES,
   callIdFromClientNonce,
@@ -20,9 +19,9 @@ import {
   projectMessages,
   resolveGroupTargetBotIds,
   runFailureError,
-} from "@rakazo/core";
-import { deriveMessageQuote, messageReplyExcerpt } from "@rakazo/core/message-quote";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@bobbot/core";
+import { deriveMessageQuote, messageReplyExcerpt } from "@bobbot/core/message-quote";
+import type { Prisma, PrismaClient, ThreadEvents } from "@bobbot/db";
 import {
   answerWaitingRunWithTextInTransaction,
   appendEventInTransaction,
@@ -33,8 +32,9 @@ import {
   IsolationError,
   lockOwnedGroup,
   touchGroupUpdatedAt,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
+import { ORPCError } from "@orpc/server";
 import {
   buildSendPrompt,
   buildUserMessageBlocks,

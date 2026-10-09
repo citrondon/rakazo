@@ -3,7 +3,7 @@ import type {
   TriggerFilter,
   TriggerMapping,
   TriggerPredicate,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 
 /**
  * Evaluates a trigger's filter against a normalized event and maps event fields onto

@@ -1,12 +1,12 @@
-import type { AdapterContext, AutoReviewRequest } from "@rakazo/adapter-kit";
-import { JevAutoReviewProvider } from "@rakazo/adapters";
+import type { AdapterContext, AutoReviewRequest } from "@bobbot/adapter-kit";
+import { JevAutoReviewProvider } from "@bobbot/adapters";
 import type {
   GateName,
   GateRequirement,
   GateResult,
   MergeGateInput,
   MergeGateOutput,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 
 export class JevMergeGate {
   private jevProvider?: JevAutoReviewProvider;

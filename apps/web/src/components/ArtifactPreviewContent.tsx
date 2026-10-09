@@ -1,5 +1,5 @@
+import { ChatMarkdown } from "@bobbot/chat-ui/web";
 import { Trans } from "@lingui/react/macro";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
 import { artifactPreviewKind } from "../lib/artifact-preview";
 import { useObjectUrl } from "../lib/use-object-url";
 import { PdfViewer } from "./PdfViewer";

@@ -1,4 +1,4 @@
-import type { RoutineToolDescriptor } from "@rakazo/core";
+import type { RoutineToolDescriptor } from "@bobbot/core";
 import type { PrismaClient } from "./client.js";
 
 /**

@@ -1,4 +1,4 @@
-import type { EventDefinition, Routine, Trigger } from "@rakazo/contracts";
+import type { EventDefinition, Routine, Trigger } from "@bobbot/contracts";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";

@@ -1,4 +1,4 @@
-import type { Connection, ConnectionCatalogItem } from "@rakazo/contracts";
+import type { Connection, ConnectionCatalogItem } from "@bobbot/contracts";
 
 /** What one connection row means to the user: live, waiting, or broken. */
 export type ConnectionState = "connected" | "pending" | "expired" | "error" | "removed";

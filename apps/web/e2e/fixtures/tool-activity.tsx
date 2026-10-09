@@ -1,5 +1,5 @@
+import type { MessageBlock } from "@bobbot/contracts";
 import { I18nProvider } from "@lingui/react";
-import type { MessageBlock } from "@rakazo/contracts";
 import { useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import {

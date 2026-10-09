@@ -7,12 +7,12 @@ import type {
   ComputerRef,
   PortableFile,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import type { ComputerMode } from "@rakazo/contracts";
-import { parseScreenLeaseId } from "@rakazo/core";
-import { browserProfilePathForScreen } from "@rakazo/core/node/desktop-runtime";
-import type { PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@bobbot/adapter-kit";
+import type { ComputerMode } from "@bobbot/contracts";
+import { parseScreenLeaseId } from "@bobbot/core";
+import { browserProfilePathForScreen } from "@bobbot/core/node/desktop-runtime";
+import type { PrismaClient } from "@bobbot/db";
+import { getLogger } from "@bobbot/logging";
 import { normalizeWorkspacePath, teamBotWorkspaceDirectory } from "./computer-support.js";
 import { LocalAgentHomeStore } from "./home.js";
 

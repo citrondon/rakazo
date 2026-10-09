@@ -1,5 +1,5 @@
+import type { RunReceipt } from "@bobbot/contracts";
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { RunReceipt } from "@rakazo/contracts";
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { rpc } from "../../lib/rpc";

@@ -1,15 +1,15 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { ComposioEmulator, ExpoPushProvider, loadPushToken } from "@rakazo/adapters";
-import type { appContract, Space, SpaceNavigation } from "@rakazo/contracts";
+import { ComposioEmulator, ExpoPushProvider, loadPushToken } from "@bobbot/adapters";
+import type { appContract, Space, SpaceNavigation } from "@bobbot/contracts";
 import {
   claimEmptySpaceDeletionForMember,
   deleteEmptySpaceForMember,
   pushSessionExpiresAt,
   releaseSpaceDeletionClaim,
   renewSpaceDeletionClaim,
-} from "@rakazo/db";
+} from "@bobbot/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { createApp } from "../../../apps/api/src/app.ts";
 import type { BotIntroHarness } from "./discard-bot-intro.js";

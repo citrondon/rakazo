@@ -1,6 +1,6 @@
-import type { RakazoDesktop, RakazoDesktopOAuthCallback } from "@rakazo/contracts";
+import type { RakazoDesktop, RakazoDesktopOAuthCallback } from "@bobbot/contracts";
 
-export type { RakazoDesktop, RakazoDesktopOAuthCallback } from "@rakazo/contracts";
+export type { RakazoDesktop, RakazoDesktopOAuthCallback } from "@bobbot/contracts";
 
 declare global {
   interface Window {

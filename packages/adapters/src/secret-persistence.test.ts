@@ -1,7 +1,7 @@
+import type { AdapterContext } from "@bobbot/adapter-kit";
+import type { Prisma, PrismaClient } from "@bobbot/db";
+import { withTransactionRetry } from "@bobbot/db";
 import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
-import type { AdapterContext } from "@rakazo/adapter-kit";
-import type { Prisma, PrismaClient } from "@rakazo/db";
-import { withTransactionRetry } from "@rakazo/db";
 import { describe, expect, it, vi } from "vitest";
 import { InfisicalSecretStore } from "./infisical-secret-store.js";
 import { McpConnector } from "./mcp-connector.js";

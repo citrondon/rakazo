@@ -1,4 +1,4 @@
-import { resolveToolCallLimit, toolCallLimitFromDraft } from "@rakazo/contracts";
+import { resolveToolCallLimit, toolCallLimitFromDraft } from "@bobbot/contracts";
 
 export interface AgentLimitPolicy {
   maxToolCallsPerTurn: number | null;

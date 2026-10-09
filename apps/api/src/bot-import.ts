@@ -1,16 +1,16 @@
-import type { BotImportInput } from "@rakazo/contracts";
+import type { BotImportInput } from "@bobbot/contracts";
 import {
   BOT_DESCRIPTION_MAX_LENGTH,
   BOT_INSTRUCTIONS_MAX_LENGTH,
   BOT_NAME_MAX_LENGTH,
   BOT_TITLE_MAX_LENGTH,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import {
   hasMixedOneShotSchedule,
   isOneShotRoutineCrons,
   nextCronDateAcrossStrict,
   parseSkillMd,
-} from "@rakazo/core";
+} from "@bobbot/core";
 
 export type PreparedBotImport = {
   profile: {

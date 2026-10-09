@@ -6,7 +6,7 @@ import type {
   TriggerMapping,
   TriggerSource,
   UpdateTriggerInput,
-} from "@rakazo/contracts";
+} from "@bobbot/contracts";
 import type { Prisma, PrismaClient } from "./client.js";
 import { IsolationError } from "./scope.js";
 

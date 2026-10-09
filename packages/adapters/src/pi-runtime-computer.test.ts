@@ -1,4 +1,4 @@
-import type { ConnectorTool } from "@rakazo/adapter-kit";
+import type { ConnectorTool } from "@bobbot/adapter-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BOT_SAFETY_PREAMBLE } from "./bot-safety-preamble.js";
 

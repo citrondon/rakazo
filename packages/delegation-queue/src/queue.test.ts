@@ -1,4 +1,4 @@
-import { DelegationRequestSchema } from "@rakazo/contracts";
+import { DelegationRequestSchema } from "@bobbot/contracts";
 import { describe, expect, it } from "vitest";
 import { DelegationQueue } from "./queue.js";
 

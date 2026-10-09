@@ -3,7 +3,7 @@
  *
  * Dieses Modul bridge das BobBot AG-UI Protokoll zu CopilotKit's
  * implementierten UI-Patterns. Es liegt vollständig hinter den
- * BobBot-Verträgen (@rakazo/contracts), damit keine Abhängigkeit
+ * BobBot-Verträgen (@bobbot/contracts), damit keine Abhängigkeit
  * nach CopilotKit in den Kern übergeht.
  *
  * Usage:

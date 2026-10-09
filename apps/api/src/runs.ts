@@ -4,9 +4,9 @@ import {
   MessageBlock,
   type RunActivityFilter,
   type RunActivityRow,
-} from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, botMessageContext } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+} from "@bobbot/contracts";
+import { ACTIVE_RUN_STATUSES, botMessageContext } from "@bobbot/core";
+import type { PrismaClient } from "@bobbot/db";
 
 const RECENT_LIMIT = 20;
 const TERMINAL_STATUSES = ["completed", "failed", "cancelled"] as const;

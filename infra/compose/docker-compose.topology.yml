@@ -30,7 +30,7 @@ services:
 
   supervisor:
     image: ${TOPOLOGY_APP_IMAGE:-rakazo/app:topology}
-    command: ["pnpm", "--filter", "@rakazo/sandbox-supervisor", "start"]
+    command: ["pnpm", "--filter", "@bobbot/sandbox-supervisor", "start"]
     user: root
     environment:
       NODE_ENV: production
@@ -69,7 +69,7 @@ services:
     command:
       - bash
       - -lc
-      - pnpm --filter @rakazo/db exec prisma migrate deploy && pnpm --filter @rakazo/api start
+      - pnpm --filter @bobbot/db exec prisma migrate deploy && pnpm --filter @bobbot/api start
     environment: &app-environment
       NODE_ENV: production
       DATABASE_URL: postgres://rakazo:topology-only-password@postgres:5432/rakazo
@@ -127,7 +127,7 @@ services:
 
   web:
     image: ${TOPOLOGY_APP_IMAGE:-rakazo/app:topology}
-    command: ["pnpm", "--filter", "@rakazo/web", "preview", "--host", "0.0.0.0", "--port", "5173"]
+    command: ["pnpm", "--filter", "@bobbot/web", "preview", "--host", "0.0.0.0", "--port", "5173"]
     environment:
       NODE_ENV: production
       API_PROXY_TARGET: http://api:3100
@@ -148,7 +148,7 @@ services:
 
   worker:
     image: ${TOPOLOGY_APP_IMAGE:-rakazo/app:topology}
-    command: ["pnpm", "--filter", "@rakazo/worker", "start"]
+    command: ["pnpm", "--filter", "@bobbot/worker", "start"]
     environment: *app-environment
     volumes:
       - appdata:/data

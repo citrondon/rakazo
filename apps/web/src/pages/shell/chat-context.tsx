@@ -1,6 +1,6 @@
+import type { ThreadMessage } from "@bobbot/contracts";
+import { formatTimeSeparator, isPeerReceiptBlocks, replyLineText } from "@bobbot/core";
 import { useLingui } from "@lingui/react/macro";
-import type { ThreadMessage } from "@rakazo/contracts";
-import { formatTimeSeparator, isPeerReceiptBlocks, replyLineText } from "@rakazo/core";
 import { X } from "lucide-react";
 import { useEffect } from "react";
 
