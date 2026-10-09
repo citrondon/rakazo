@@ -763,6 +763,10 @@ msgstr "Bearer token"
 msgid "Billing"
 msgstr "Billing"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "BobBot is installed as a standalone app."
+msgstr "BobBot is installed as a standalone app."
+
 #: src/pages/Shell.tsx
 msgid "Booting live desktop…"
 msgstr "Booting live desktop…"
@@ -983,8 +987,8 @@ msgid "Choose file"
 msgstr "Choose file"
 
 #: src/pages/ModelSettingsOverlay.tsx
-msgid "Choose which connected model Rakazo uses."
-msgstr "Choose which connected model Rakazo uses."
+msgid "Choose which connected model BobBot uses."
+msgstr "Choose which connected model BobBot uses."
 
 #: src/pages/shell/dialogs.tsx
 msgid "Clear"
@@ -1844,8 +1848,8 @@ msgid "Create team"
 msgstr "Create team"
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "Create your Rakazo"
+msgid "Create your BobBot"
+msgstr "Create your BobBot"
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -2619,8 +2623,8 @@ msgid "Install app"
 msgstr "Install app"
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Install Rakazo as a standalone app without browser borders."
-msgstr "Install Rakazo as a standalone app without browser borders."
+msgid "Install BobBot as a standalone app without browser borders."
+msgstr "Install BobBot as a standalone app without browser borders."
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Install via browser menu"
@@ -3517,8 +3521,8 @@ msgid "Paste a replacement key"
 msgstr "Paste a replacement key"
 
 #: src/pages/ModelSettingsOverlay.tsx
-msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
-msgstr "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
+msgid "Paste the OpenAI-compatible address from your server. BobBot adds /v1 if needed."
+msgstr "Paste the OpenAI-compatible address from your server. BobBot adds /v1 if needed."
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Paste your API key"
@@ -3634,10 +3638,6 @@ msgstr "Quote"
 #: src/pages/Shell.tsx
 msgid "Raise budget"
 msgstr "Raise budget"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Rakazo is installed as a standalone app."
-msgstr "Rakazo is installed as a standalone app."
 
 #: src/pages/ActivityList.tsx
 msgid "Ran on their own"
@@ -3958,8 +3958,8 @@ msgid "Retry screen"
 msgstr "Retry screen"
 
 #: src/pages/McpOAuthCallback.tsx
-msgid "Return to Rakazo"
-msgstr "Return to Rakazo"
+msgid "Return to BobBot"
+msgstr "Return to BobBot"
 
 #. placeholder {0}: doc.revision
 #: src/pages/KnowledgeSection.tsx
@@ -4319,8 +4319,8 @@ msgid "Sign in again"
 msgstr "Sign in again"
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Sign in to Rakazo"
+msgid "Sign in to BobBot"
+msgstr "Sign in to BobBot"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
@@ -4614,8 +4614,8 @@ msgstr "This deletes all {0} versions of this artifact. This can't be undone."
 
 #: src/pages/BotImportOverlay.tsx
 #: src/pages/BotLibraryOverlay.tsx
-msgid "This file is not a Rakazo bot preset (export format 1)."
-msgstr "This file is not a Rakazo bot preset (export format 1)."
+msgid "This file is not a BobBot bot preset (export format 1)."
+msgstr "This file is not a BobBot bot preset (export format 1)."
 
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
@@ -4659,8 +4659,8 @@ msgid "This server is already connected. Disconnect it first to authorize again.
 msgstr "This server is already connected. Disconnect it first to authorize again."
 
 #: src/pages/ModelSettingsOverlay.tsx
-msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
-msgstr "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
+msgid "This subscription sign-in is not available in BobBot yet. Use a deployment credential or choose another provider."
+msgstr "This subscription sign-in is not available in BobBot yet. Use a deployment credential or choose another provider."
 
 #: src/pages/Artifacts.tsx
 msgid "This week"

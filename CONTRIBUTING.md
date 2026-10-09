@@ -1,6 +1,6 @@
-# Contributing to Rakazo
+# Contributing to BobBot
 
-Thanks for helping improve Rakazo. Keep changes focused and testable.
+Thanks for helping improve BobBot. Keep changes focused and testable.
 
 ## Run locally
 

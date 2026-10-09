@@ -1,9 +1,9 @@
 /**
- * Rakazo <-> CopilotKit AG-UI Adapter Barrel
+ * BobBot <-> CopilotKit AG-UI Adapter Barrel
  *
- * Dieses Modul bridge das Rakazo AG-UI Protokoll zu CopilotKit's
+ * Dieses Modul bridge das BobBot AG-UI Protokoll zu CopilotKit's
  * implementierten UI-Patterns. Es liegt vollständig hinter den
- * Rakazo-Verträgen (@rakazo/contracts), damit keine Abhängigkeit
+ * BobBot-Verträgen (@rakazo/contracts), damit keine Abhängigkeit
  * nach CopilotKit in den Kern übergeht.
  *
  * Usage:
@@ -14,5 +14,5 @@
  *   })
  */
 
-export * from './types'
-export * from './adapter'
+export * from "./adapter";
+export * from "./types";

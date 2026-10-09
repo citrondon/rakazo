@@ -60,7 +60,7 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
       includeFiles,
     });
     if (!parsed.success) {
-      setParseError(t`This file is not a Rakazo bot preset (export format 1).`);
+      setParseError(t`This file is not a BobBot bot preset (export format 1).`);
       return;
     }
     setParseError(null);
@@ -106,7 +106,7 @@ export function BotImportOverlay({ onClose }: { onClose: () => void }) {
       includeFiles,
     });
     if (!parsed.success) {
-      setParseError(t`This file is not a Rakazo bot preset (export format 1).`);
+      setParseError(t`This file is not a BobBot bot preset (export format 1).`);
       return;
     }
     setImporting(true);

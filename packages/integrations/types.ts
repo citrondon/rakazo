@@ -1,8 +1,8 @@
 import type {
-  ProductEventType,
-  MessageBlock,
   BotMessageIntent,
   ComputerCommandKind,
+  MessageBlock,
+  ProductEventType,
   TrustEffect,
 } from "@rakazo/contracts"
 
@@ -11,7 +11,7 @@ import type {
 // –––––––––––––––––––––––––––––––––––––––––––––––––––
 
 /**
- * Mapping von Rakazo MessageBlock nach CopilotKit Format.
+ * Mapping von BobBot MessageBlock nach CopilotKit Format.
  * CopilotKit erwartet eine vereinfachte Struktur für seine Chat-Komponenten.
  */
 export type CopilotKitMessageBlock =
@@ -44,7 +44,7 @@ export type CopilotKitMessageBlock =
   | { kind: "bot_message_received"; fromBotId: string; fromBotName: string; text: string; intent?: string; returnToMessageId?: string; hop?: number }
 
 /**
- * Erzeugt ein CopilotKit MessageBlock aus einem Rakazo MessageBlock.
+ * Erzeugt ein CopilotKit MessageBlock aus einem BobBot MessageBlock.
  * Pure Funktion, keine I/O, deterministisch.
  */
 export function mapToCopilotKitBlock(
@@ -158,7 +158,7 @@ export function mapToCopilotKitBlock(
 // –––––––––––––––––––––––––––––––––––––––––––––––––––
 
 /**
- * Mapping von Rakazo ProductEventType nach CopilotKit Event Types.
+ * Mapping von BobBot ProductEventType nach CopilotKit Event Types.
  * CopilotKit nutzt ein eigenes Event-System für seine UI-Interaktionen.
  */
 export type CopilotKitEventType =
@@ -267,7 +267,7 @@ export function createTrustEffectForCopilotKit(
       id: `${effect.action}-${effect.target}-${Date.now()}`,
       handler: (outcome) => {
         // Wird von CopilotKit aufgerufen, further processing
-        // geschieht in deinem Rakazo Run Executor
+        // geschieht in deinem BobBot Run Executor
       },
     },
   }

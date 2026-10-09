@@ -1,6 +1,6 @@
-# Telegram Bot Bridge für Rakazo (GrokBot Mobile Alternative)
+# Telegram Bot Bridge für BobBot (GrokBot Mobile Alternative)
 
-Rakazo unterstützt nativ die Anbindung an Telegram über `@chat-adapter/telegram`. Damit kannst du deine Bots (`GrokCoder`, `OpenResearch`, `TrendScout`, `ExecutiveChief`, `DataAnalyst`) direkt über die Telegram-App auf dem Smartphone oder Desktop nutzen — ganz ohne laufenden Browser.
+BobBot unterstützt nativ die Anbindung an Telegram über `@chat-adapter/telegram`. Damit kannst du deine Bots (`GrokCoder`, `OpenResearch`, `TrendScout`, `ExecutiveChief`, `DataAnalyst`) direkt über die Telegram-App auf dem Smartphone oder Desktop nutzen — ganz ohne laufenden Browser.
 
 ---
 
@@ -8,7 +8,7 @@ Rakazo unterstützt nativ die Anbindung an Telegram über `@chat-adapter/telegra
 
 1. Öffne Telegram und suche nach dem offiziellen Bot **[@BotFather](https://t.me/BotFather)**.
 2. Sende den Befehl `/newbot`.
-3. Gib deinem Bot einen Anzeigenamen (z. B. `Mein Rakazo Assistent`).
+3. Gib deinem Bot einen Anzeigenamen (z. B. `Mein BobBot Assistent`).
 4. Wähle einen eindeutigen Benutzernamen, der auf `bot` endet (z. B. `mein_rakazo_bot`).
 5. BotFather gibt dir deinen geheimen **API Token** (Format: `1234567890:ABCdefGhIJKlmNoPQRsTUVwxyZ`).
    *(Halte diesen Token geheim!)*
@@ -29,7 +29,7 @@ openssl rand -hex 16
 
 ---
 
-## 3. Umgebungsvariablen in Rakazo konfigurieren
+## 3. Umgebungsvariablen in BobBot konfigurieren
 
 Füge die beiden Variablen zu deiner `.env` (oder `docker-compose.images.yml`) hinzu:
 
@@ -39,8 +39,8 @@ TELEGRAM_WEBHOOK_SECRET_TOKEN="dein_generiertes_32_zeichen_secret"
 ```
 
 > **Hinweis zum Betriebsmodus:**
-> - **Lokal / ohne öffentliche Domain**: Rakazo schaltet automatisch auf **Long-Polling (`getUpdates`)** um. Du brauchst keinen Portforwarding und kein SSL-Zertifikat!
-> - **Mit VPS / öffentlicher Domain**: Wenn du einen Webhook bei Telegram registriert hast (`https://deine-domain.de/api/messaging/telegram/webhook`), nutzt Rakazo den performanten Push-Webhook.
+> - **Lokal / ohne öffentliche Domain**: BobBot schaltet automatisch auf **Long-Polling (`getUpdates`)** um. Du brauchst keinen Portforwarding und kein SSL-Zertifikat!
+> - **Mit VPS / öffentlicher Domain**: Wenn du einen Webhook bei Telegram registriert hast (`https://deine-domain.de/api/messaging/telegram/webhook`), nutzt BobBot den performanten Push-Webhook.
 
 ---
 
@@ -54,9 +54,9 @@ Sobald der API-Container startet, initialisiert er den Telegram-Poller.
 
 ---
 
-## 5. Kopplung mit deinem Rakazo-Account (Pairing Flow)
+## 5. Kopplung mit deinem BobBot-Account (Pairing Flow)
 
-1. Öffne deine Rakazo Web-UI (`http://localhost:5174` oder deine Instanz).
+1. Öffne deine BobBot Web-UI (`http://localhost:5174` oder deine Instanz).
 2. Gehe auf **Settings → Messaging** und kopiere deinen persönlichen **Pairing-Code** (oder erstelle einen neuen Code).
 3. Öffne deinen Bot in Telegram und sende:
    ```text

@@ -1,6 +1,6 @@
-# GrokBot-Parität in Rakazo: Dokumentation & Benutzerhandbuch
+# GrokBot-Parität in BobBot: Dokumentation & Benutzerhandbuch
 
-Dieses Dokument beschreibt, wie die vier Grokbot-Kernmerkmale in Rakazo umgesetzt sind. Stand
+Dieses Dokument beschreibt, wie die vier Grokbot-Kernmerkmale in BobBot umgesetzt sind. Stand
 2026-09-30, Bezug: Source-Checkout auf Linux (`pnpm dev`, Postgres lokal, `SANDBOX_PROVIDER=docker`).
 
 ---
@@ -20,7 +20,7 @@ Dieses Dokument beschreibt, wie die vier Grokbot-Kernmerkmale in Rakazo umgesetz
 
 ## 1. Übersicht der vier Merkmale
 
-| Merkmal | Umsetzung in Rakazo | Fundstelle |
+| Merkmal | Umsetzung in BobBot | Fundstelle |
 | :--- | :--- | :--- |
 | **Team War Room** | Gruppen im Space, `@`-Erwähnungen, autonome Delegation | `packages/db/src/groups.ts`, `apps/api/src/team-chat-bridge.ts` |
 | **Freigaben** | Konsequente Aktionen erzeugen eine Freigabekarte im Thread | `apps/web/src/components/ApprovalRulesSettings.tsx`, `packages/core/src/action-approval.ts` |

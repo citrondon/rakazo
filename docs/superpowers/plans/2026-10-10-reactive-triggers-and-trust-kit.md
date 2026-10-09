@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 
-**Goal:** Turn Rakazo's routines from schedules-plus-flags into a trust-based, event-driven
+**Goal:** Turn BobBot's routines from schedules-plus-flags into a trust-based, event-driven
 automation tool: narrow reactive triggers, a dry-run → approval → execute path, and quiet hours.
 
 **Spec:** this plan. **Status:** done. Phases 1–5 shipped: pure domain and contracts, persistence,
@@ -14,7 +14,7 @@ normalized-event inbound path for the broker providers. Remaining candidates are
 ## Why this shape
 
 The submitted design sketched new `events.triggers` / `events.approvalLogs` /
-`events.routineExecutions` tables. Rakazo already has the primitives those tables would duplicate,
+`events.routineExecutions` tables. BobBot already has the primitives those tables would duplicate,
 so this plan reuses them and keeps one source of truth (AGENTS.md: reuse primitives, avoid
 duplication and speculative abstractions):
 

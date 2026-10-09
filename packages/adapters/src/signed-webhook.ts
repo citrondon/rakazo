@@ -5,7 +5,7 @@ import { findEventDefinition } from "./event-catalog.js";
 /**
  * Provider-neutral seam for inbound webhooks that sign their own raw request body.
  *
- * Some providers (Linear, Sentry, PagerDuty) do not ship a connector that watches Rakazo like the
+ * Some providers (Linear, Sentry, PagerDuty) do not ship a connector that watches BobBot like the
  * chat adapters do: they POST their own payload to a URL we hand them and sign the raw bytes with
  * a shared secret. An adapter verifies that signature and translates the provider payload into the
  * normalized `{ provider, type, payload }` the existing `/events` route already accepts, so no

@@ -8,7 +8,7 @@
 Opening a window? Start at `2026-10-01-parallel-sprint/START-HERE.md` — it carries the current state
 and tells you which brief is yours.
 
-**Goal:** push Rakazo toward GrokBot parity, convenience first (fewer steps, less friction), with
+**Goal:** push BobBot toward GrokBot parity, convenience first (fewer steps, less friction), with
 four agents working at once and no merge conflicts.
 
 **Why not one folder:** three agents editing one checkout collide — files change under each other

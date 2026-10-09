@@ -29,5 +29,5 @@ but two evidence cells were wrong and are corrected below — #1 counted 78 web 
 - **Still open — where the per-tool approval card renders.** Nothing under `apps/web/src/components`
   or `packages/chat-ui/src` references `dryRun`/`plannedEffect`, so D must first decide where the
   plan becomes client-visible before A can render it.
-- **Not verified for parity:** whether GrokBot has capabilities with no Rakazo counterpart at all
+- **Not verified for parity:** whether GrokBot has capabilities with no BobBot counterpart at all
   (the reverse gap). The four shipped features cover the ones the plans named.

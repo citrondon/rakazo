@@ -763,6 +763,10 @@ msgstr "Bearer-Token"
 msgid "Billing"
 msgstr ""
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "BobBot is installed as a standalone app."
+msgstr ""
+
 #: src/pages/Shell.tsx
 msgid "Booting live desktop…"
 msgstr "Live-Desktop wird gestartet…"
@@ -983,8 +987,8 @@ msgid "Choose file"
 msgstr "Datei wählen"
 
 #: src/pages/ModelSettingsOverlay.tsx
-msgid "Choose which connected model Rakazo uses."
-msgstr "Wähle das verbundene Modell aus, das Rakazo verwendet."
+msgid "Choose which connected model BobBot uses."
+msgstr "Wähle das verbundene Modell aus, das BobBot verwendet."
 
 #: src/pages/shell/dialogs.tsx
 msgid "Clear"
@@ -1844,8 +1848,8 @@ msgid "Create team"
 msgstr ""
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "Dein Rakazo erstellen"
+msgid "Create your BobBot"
+msgstr "Dein BobBot erstellen"
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -2619,7 +2623,7 @@ msgid "Install app"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Install Rakazo as a standalone app without browser borders."
+msgid "Install BobBot as a standalone app without browser borders."
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3517,8 +3521,8 @@ msgid "Paste a replacement key"
 msgstr "Ersatzschlüssel einfügen"
 
 #: src/pages/ModelSettingsOverlay.tsx
-msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
-msgstr "Füge die OpenAI-kompatible Adresse deines Servers ein. Rakazo ergänzt /v1 bei Bedarf."
+msgid "Paste the OpenAI-compatible address from your server. BobBot adds /v1 if needed."
+msgstr "Füge die OpenAI-kompatible Adresse deines Servers ein. BobBot ergänzt /v1 bei Bedarf."
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Paste your API key"
@@ -3633,10 +3637,6 @@ msgstr ""
 
 #: src/pages/Shell.tsx
 msgid "Raise budget"
-msgstr ""
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Rakazo is installed as a standalone app."
 msgstr ""
 
 #: src/pages/ActivityList.tsx
@@ -3958,8 +3958,8 @@ msgid "Retry screen"
 msgstr ""
 
 #: src/pages/McpOAuthCallback.tsx
-msgid "Return to Rakazo"
-msgstr "Zurück zu Rakazo"
+msgid "Return to BobBot"
+msgstr "Zurück zu BobBot"
 
 #. placeholder {0}: doc.revision
 #: src/pages/KnowledgeSection.tsx
@@ -4319,8 +4319,8 @@ msgid "Sign in again"
 msgstr ""
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Bei Rakazo anmelden"
+msgid "Sign in to BobBot"
+msgstr "Bei BobBot anmelden"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
@@ -4614,7 +4614,7 @@ msgstr ""
 
 #: src/pages/BotImportOverlay.tsx
 #: src/pages/BotLibraryOverlay.tsx
-msgid "This file is not a Rakazo bot preset (export format 1)."
+msgid "This file is not a BobBot bot preset (export format 1)."
 msgstr ""
 
 #: src/components/ArtifactFileCard.tsx
@@ -4659,8 +4659,8 @@ msgid "This server is already connected. Disconnect it first to authorize again.
 msgstr "Dieser Server ist bereits verbunden. Trenne zuerst die Verbindung, um ihn erneut zu autorisieren."
 
 #: src/pages/ModelSettingsOverlay.tsx
-msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
-msgstr "Diese Abonnementanmeldung ist in Rakazo noch nicht verfügbar. Verwende Zugangsdaten der Bereitstellung oder wähle einen anderen Anbieter."
+msgid "This subscription sign-in is not available in BobBot yet. Use a deployment credential or choose another provider."
+msgstr "Diese Abonnementanmeldung ist in BobBot noch nicht verfügbar. Verwende Zugangsdaten der Bereitstellung oder wähle einen anderen Anbieter."
 
 #: src/pages/Artifacts.tsx
 msgid "This week"

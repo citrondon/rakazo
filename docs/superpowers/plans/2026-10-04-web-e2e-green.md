@@ -4,7 +4,7 @@
 
 **Goal:** Die fünf verbleibenden roten Web-E2E-Tests auf `main` wieder grün bekommen und die Lücke schließen, die `reactive-trigger-hold` sichtbar macht (Wiederaufnahme eines Quiet-Hours-Runs).
 
-**Architecture:** Rakazo ist ein Produkt über Web/Electron/Mobile; der Web-Client (`apps/web`) spricht `rpc` gegen `apps/api`, Orchestrierung und Autorität liegen im Backend (`packages/db` Run-State, `packages/adapters` Executor, `packages/core` Trust-Planung). Drei der fünf Failures sind Test-Erwartungen, die einer bewussten Produktänderung hinterherhinken (Copy, Sichtbarkeit widerrufener Konten, Owner-Race); eins ist ein echtes Wiring-Loch im Resume-Pfad; eins ist Doku-Drift.
+**Architecture:** BobBot ist ein Produkt über Web/Electron/Mobile; der Web-Client (`apps/web`) spricht `rpc` gegen `apps/api`, Orchestrierung und Autorität liegen im Backend (`packages/db` Run-State, `packages/adapters` Executor, `packages/core` Trust-Planung). Drei der fünf Failures sind Test-Erwartungen, die einer bewussten Produktänderung hinterherhinken (Copy, Sichtbarkeit widerrufener Konten, Owner-Race); eins ist ein echtes Wiring-Loch im Resume-Pfad; eins ist Doku-Drift.
 
 **Tech Stack:** pnpm 9 Workspaces + Turborepo, TypeScript 7, React/Vite, Biome 2, Vitest 4, Playwright 1.63, Prisma 7 + PostgreSQL (Testcontainer im E2E-Harness), OrPC.
 

@@ -1,4 +1,4 @@
-# Architectural Design: GrokBot Core Features for Rakazo
+# Architectural Design: GrokBot Core Features for BobBot
 
 - **Date:** 2026-09-30
 - **Status:** Approved
@@ -15,7 +15,7 @@ GrokBot (launched August 2026 by xAI/Cursor) introduced an always-on AI teammate
 4. Second brain notes vault continuously maintained by bots.
 5. Voice notes & spoken briefings.
 
-This design document establishes the concrete technical implementation of these capabilities in Rakazo.
+This design document establishes the concrete technical implementation of these capabilities in BobBot.
 
 ---
 
@@ -53,7 +53,7 @@ This design document establishes the concrete technical implementation of these 
      - `subject`: email subject line
      - `body`: proposed reply text
      - `action`: `send` | `archive` | `delete`
-  3. The bot presents this draft via Rakazo's native `ApprovalEffect` / `waiting_approval` state.
+  3. The bot presents this draft via BobBot's native `ApprovalEffect` / `waiting_approval` state.
   4. The UI displays an interactive action card with `[Freigeben & Senden]` and `[Abbrechen]`.
   5. Only upon receiving confirmation does the executor invoke `python3 workspace/tools/google_assistant.py send`.
 
@@ -100,7 +100,7 @@ This design document establishes the concrete technical implementation of these 
    - Verify group chat message routing, `@mention` dispatching, and bot-to-bot handoffs.
 2. **Phase 2: E-Mail Draft & Approval Tooling**
    - Extend `google_assistant.py` with `draft` and `send` commands.
-   - Wire approval test and verify approval cards in Rakazo.
+   - Wire approval test and verify approval cards in BobBot.
 3. **Phase 3: Second Brain Vault Initialization**
    - Scaffold the `workspace/notes/` directory hierarchy.
    - Instruct ExecutiveChief and TrendScout to automatically mirror daily briefings into `notes/daily/`.

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Turn Rakazo into a installable standalone PWA app (no browser borders/bars) on Windows & Mobile, and establish a Deep Research workflow where OpenResearch & TrendScout bots scrape web resources via the `web-fetch` MCP connector and output structured markdown reports directly into the synced workspace.
+**Goal:** Turn BobBot into a installable standalone PWA app (no browser borders/bars) on Windows & Mobile, and establish a Deep Research workflow where OpenResearch & TrendScout bots scrape web resources via the `web-fetch` MCP connector and output structured markdown reports directly into the synced workspace.
 
 **Architecture:**
 1. **PWA Standalone Engine:** Register a clean service worker (`sw.js`) in `apps/web` with offline cache handling, update `site.webmanifest` with display mode, scope, orientation, and categories, and add an in-app "Als Desktop-App installieren" trigger button in `SettingsOverlay` / `Shell`.
@@ -32,8 +32,8 @@
 Add `scope`, `id`, `orientation`, `categories`, and `prefer_related_applications: false`:
 ```json
 {
-  "name": "Rakazo",
-  "short_name": "Rakazo",
+  "name": "BobBot",
+  "short_name": "BobBot",
   "description": "Your team of always-on AI agents.",
   "start_url": "/",
   "scope": "/",
@@ -83,7 +83,7 @@ if ("serviceWorker" in navigator && !import.meta.env.DEV) {
 ```
 
 - [x] **Step 4: Add Install Prompt Hook & Button**
-Create `apps/web/src/lib/use-pwa-install.ts` listening to `beforeinstallprompt` event, allowing the user to click "Rakazo als App installieren" directly from settings or sidebar.
+Create `apps/web/src/lib/use-pwa-install.ts` listening to `beforeinstallprompt` event, allowing the user to click "BobBot als App installieren" directly from settings or sidebar.
 
 - [x] **Step 5: Typecheck & Build**
 Run: `pnpm --filter @rakazo/web check` and `pnpm --filter @rakazo/web build`
@@ -117,7 +117,7 @@ Verify that `pnpm workspace:pull` detects the new file and writes it to the conf
 ---
 
 ## Verification Checklist
-- [x] Chrome / Edge shows the "Install Rakazo" app icon in the address bar.
-- [x] Launching Rakazo in standalone window opens without URL bar or browser tabs.
+- [x] Chrome / Edge shows the "Install BobBot" app icon in the address bar.
+- [x] Launching BobBot in standalone window opens without URL bar or browser tabs.
 - [x] `web-fetch` tool successfully fetches and digests live web content.
 - [x] Markdown reports are saved in `/home/rakazo/shared/research/` and synced to Windows host.

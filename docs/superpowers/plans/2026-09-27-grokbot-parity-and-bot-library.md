@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Transform Rakazo into a self-hosted, full-featured GrokBot alternative (< 5 €/month) by supplying a complete 5-bot library (`OpenResearch`, `GrokCoder`, `TrendScout`, `ExecutiveChief`, `DataAnalyst`), zero-cost realtime scraping tools, and Telegram mobile bridge enablement.
+**Goal:** Transform BobBot into a self-hosted, full-featured GrokBot alternative (< 5 €/month) by supplying a complete 5-bot library (`OpenResearch`, `GrokCoder`, `TrendScout`, `ExecutiveChief`, `DataAnalyst`), zero-cost realtime scraping tools, and Telegram mobile bridge enablement.
 
 **Architecture:** 
-- Manifests adhere to Rakazo's `ExportManifestSchema` (v1) in `bot-library/*.v1.json`, verified via `@rakazo/contracts` vitest suites.
+- Manifests adhere to BobBot's `ExportManifestSchema` (v1) in `bot-library/*.v1.json`, verified via `@rakazo/contracts` vitest suites.
 - Bots run with dedicated/team Docker computers leveraging SpooK API Token-Pack models (`claude-sonnet-5` for deep reasoning/coding, `deepseek-v4-flash` for high-throughput trend-scanning, `gpt-5.6-fast` for triage).
 - Realtime web trends use standalone Python scripts (`fetch-tech-trends.py`) running inside the bot's sandbox (no paid X-API required).
-- Telegram integration uses Rakazo's native `@chat-adapter/telegram` already wired in `packages/adapters`.
+- Telegram integration uses BobBot's native `@chat-adapter/telegram` already wired in `packages/adapters`.
 
 **Tech Stack:** TypeScript, Node.js 22, React / Vite, Prisma / PostgreSQL 16, Docker, Vitest, SpooK API / OpenAI-compatible.
 
@@ -167,7 +167,7 @@ Expected: Valid JSON with news items from HN, GitHub, and arXiv in under 3 secon
 
 **Interfaces:**
 - Consumes: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET_TOKEN`
-- Produces: Two-way chat connection between Telegram mobile app and Rakazo bots.
+- Produces: Two-way chat connection between Telegram mobile app and BobBot bots.
 
 - [ ] **Step 1: Document Telegram BotFather step-by-step setup in `docs/messaging/telegram-setup.md`**
 - Registering bot with `@BotFather`.

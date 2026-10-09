@@ -1,10 +1,10 @@
 # Bot-Library
 
-Wiederverwendbare Bot-Presets für Rakazo (Export-Format v1).
+Wiederverwendbare Bot-Presets für BobBot (Export-Format v1).
 
 ## Import
 
-1. Rakazo öffnen → **Bots** → Bot anlegen → **Import preset**.
+1. BobBot öffnen → **Bots** → Bot anlegen → **Import preset**.
 2. Eine `*.v1.json`-Datei wählen. Das Preset wird vorab angezeigt; Speicher, Routinen und Dateien
    sind einzeln ab- oder anwählbar.
 3. Danach dem Bot ein Modell zuweisen und bei Bedarf einen Computer geben (**Private** oder

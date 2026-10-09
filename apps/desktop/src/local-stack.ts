@@ -253,7 +253,7 @@ const DOCKER_GROUP_HINT =
   "This user cannot access Docker. Add it to the docker group (sudo usermod -aG docker $USER), sign out and back in, then check again.";
 const STOP_FAILED = "Could not stop the local stack. Check that Docker is running, then try again.";
 const START_INTERRUPTED = "The start was interrupted. Retry to continue.";
-const PORT_TAKEN_NOTICE = "is already in use; Rakazo starts on a free loopback port instead.";
+const PORT_TAKEN_NOTICE = "is already in use; BobBot starts on a free loopback port instead.";
 
 /** Docker output may contain paths and hostnames, so the person only ever sees these. */
 export function stackFailureMessage(
@@ -265,7 +265,7 @@ export function stackFailureMessage(
     case "image-not-found":
       return `Images for ${imageTag} are not published yet. Try again in a few minutes.`;
     case "port-in-use":
-      return "Could not bind a local port: another program is already using it. Close that program (or stop the other Rakazo stack), then retry.";
+      return "Could not bind a local port: another program is already using it. Close that program (or stop the other BobBot stack), then retry.";
     case "address-pool-exhausted":
       return "Docker has no free network address pools. Remove unused Docker networks or expand Docker’s address pools, then retry.";
     case "network":
@@ -278,8 +278,8 @@ export function stackFailureMessage(
       return "Docker Compose is missing. Install Docker Desktop or the docker-compose-plugin, then retry.";
     case "other":
       return phase === "pulling"
-        ? "Downloading Rakazo images failed. Check the output below, then retry."
-        : "Rakazo services did not start. Check the output below, then retry.";
+        ? "Downloading BobBot images failed. Check the output below, then retry."
+        : "BobBot services did not start. Check the output below, then retry.";
   }
 }
 

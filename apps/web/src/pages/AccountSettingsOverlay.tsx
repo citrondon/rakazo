@@ -685,7 +685,7 @@ function PwaInstallSection() {
           <Trans>App Installation</Trans>
         </h3>
         <p className="mt-2 text-[13px] text-muted-foreground/70">
-          <Trans>Rakazo is installed as a standalone app.</Trans>
+          <Trans>BobBot is installed as a standalone app.</Trans>
         </p>
       </section>
     );
@@ -699,7 +699,7 @@ function PwaInstallSection() {
             <Trans>Desktop & Mobile App</Trans>
           </h3>
           <p className="mt-1 text-[13px] text-muted-foreground/70">
-            <Trans>Install Rakazo as a standalone app without browser borders.</Trans>
+            <Trans>Install BobBot as a standalone app without browser borders.</Trans>
           </p>
         </div>
         {canInstall ? (

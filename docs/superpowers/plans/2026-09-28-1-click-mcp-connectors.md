@@ -1,6 +1,6 @@
 # 1-Click MCP Connectors Implementation Plan
 
-> **Goal:** Bring Grok-Bot-style 1-Click MCP Connector Presets to Rakazo for non-technical users, enabling instant zero-config activation of Workspace Files, Web Fetch, Second Brain Notes, and GitHub, while maintaining compatibility with Track B and the existing stack.
+> **Goal:** Bring Grok-Bot-style 1-Click MCP Connector Presets to BobBot for non-technical users, enabling instant zero-config activation of Workspace Files, Web Fetch, Second Brain Notes, and GitHub, while maintaining compatibility with Track B and the existing stack.
 
 ---
 

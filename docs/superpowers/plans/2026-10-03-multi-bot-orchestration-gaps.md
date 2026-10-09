@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Close the 5 orchestration gaps between Rakazo's generic "Bot" model and Agent-Stack's team patterns: (1) Role-based Bot taxonomy with capabilities, (2) Structured delegation queue with acceptance criteria, (3) Jev-powered local merge gates, (4) Git-synced team templates, (5) Credential Guard runtime hooks.
+**Goal:** Close the 5 orchestration gaps between BobBot's generic "Bot" model and Agent-Stack's team patterns: (1) Role-based Bot taxonomy with capabilities, (2) Structured delegation queue with acceptance criteria, (3) Jev-powered local merge gates, (4) Git-synced team templates, (5) Credential Guard runtime hooks.
 
 **Architecture:** Extend `packages/contracts` with role/capability/delegation types; add new packages `bot-roles`, `delegation-queue`, `jev-gate`, `team-sync`, `credential-guard`; wire into existing executor/bot-runtime via hooks. All changes are additive — existing Bot schema stays compatible.
 
-**Tech Stack:** TypeScript, Zod schemas, Vitest, Turbo monorepo, existing Rakazo patterns (contracts → adapters → executor).
+**Tech Stack:** TypeScript, Zod schemas, Vitest, Turbo monorepo, existing BobBot patterns (contracts → adapters → executor).
 
 **Spec:** `rakazo-multi-bot-orchestration-gaps.md` (user analysis + AI feedback), this plan implements the 5 corrected designs from AI feedback.
 

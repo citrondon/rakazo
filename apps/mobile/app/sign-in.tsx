@@ -191,9 +191,9 @@ export default function SignIn() {
                 {resetSent
                   ? t("Check your email")
                   : mode === "in"
-                    ? t("Sign in to Rakazo")
+                    ? t("Sign in to BobBot")
                     : mode === "up"
-                      ? t("Sign up for Rakazo")
+                      ? t("Sign up for BobBot")
                       : t("Reset your password")}
               </Text>
               {resetSent ? (

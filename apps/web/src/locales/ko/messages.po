@@ -763,6 +763,10 @@ msgstr "Bearer 토큰"
 msgid "Billing"
 msgstr ""
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "BobBot is installed as a standalone app."
+msgstr ""
+
 #: src/pages/Shell.tsx
 msgid "Booting live desktop…"
 msgstr "라이브 데스크톱 시작 중…"
@@ -983,8 +987,8 @@ msgid "Choose file"
 msgstr "파일 선택"
 
 #: src/pages/ModelSettingsOverlay.tsx
-msgid "Choose which connected model Rakazo uses."
-msgstr "Rakazo에서 기본으로 사용할 연결된 모델을 선택하세요."
+msgid "Choose which connected model BobBot uses."
+msgstr "BobBot에서 기본으로 사용할 연결된 모델을 선택하세요."
 
 #: src/pages/shell/dialogs.tsx
 msgid "Clear"
@@ -1844,8 +1848,8 @@ msgid "Create team"
 msgstr ""
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "Rakazo 계정 만들기"
+msgid "Create your BobBot"
+msgstr "BobBot 계정 만들기"
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -2619,7 +2623,7 @@ msgid "Install app"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Install Rakazo as a standalone app without browser borders."
+msgid "Install BobBot as a standalone app without browser borders."
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3517,8 +3521,8 @@ msgid "Paste a replacement key"
 msgstr "새 API 키를 붙여넣으세요"
 
 #: src/pages/ModelSettingsOverlay.tsx
-msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
-msgstr "서버의 OpenAI 호환 주소를 붙여넣으세요. 필요하면 Rakazo가 /v1을 추가합니다."
+msgid "Paste the OpenAI-compatible address from your server. BobBot adds /v1 if needed."
+msgstr "서버의 OpenAI 호환 주소를 붙여넣으세요. 필요하면 BobBot가 /v1을 추가합니다."
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Paste your API key"
@@ -3633,10 +3637,6 @@ msgstr ""
 
 #: src/pages/Shell.tsx
 msgid "Raise budget"
-msgstr ""
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Rakazo is installed as a standalone app."
 msgstr ""
 
 #: src/pages/ActivityList.tsx
@@ -3958,8 +3958,8 @@ msgid "Retry screen"
 msgstr ""
 
 #: src/pages/McpOAuthCallback.tsx
-msgid "Return to Rakazo"
-msgstr "Rakazo로 돌아가기"
+msgid "Return to BobBot"
+msgstr "BobBot로 돌아가기"
 
 #. placeholder {0}: doc.revision
 #: src/pages/KnowledgeSection.tsx
@@ -4319,8 +4319,8 @@ msgid "Sign in again"
 msgstr ""
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Rakazo 로그인"
+msgid "Sign in to BobBot"
+msgstr "BobBot 로그인"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
@@ -4614,7 +4614,7 @@ msgstr ""
 
 #: src/pages/BotImportOverlay.tsx
 #: src/pages/BotLibraryOverlay.tsx
-msgid "This file is not a Rakazo bot preset (export format 1)."
+msgid "This file is not a BobBot bot preset (export format 1)."
 msgstr ""
 
 #: src/components/ArtifactFileCard.tsx
@@ -4659,8 +4659,8 @@ msgid "This server is already connected. Disconnect it first to authorize again.
 msgstr "이 서버는 이미 연결되어 있습니다. 다시 인증하려면 먼저 연결을 해제하세요."
 
 #: src/pages/ModelSettingsOverlay.tsx
-msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
-msgstr "이 구독 로그인 방식은 아직 Rakazo에서 지원되지 않습니다. 서버에 설정된 인증 정보를 사용하거나 다른 서비스를 선택하세요."
+msgid "This subscription sign-in is not available in BobBot yet. Use a deployment credential or choose another provider."
+msgstr "이 구독 로그인 방식은 아직 BobBot에서 지원되지 않습니다. 서버에 설정된 인증 정보를 사용하거나 다른 서비스를 선택하세요."
 
 #: src/pages/Artifacts.tsx
 msgid "This week"

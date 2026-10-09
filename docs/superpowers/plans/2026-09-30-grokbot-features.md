@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement the 4 flagship GrokBot features in Rakazo: Multi-Bot Group Chat (War Room), Email Drafts with 1-Click Approval, Second Brain Vault, and Voice Notes / Audio Briefings.
+**Goal:** Implement the 4 flagship GrokBot features in BobBot: Multi-Bot Group Chat (War Room), Email Drafts with 1-Click Approval, Second Brain Vault, and Voice Notes / Audio Briefings.
 
-**Architecture:** We build upon Rakazo's native Postgres group chat schema, approval effect mechanism, shared workspace notes vault, and Python standard/TTS tools. Turn-taking supports both explicit `@mentions` and autonomous orchestration led by `ExecutiveChief`.
+**Architecture:** We build upon BobBot's native Postgres group chat schema, approval effect mechanism, shared workspace notes vault, and Python standard/TTS tools. Turn-taking supports both explicit `@mentions` and autonomous orchestration led by `ExecutiveChief`.
 
 **Tech Stack:** TypeScript, Node.js / tsx, Prisma, PostgreSQL, Docker, Python 3 (standard library + Edge-TTS).
 

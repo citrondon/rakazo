@@ -1,4 +1,4 @@
-# Rakazo auf Nobara Linux — Setup-Guide
+# BobBot auf Nobara Linux — Setup-Guide
 
 Nobara ist Fedora-basiert, also gilt: DNF für Systempakete, Docker (nicht Podman als Drop-in, das Projekt nutzt Compose v2 und `docker compose`), Node über nvm. Alles hier ist aus dem Repo abgeleitet (`README.md` → *Local development*, `.env.example`), nichts geraten.
 

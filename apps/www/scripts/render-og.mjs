@@ -36,7 +36,7 @@ function pageHtml(kicker, title) {
         <rect x="38" y="24" width="5" height="10" rx="2.5" fill="#F2F2F0"/>
         <circle cx="52" cy="51" r="5" fill="#3EC5A8"/>
       </svg>
-      Rakazo
+      BobBot
     </div>
   </div>
 </body>

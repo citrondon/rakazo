@@ -218,7 +218,7 @@ export function BotLibraryOverlay({ onClose }: { onClose: () => void }) {
       includeFiles,
     });
     if (!parsed.success) {
-      setError(t`This file is not a Rakazo bot preset (export format 1).`);
+      setError(t`This file is not a BobBot bot preset (export format 1).`);
       return;
     }
     setIntegrations(parsed.data.manifest.integrations);

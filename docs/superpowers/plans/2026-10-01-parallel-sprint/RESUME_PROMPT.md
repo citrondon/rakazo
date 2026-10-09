@@ -1,7 +1,7 @@
-# Fresh-context prompt — Rakazo, 2026-10-01
+# Fresh-context prompt — BobBot, 2026-10-01
 
 ## You are
-Cline at the Rakazo repo root (branch `main`). Read `AGENTS.md` first — it governs UI copy,
+Cline at the BobBot repo root (branch `main`). Read `AGENTS.md` first — it governs UI copy,
 shared-first design, provider neutrality, secrets, and verification.
 
 ## Repo

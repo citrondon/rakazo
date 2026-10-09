@@ -1,6 +1,6 @@
-# Cline CLI Prompt — Rakazo Project Setup
+# Cline CLI Prompt — BobBot Project Setup
 
-Use this prompt to configure the `cline` CLI for the Rakazo monorepo.
+Use this prompt to configure the `cline` CLI for the BobBot monorepo.
 Verified against `cline` CLI **v3.0.67**.
 
 > **CLI facts (v3.0.67)** — the commands below match the real CLI surface:

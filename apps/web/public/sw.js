@@ -1,5 +1,5 @@
 // Minimal service worker: it makes the web app installable as a PWA, but it deliberately
-// does not intercept requests. Rakazo is a live app (chats, streaming, computer screens),
+// does not intercept requests. BobBot is a live app (chats, streaming, computer screens),
 // so serving stale copies from a cache would do more harm than good.
 //
 // The previous version answered every GET request through this worker and never filled its

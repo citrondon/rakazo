@@ -57,7 +57,7 @@ Windows-specific fixes, if needed:
 Alternative (no WSL): build the desktop app on Windows (`pnpm --filter @rakazo/desktop dev`) and
 pick **This computer**, which runs the published images via Docker Compose itself
 (`docs/desktop-release.md`); or connect it to a server with **Existing instance**. Use this to
-*use* Rakazo on Windows; for *source development* prefer WSL.
+*use* BobBot on Windows; for *source development* prefer WSL.
 
 ## 2. What shipped
 
