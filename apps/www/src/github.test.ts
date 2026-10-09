@@ -9,7 +9,7 @@ import {
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
-  delete process.env.RAKAZO_GITHUB_STARS;
+  delete process.env.BOBBOT_GITHUB_STARS;
 });
 
 describe("GitHub stars", () => {
@@ -36,7 +36,7 @@ describe("GitHub stars", () => {
   });
 
   it("does not contact GitHub when tests ask for an offline star count", async () => {
-    process.env.RAKAZO_GITHUB_STARS = "offline";
+    process.env.BOBBOT_GITHUB_STARS = "offline";
     const fetchImpl = vi.fn(async () => Response.json({ stargazers_count: 12_345 }));
 
     await expect(fetchGithubStars(fetchImpl as unknown as typeof fetch)).resolves.toBeNull();

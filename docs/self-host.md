@@ -27,9 +27,15 @@ it answers from the inbox, not from imagination.
 
 The signed-in product is a long-running API, a Graphile Worker, Postgres, and a computer provider (Docker supervisor, E2B, Daytona, CreateOS, or Box). It is not a static site. The marketing site in `apps/www` can be hosted separately.
 
+### Renamed settings (`RAKAZO_` to `BOBBOT_`)
+
+Deployment settings used to be named `RAKAZO_*`. They are now `BOBBOT_*`, and both spellings keep working: the API, worker, updater, supervisor and web build copy a legacy name onto its new one before reading anything, and the Compose files fall back to the legacy name when the new one is unset. So an existing `.env` needs no edit. Rename at your convenience — a setting whose new name is present always wins, which lets you move one variable at a time. The same applies to systemd units, which read their `EnvironmentFile` as-is.
+
+Only the names of settings changed in that pass. Docker service, image, volume and network names, the `data` directory and the Compose project name are unchanged.
+
 ## Local (source checkout)
 
-Same as the README quick start: `.env` from `.env.example`, Postgres via Compose, `pnpm sandbox:build`, `pnpm dev`, then [http://127.0.0.1:5173](http://127.0.0.1:5173) (or `http://localhost:5173` — both loopback hosts are trusted). Electron: `pnpm --filter @rakazo/desktop dev` while that stack is up, choosing **Existing instance** with that address. The desktop app's **This computer** option instead installs and runs the published images itself with Docker Compose (see [Published images](#published-images-no-checkout)), using port 45173 by default so it can run alongside `pnpm dev`. If that port is occupied, the app selects and remembers another loopback port. The managed API gets a Docker-assigned loopback port; all desktop traffic uses the web origin. If `pnpm dev` and the Compose stack collide on 5173 or 3100, set `RAKAZO_WEB_PORT` / `RAKAZO_API_PORT` in `.env` (see [Port conflicts](#port-conflicts-3100--5173)).
+Same as the README quick start: `.env` from `.env.example`, Postgres via Compose, `pnpm sandbox:build`, `pnpm dev`, then [http://127.0.0.1:5173](http://127.0.0.1:5173) (or `http://localhost:5173` — both loopback hosts are trusted). Electron: `pnpm --filter @rakazo/desktop dev` while that stack is up, choosing **Existing instance** with that address. The desktop app's **This computer** option instead installs and runs the published images itself with Docker Compose (see [Published images](#published-images-no-checkout)), using port 45173 by default so it can run alongside `pnpm dev`. If that port is occupied, the app selects and remembers another loopback port. The managed API gets a Docker-assigned loopback port; all desktop traffic uses the web origin. If `pnpm dev` and the Compose stack collide on 5173 or 3100, set `BOBBOT_WEB_PORT` / `BOBBOT_API_PORT` in `.env` (see [Port conflicts](#port-conflicts-3100--5173)).
 
 For source development in WSL, keep the checkout and `data` directory in the Linux filesystem (for example, `~/rakazo`), and run `pnpm dev` as your normal user. The host-run supervisor matches bot container UID/GID to that user. If Docker Desktop container IPs are unreachable, set `SANDBOX_CONTROL_VIA_LOOPBACK=true` in `.env`; this publishes the token-protected control service on a random loopback port. Leave this unset for the Compose-hosted supervisor.
 
@@ -61,7 +67,7 @@ Compose stack requires `SANDBOX_SUPERVISOR_TOKEN` for every provider; leave it e
 
 Optional: set `OPENROUTER_API_KEY` or connect a model in the UI after signup.
 Auto Review uses that LLM checker by default. To use TypeSafe Jev instead, set
-`RAKAZO_AUTO_REVIEW_PROVIDER=jev` and `TYPESAFE_API_KEY`. Core still runs with neither.
+`BOBBOT_AUTO_REVIEW_PROVIDER=jev` and `TYPESAFE_API_KEY`. Core still runs with neither.
 
 The example defaults to `edge` (main builds). Every publish is multi-arch (`amd64` + `arm64`), so
 arm64 hosts need no special tag. Do not assume `latest` is present until a stable release exists.
@@ -73,7 +79,7 @@ that HTTPS URL.
 Images Compose binds web to loopback (`127.0.0.1:5173`). Terminate TLS on the host and proxy
 there. Vite preview same-origin-proxies `/api` and `/rpc`, so do not expose `:3100`. Set
 `BETTER_AUTH_URL`, `WEB_ORIGIN`, and `API_URL` to that same HTTPS origin, and set
-`RAKAZO_HOST` to its hostname (for example, `app.example.com`).
+`BOBBOT_HOST` to its hostname (for example, `app.example.com`).
 
 ```Caddyfile
 app.example.com {
@@ -100,16 +106,16 @@ lsof -nP -iTCP:3100 -sTCP:LISTEN   # or: ss -lntp '( sport = :3100 )'
 
 ```env
 # .env — set before `docker compose up`. 0 lets Docker assign a free loopback port (API only).
-RAKAZO_API_PORT=0
-RAKAZO_WEB_PORT=5174
+BOBBOT_API_PORT=0
+BOBBOT_WEB_PORT=5174
 ```
 
 Both variables work in the source-checkout Compose file and in `docker-compose.images.yml`; leave
 them unset to keep 3100 and 5173. The desktop app's **This computer** stack handles this itself: it
 probes its web origin before starting the containers, moves to another loopback port with an
-`already in use` notice, and launches the API with `RAKAZO_API_PORT=0`.
+`already in use` notice, and launches the API with `BOBBOT_API_PORT=0`.
 
-If you move `RAKAZO_WEB_PORT`, keep `BETTER_AUTH_URL`, `WEB_ORIGIN`, and `API_URL` on the new
+If you move `BOBBOT_WEB_PORT`, keep `BETTER_AUTH_URL`, `WEB_ORIGIN`, and `API_URL` on the new
 origin, and update the host proxy in front of it.
 
 ### Restricted networks / mirror downloads
@@ -125,9 +131,9 @@ Docker computer topology:
 
 | Variable | Default | Accepts |
 | --- | --- | --- |
-| `RAKAZO_COMPUTER_MEMORY` | `2g` | `2g`, `1536m`, a byte count. Minimum `6m`, Docker's own floor. Also caps swap, so the ceiling holds. |
-| `RAKAZO_COMPUTER_CPUS` | `2` | Whole or fractional cores, e.g. `1.5` |
-| `RAKAZO_COMPUTER_PIDS_LIMIT` | `2048` | A positive integer |
+| `BOBBOT_COMPUTER_MEMORY` | `2g` | `2g`, `1536m`, a byte count. Minimum `6m`, Docker's own floor. Also caps swap, so the ceiling holds. |
+| `BOBBOT_COMPUTER_CPUS` | `2` | Whole or fractional cores, e.g. `1.5` |
+| `BOBBOT_COMPUTER_PIDS_LIMIT` | `2048` | A positive integer |
 
 Set any of them to `0`, `none` or `unlimited` to remove that ceiling. A malformed value fails the
 supervisor at startup naming the variable, rather than surfacing later as a failed bot.
@@ -374,12 +380,12 @@ To use an operator-controlled OpenAI-compatible server such as Ollama, LM Studio
 MLX, list its model IDs and an endpoint that both the API and worker processes can reach:
 
 ```env
-RAKAZO_LOCAL_MODELS=qwen3:4b,llama3.1:8b,qwen3-vl
-RAKAZO_LOCAL_MODELS_URL=http://127.0.0.1:11434/v1
-RAKAZO_LOCAL_CONTEXT_WINDOW=32768
-RAKAZO_LOCAL_MAX_TOKENS=4096
+BOBBOT_LOCAL_MODELS=qwen3:4b,llama3.1:8b,qwen3-vl
+BOBBOT_LOCAL_MODELS_URL=http://127.0.0.1:11434/v1
+BOBBOT_LOCAL_CONTEXT_WINDOW=32768
+BOBBOT_LOCAL_MAX_TOKENS=4096
 # Optional: model ids on this endpoint that accept images (screenshot computer tools).
-RAKAZO_LOCAL_VISION_MODELS=qwen3-vl
+BOBBOT_LOCAL_VISION_MODELS=qwen3-vl
 ```
 
 The loopback default is suitable when running BobBot from a source checkout. From containers,
@@ -391,17 +397,17 @@ bots run, or firewall / block that path. The Compose stacks also define `host.do
 Linux (`extra_hosts: host-gateway` on the API and worker), so the hostname resolves there too —
 an endpoint bound only to the host's `127.0.0.1` still stays unreachable from a container.
 Only configure an endpoint you control: prompts, attachments, and tool results sent to that model
-leave BobBot through this URL. Leave `RAKAZO_LOCAL_MODELS` blank to disable the provider.
+leave BobBot through this URL. Leave `BOBBOT_LOCAL_MODELS` blank to disable the provider.
 
 Each user can also connect their own OpenAI-compatible endpoint from **Connect a model** /
 **Settings → Models** on web and mobile. Choose **OpenAI-compatible**, enter the server base URL
 (for example `http://127.0.0.1:8000/v1`), the exact model id, and an optional API key.
-Public hosts and ordinary hostnames need `RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC=1` and HTTPS.
+Public hosts and ordinary hostnames need `BOBBOT_OPENAI_COMPAT_ALLOW_PUBLIC=1` and HTTPS.
 Literal private IP, loopback, and `host.docker.internal` targets do not. If that endpoint's model
 accepts images, enable **Supports images** under **Advanced** when connecting so attachments and
 screenshot computer tools stay available. Existing connections default to disabled. For centrally
 managed endpoints, the deployment-wide fallback remains
-`RAKAZO_OPENAI_COMPATIBLE_VISION_MODELS=gpt4o-vision,llava`.
+`BOBBOT_OPENAI_COMPATIBLE_VISION_MODELS=gpt4o-vision,llava`.
 
 Remote MCP servers and installed API / GraphQL connectors default to public HTTPS. The deployment
 owner can attach one on localhost, the same LAN, or a Docker network. Set
@@ -413,20 +419,20 @@ metadata addresses stay blocked. Leave the flag unset on public installs.
 | Gate | Enable with | Default | What it allows |
 | --- | --- | --- | --- |
 | `MCP_ALLOW_PRIVATE_ENDPOINT` | `true` (literal, not `1`) | off | Remote MCP servers and installed API/GraphQL connectors on loopback, RFC1918, `*.internal`, Docker-network and `host.docker.internal` hosts, for every user. The deployment owner needs no flag. Cloud-metadata and link-local addresses stay blocked. Set it on **both** the API and the worker process. |
-| `RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC` | `1` (literal, not `true`) | off | User-connected OpenAI-compatible endpoints on public hostnames. Private/loopback endpoints need no flag. An endpoint that receives an API key must use HTTPS either way. |
-| `RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP` | `1` | off | Bot credentials (`request_secret` / website logins) against plain-`http://` private origins. |
+| `BOBBOT_OPENAI_COMPAT_ALLOW_PUBLIC` | `1` (literal, not `true`) | off | User-connected OpenAI-compatible endpoints on public hostnames. Private/loopback endpoints need no flag. An endpoint that receives an API key must use HTTPS either way. |
+| `BOBBOT_SECRETS_ALLOW_PRIVATE_HTTP` | `1` | off | Bot credentials (`request_secret` / website logins) against plain-`http://` private origins. |
 | `MCP_STDIO_ENABLED` | `true` | off | stdio MCP servers, which spawn a process on the API/worker host. |
 | `MCP_STDIO_ALLOWED_COMMANDS` | comma-separated executables, e.g. `npx,node` | empty | The exact executables a stdio server may start; anything else is refused. |
-| `RAKAZO_ACTION_FAIL_CLOSED` | `1`, `true`, `yes` or `on` (trimmed, case-insensitive) | off | Enforcement for the recorded action decisions: a tool that no approval rule covers asks a human instead of being allowed silently. Existing `always_allow` rules still win. Set it on **both** the API and the worker process, because whichever one runs the tool call reads it. |
+| `BOBBOT_ACTION_FAIL_CLOSED` | `1`, `true`, `yes` or `on` (trimmed, case-insensitive) | off | Enforcement for the recorded action decisions: a tool that no approval rule covers asks a human instead of being allowed silently. Existing `always_allow` rules still win. Set it on **both** the API and the worker process, because whichever one runs the tool call reads it. |
 
-The `MCP_*` switches are read as the literal `true` and the `RAKAZO_*` escape hatches as the literal
-`1`; any other spelling (`TRUE`, `yes`, `true` for a `RAKAZO_*` gate) leaves the gate off.
-`RAKAZO_ACTION_FAIL_CLOSED` is the one exception, and its row lists the spellings it accepts.
+The `MCP_*` switches are read as the literal `true` and the `BOBBOT_*` escape hatches as the literal
+`1`; any other spelling (`TRUE`, `yes`, `true` for a `BOBBOT_*` gate) leaves the gate off.
+`BOBBOT_ACTION_FAIL_CLOSED` is the one exception, and its row lists the spellings it accepts.
 
 Where the operator sees the refusal: adding an MCP server on web answers
 `MCP endpoint targets a private host (…)` plus the assignment to set, the same sentence carries the
 fix at connect time, and a blocked public model endpoint answers with
-`RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC=1`.
+`BOBBOT_OPENAI_COMPAT_ALLOW_PUBLIC=1`.
 
 For servers that accept standard `reasoning_effort`, enable **Supports thinking** under
 **Advanced** when connecting. The setting is saved on the connection (no env var or restart).
@@ -548,16 +554,16 @@ container logs, default no-new-privileges, and the kernel NAT path instead of Do
 2. Clone the repository on the VM and create a root `.env` with production-only values. At minimum set
    `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, `SCREEN_PROXY_SECRET`,
    `OPENROUTER_API_KEY`, the API key for your selected sandbox provider,
-   `RAKAZO_HOST`, and the three public origins. Set `RAKAZO_DEPLOY_DIR` when the checkout is not at
+   `BOBBOT_HOST`, and the three public origins. Set `BOBBOT_DEPLOY_DIR` when the checkout is not at
    the supported Linux default, `/srv/rakazo`. Use URL-safe random values for database credentials.
-   If you enable the `updater` profile, also set a dedicated `RAKAZO_UPDATER_TOKEN` (at least 32
+   If you enable the `updater` profile, also set a dedicated `BOBBOT_UPDATER_TOKEN` (at least 32
    characters) that differs from `BETTER_AUTH_SECRET`, `SANDBOX_SUPERVISOR_TOKEN`, and
    `SCREEN_PROXY_SECRET`.
 3. Keep registration allowlisted while the service is private:
 
 ```env
 NODE_ENV=production
-RAKAZO_HOST=app.example.com
+BOBBOT_HOST=app.example.com
 # Optional operator-owned override, for example the Cloudflare allowlist file:
 # CADDYFILE_PATH=/etc/rakazo/Caddyfile.prod
 BETTER_AUTH_URL=https://app.example.com
@@ -572,10 +578,10 @@ WAKEUP_DRIVER=graphile
 DATA_DIR=/data
 # Absolute path of this checkout as the Docker daemon sees it. /srv/rakazo is the Linux default;
 # set this explicitly for every other layout. See "The deploy directory must be one path" below.
-RAKAZO_DEPLOY_DIR=/srv/rakazo
-RAKAZO_IMAGE_TAG=local
+BOBBOT_DEPLOY_DIR=/srv/rakazo
+BOBBOT_IMAGE_TAG=local
 # Optional: required only with `--profile updater`.
-# RAKAZO_UPDATER_TOKEN=replace-with-32-plus-character-updater-token
+# BOBBOT_UPDATER_TOKEN=replace-with-32-plus-character-updater-token
 ```
 
 4. Build the images from your checkout and start the stack, then verify its public health endpoint:
@@ -588,7 +594,7 @@ docker compose --env-file .env -f infra/compose/docker-compose.prod.yml \
 curl --fail https://app.example.com/health
 ```
 
-**Build, do not pull, for a first deployment.** `RAKAZO_IMAGE_TAG` ships as `local`, a tag no
+**Build, do not pull, for a first deployment.** `BOBBOT_IMAGE_TAG` ships as `local`, a tag no
 registry serves, so the commands above build `api`, `worker`, and `web` from the checkout you just
 cloned. The opt-in command under [Updater sidecar](#updater-sidecar) builds `updater` when needed.
 
@@ -606,7 +612,7 @@ you switch to a release tag you should leave `GIT_SHA` unset — a value in `.en
 the image already knows.
 
 Once a release has been published you can switch this host to prebuilt images by setting
-`RAKAZO_IMAGE_TAG` to that release tag and running `pull` followed by `up -d --wait --pull never`.
+`BOBBOT_IMAGE_TAG` to that release tag and running `pull` followed by `up -d --wait --pull never`.
 See [Published images and tags](#published-images-and-tags) for the tag contract.
 
 The root `.env` is excluded from both Git and the Docker build context. The database, application data,
@@ -624,7 +630,7 @@ Postgres custom-format dump plus an application-data archive under `/var/backups
 substitute for an encrypted off-host backup or provider snapshot.
 
 The scheduled backup uses `/srv/rakazo` by default. For another deployment directory, set
-`RAKAZO_DEPLOY_DIR=/absolute/path/to/checkout` in a root-owned `/etc/rakazo/backup.env`
+`BOBBOT_DEPLOY_DIR=/absolute/path/to/checkout` in a root-owned `/etc/rakazo/backup.env`
 (mode `0600`). The service reads this optional file on each run; the script uses the selected
 checkout's `.env` and production Compose file. If the stack was started with a custom `-p`,
 set the same `COMPOSE_PROJECT_NAME` in that file. For a manual run, export these variables instead.
@@ -655,10 +661,10 @@ backup, before serving traffic again. On a first install with no running Postgre
 skipped and the deploy says so.
 
 By default it deploys `infra/compose/docker-compose.prod.yml`. To deploy an overlay stack, set
-`RAKAZO_DEPLOY_COMPOSE_FILES` to the same space-separated `-f` list you run by hand (for example
+`BOBBOT_DEPLOY_COMPOSE_FILES` to the same space-separated `-f` list you run by hand (for example
 the base file followed by `infra/compose/docker-compose.prod.docker.yml`); each path must be a
 relative `.yml`/`.yaml` inside the checkout. For a checkout outside `/srv/rakazo`, put
-`RAKAZO_DEPLOY_DIR=/absolute/path` in a root-owned `/etc/rakazo/deploy.env` readable by the
+`BOBBOT_DEPLOY_DIR=/absolute/path` in a root-owned `/etc/rakazo/deploy.env` readable by the
 deploy user.
 
 ### Docker computers on the production stack
@@ -689,7 +695,7 @@ file without the overlay. If `docker compose up --help` lacks `--wait-timeout`
 The overlay adds the supervisor (app image, `user: root`, Docker socket), the one-shot `computer`
 image build and `data-init` ownership fix, points the API and worker at `http://supervisor:7091`,
 and makes `SANDBOX_PROVIDER=docker` the default. It needs a dedicated `SANDBOX_SUPERVISOR_TOKEN`
-in `.env`; `RAKAZO_COMPUTER_*` and the `SANDBOX_*` limits apply as documented in `.env.example`.
+in `.env`; `BOBBOT_COMPUTER_*` and the `SANDBOX_*` limits apply as documented in `.env.example`.
 Like the updater, the supervisor is root-equivalent on the host: it publishes no port, joins only
 the internal `app` network, and Caddy has no route to it. Bot computers are sibling containers on
 per-bot networks that only the supervisor and the `web` screen proxy join.
@@ -698,8 +704,8 @@ When the `updater` profile is enabled too, give the sidecar the same file list a
 updates do not leave the supervisor on the previous app image:
 
 ```env
-RAKAZO_COMPOSE_FILE=infra/compose/docker-compose.prod.yml:infra/compose/docker-compose.prod.docker.yml
-RAKAZO_UPDATE_SERVICES=supervisor
+BOBBOT_COMPOSE_FILE=infra/compose/docker-compose.prod.yml:infra/compose/docker-compose.prod.docker.yml
+BOBBOT_UPDATE_SERVICES=supervisor
 ```
 
 The updater pulls and recreates services but cannot rebuild the `computer` stub image
@@ -728,13 +734,13 @@ For backups created by `infra/compose/backup-prod.sh` (custom-format `rakazo.dum
 `appdata.tgz` plus `SHA256SUMS`), use `infra/compose/restore-prod.sh` on the production layout:
 
 ```bash
-sudo RAKAZO_RESTORE_DIR=/srv/rakazo \
+sudo BOBBOT_RESTORE_DIR=/srv/rakazo \
   infra/compose/restore-prod.sh /var/backups/rakazo/<stamp>
 ```
 
 The production restore verifies the dump with `pg_restore --list`, the archive with `tar -tzf`, and
 `SHA256SUMS` before touching anything, refuses a dirty target checkout, and refuses to overwrite a
-database it can reach unless you pass `RAKAZO_RESTORE_FORCE=1`. It then restores the database in a
+database it can reach unless you pass `BOBBOT_RESTORE_FORCE=1`. It then restores the database in a
 single transaction, replaces the files inside the API container's `/data`, and starts the stack. It
 never writes a new `ENCRYPTION_KEY`: the key that was active when the snapshot was taken must
 already be in the target `.env`, and the restore refuses to start the application without it.
@@ -788,10 +794,10 @@ GIT_SHA=$(git rev-parse HEAD) docker compose --env-file .env -f infra/compose/do
 `up --wait` does not report success until the new API is healthy and the worker and web containers
 are running. The API's start command runs `prisma migrate deploy` before it serves, so migration
 failure keeps health red. A failed CLI recreate does not auto-roll back; recover with the previous
-`RAKAZO_IMAGE_TAG` (or rebuild `local`) and `up -d --wait --pull never`.
+`BOBBOT_IMAGE_TAG` (or rebuild `local`) and `up -d --wait --pull never`.
 
 The updater sidecar has its own image and tag so an update never recreates the process performing
-it. Move it deliberately by setting `RAKAZO_UPDATER_IMAGE_TAG` to the full `sha-<commit>` tag, then
+it. Move it deliberately by setting `BOBBOT_UPDATER_IMAGE_TAG` to the full `sha-<commit>` tag, then
 running `docker compose … pull updater && docker compose … up -d --wait --pull never updater`.
 Sidecar `/apply` and `/rollback` recover a failed recreate by redeploying the previously cached
 image when possible; if that also fails, they report a possible mixed-version runtime.
@@ -843,9 +849,9 @@ this repository that is:
 `infra/compose/docker-compose.images.yml` is the no-checkout path for those app and computer tags
 plus Postgres. The supervisor runs from the app image on the internal network only (not a separate
 published supervisor image, and no host port). Production Compose (`docker-compose.prod.yml`) can
-also pull the same app tags once `RAKAZO_IMAGE_TAG` is set to a published value.
+also pull the same app tags once `BOBBOT_IMAGE_TAG` is set to a published value.
 
-If you deploy from your own fork, set `RAKAZO_IMAGE` and `RAKAZO_UPDATER_IMAGE` to your namespace —
+If you deploy from your own fork, set `BOBBOT_IMAGE` and `BOBBOT_UPDATER_IMAGE` to your namespace —
 your CI cannot publish into someone else's.
 
 | Tag | Published on | Moves? |
@@ -874,7 +880,7 @@ not `latest` or a moving minor tag. A registry tag is not an OCI digest and GHCR
 replace it, so the trust boundary remains this repository's publishing credentials. The workflow
 reduces that boundary by using SHA-pinned actions, read-only pull-request jobs, digest-pinned base
 images, SBOM/provenance output, and a GitHub build attestation. Operators who require registry-level
-content addressing can pin `RAKAZO_IMAGE` outside the automatic updater to a verified digest.
+content addressing can pin `BOBBOT_IMAGE` outside the automatic updater to a verified digest.
 
 Rollback never contacts the registry: it redeploys the previous tag from the local Docker cache,
 so a later tag move cannot change rollback content. Do not prune the previous application image
@@ -890,7 +896,7 @@ and refuses the official path until a stable `vX.Y.Z` exists.
 
 Compose production deployments offer an opt-in `updater` profile on a private `control` network.
 Normal deployments do not start it or require its credential. To enable it, set a dedicated
-`RAKAZO_UPDATER_TOKEN` and explicitly start the profile:
+`BOBBOT_UPDATER_TOKEN` and explicitly start the profile:
 
 ```bash
 docker compose --env-file .env -f infra/compose/docker-compose.prod.yml \
@@ -898,7 +904,7 @@ docker compose --env-file .env -f infra/compose/docker-compose.prod.yml \
 ```
 
 It exposes `/health`, `/state`, `/plan`, `/apply`, and `/rollback` at `http://updater:7092` with
-`RAKAZO_UPDATER_TOKEN`. Operator CLI upgrades above do not need it; the sidecar is for automated
+`BOBBOT_UPDATER_TOKEN`. Operator CLI upgrades above do not need it; the sidecar is for automated
 apply/rollback over that private HTTP API.
 
 The API cannot update itself — its image has no `.git`, and nothing inside the container would
@@ -906,10 +912,10 @@ restart it — so the work happens in a separate `updater` container that outliv
 
 - *Official repository:* resolves the newest stable release and its source commit with
   `git ls-remote --tags`, pins the corresponding full `sha-<commit>` image tag in `.env`, keeps the
-  outgoing tag in `RAKAZO_IMAGE_TAG_PREVIOUS`, explicitly pulls the new image, then runs
+  outgoing tag in `BOBBOT_IMAGE_TAG_PREVIOUS`, explicitly pulls the new image, then runs
   `up -d --wait --pull never`. No build runs on the server.
 - *Fork (Advanced):* a fork has no published images, so the sidecar fast-forwards the checkout in
-  `RAKAZO_DEPLOY_DIR` and runs `up -d --build`. This builds on the server and takes minutes rather
+  `BOBBOT_DEPLOY_DIR` and runs `up -d --build`. This builds on the server and takes minutes rather
   than seconds. Point it only at a fork you control and have reviewed — the sidecar runs that
   Compose file through a root-equivalent Docker socket.
 
@@ -925,38 +931,38 @@ untracked source tree fails closed before anything runs (the application Dockerf
 
 ### The deploy directory must be one path
 
-`RAKAZO_DEPLOY_DIR` is bind-mounted into the updater at the same path it is read from
-(`${RAKAZO_DEPLOY_DIR}:${RAKAZO_DEPLOY_DIR}`), and that is load-bearing rather than tidy. Production
+`BOBBOT_DEPLOY_DIR` is bind-mounted into the updater at the same path it is read from
+(`${BOBBOT_DEPLOY_DIR}:${BOBBOT_DEPLOY_DIR}`), and that is load-bearing rather than tidy. Production
 Compose defaults both sides to `/srv/rakazo`; set the variable for any other layout. When the
-updater runs `docker compose -p <project> --file $RAKAZO_DEPLOY_DIR/infra/compose/docker-compose.prod.yml up -d`,
+updater runs `docker compose -p <project> --file $BOBBOT_DEPLOY_DIR/infra/compose/docker-compose.prod.yml up -d`,
 the Compose CLI *inside* the container expands this file's relative bind mounts — `../../.env`,
 `./Caddyfile.prod` — against that path and hands the results to the daemon. The daemon has to be
 able to resolve the same strings, or it silently creates empty directories where your `.env` and
 Caddyfile should be. Compose makes the effective `-p` value available for interpolation but does
 not automatically put it in a container's environment, so the production file explicitly assigns
 `COMPOSE_PROJECT_NAME` to the updater. A standalone sidecar can instead set
-`RAKAZO_COMPOSE_PROJECT_NAME`; the final fallback is `rakazo-prod`. Without that propagation, a
+`BOBBOT_COMPOSE_PROJECT_NAME`; the final fallback is `rakazo-prod`. Without that propagation, a
 stack started with `-p something-else` would be left alone while a second project with a new empty
 Postgres volume came up beside it.
 
 ### Deployments that layer a Compose overlay
 
-`RAKAZO_COMPOSE_FILE` takes a list, separated the way Compose's own `COMPOSE_FILE` is
+`BOBBOT_COMPOSE_FILE` takes a list, separated the way Compose's own `COMPOSE_FILE` is
 (`:` by default, or whatever `COMPOSE_PATH_SEPARATOR` says). Each entry becomes its own `--file`,
 in the order given, so the updater reconciles the same stack the operator runs by hand:
 
 ```
-RAKAZO_COMPOSE_FILE=infra/compose/docker-compose.prod.yml:ops/compose/overlay.yml
+BOBBOT_COMPOSE_FILE=infra/compose/docker-compose.prod.yml:ops/compose/overlay.yml
 ```
 
-Every entry is validated separately and must stay inside `RAKAZO_DEPLOY_DIR`.
+Every entry is validated separately and must stay inside `BOBBOT_DEPLOY_DIR`.
 
 If the overlay adds a service built from the application image, name it in
-`RAKAZO_UPDATE_SERVICES` (comma separated) so it is pulled, recreated and rolled back with the
+`BOBBOT_UPDATE_SERVICES` (comma separated) so it is pulled, recreated and rolled back with the
 rest. Otherwise an update leaves that service running the previous code:
 
 ```
-RAKAZO_UPDATE_SERVICES=supervisor
+BOBBOT_UPDATE_SERVICES=supervisor
 ```
 
 These names are appended to the built-in `api`, `worker`, `web`, never substituted for them, so no
@@ -966,15 +972,15 @@ The value therefore has to be the path **the daemon** sees, which is not always 
 sees:
 
 - **Linux.** The daemon shares the host filesystem, so the checkout path is the answer:
-  `/srv/rakazo` is the default and supported production layout. Set `RAKAZO_DEPLOY_DIR` explicitly
+  `/srv/rakazo` is the default and supported production layout. Set `BOBBOT_DEPLOY_DIR` explicitly
   when the checkout is elsewhere.
 - **Docker Desktop (Windows/macOS).** The daemon runs in a VM that mounts your drive somewhere else.
   On Windows, `C:` appears at `/run/desktop/mnt/host/c`, so a checkout at `C:\Users\you\rakazo` is
-  `RAKAZO_DEPLOY_DIR=/run/desktop/mnt/host/c/Users/you/rakazo`. Host Git may use `core.autocrlf=true`; the updater ignores CR-only diffs so that does not block `/apply`. Verify the mount before deploying:
+  `BOBBOT_DEPLOY_DIR=/run/desktop/mnt/host/c/Users/you/rakazo`. Host Git may use `core.autocrlf=true`; the updater ignores CR-only diffs so that does not block `/apply`. Verify the mount before deploying:
 
 ```bash
 docker compose --env-file .env -f infra/compose/docker-compose.prod.yml \
-  --profile updater run --rm updater git -C "$RAKAZO_DEPLOY_DIR" log --oneline -1
+  --profile updater run --rm updater git -C "$BOBBOT_DEPLOY_DIR" log --oneline -1
 ```
 
   That must print your checkout's HEAD. The two tempting wrong answers both fail: a native Windows
@@ -991,13 +997,13 @@ as that allows:
 - Only on the dedicated `control` network shared with the API. Caddy is not attached, so the
   reverse proxy has no route to the updater.
 - Every route except `/health` requires the shared bearer token, compared in constant time.
-- The process environment carries only updater settings (`RAKAZO_UPDATER_TOKEN`, deploy path,
+- The process environment carries only updater settings (`BOBBOT_UPDATER_TOKEN`, deploy path,
   image name, project name). Application secrets stay in the bind-mounted `.env` that Compose
   reads for interpolation; they are not loaded into this container.
 - The Docker CLI lives only in the updater image. The api, worker, and web containers keep
   `cap_drop: ALL` and no socket.
 
-Enabling the `updater` profile requires `RAKAZO_UPDATER_TOKEN` to be a dedicated random value (at
+Enabling the `updater` profile requires `BOBBOT_UPDATER_TOKEN` to be a dedicated random value (at
 least 32 characters in production). It must differ from `BETTER_AUTH_SECRET`,
 `SANDBOX_SUPERVISOR_TOKEN`, and `SCREEN_PROXY_SECRET`. Leave the profile disabled if you would
 rather not grant the capability.

@@ -7,7 +7,7 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 g() { grep -F -e "$1" "$src" >/dev/null || fail "missing $1"; }
 g '--pull-never)'
 g '--offline)'
-g 'RAKAZO_PULL_NEVER'
+g 'BOBBOT_PULL_NEVER'
 g 'Skipping image pull'
 g '--pull never'
 g 'cannot enforce pull-never on this Compose version'

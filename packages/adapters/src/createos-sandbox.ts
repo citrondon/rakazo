@@ -56,7 +56,7 @@ function createosChromiumProfile(screenId: string) {
 }
 const CREATEOS_DRAINING_SCREEN = "draining:";
 const CREATEOS_SCREEN_MAP_PATH = `${CREATEOS_WORKSPACE}/.rakazo/screens.json`;
-export const CREATEOS_SCREEN_MAP_SENTINEL = "RAKAZO_SCREEN_MAP_V1";
+export const CREATEOS_SCREEN_MAP_SENTINEL = "BOBBOT_SCREEN_MAP_V1";
 const CREATEOS_SCREEN_MAP_NEED_CREATE = "NEED_CREATE";
 const DEFAULT_CREATEOS_BASE_URL = "https://api.sb.createos.sh";
 const CREATEOS_INGRESS_ZONE = "sb.createos.sh";

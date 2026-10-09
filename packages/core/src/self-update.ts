@@ -237,7 +237,7 @@ export type RestartSupervisor =
   | { kind: "systemd" | "pm2" | "declared"; label: string }
   | { kind: "none"; label: null };
 
-export const RESTART_SUPERVISOR_ENV = "RAKAZO_UPDATE_RESTART_SUPERVISOR";
+export const RESTART_SUPERVISOR_ENV = "BOBBOT_UPDATE_RESTART_SUPERVISOR";
 
 /**
  * Whether something outside this process will start it again after it exits. Docker restart

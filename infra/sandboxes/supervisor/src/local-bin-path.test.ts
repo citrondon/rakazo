@@ -19,7 +19,7 @@ const LOGIN_SHELL_STARTUP = [
   '  PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"',
   "fi",
   "export PATH",
-  '. "$RAKAZO_LOCAL_BIN_SNIPPET"',
+  '. "$BOBBOT_LOCAL_BIN_SNIPPET"',
   'if [ -f "$HOME/.bash_profile" ]; then',
   '  . "$HOME/.bash_profile"',
   'elif [ -f "$HOME/.bash_login" ]; then',
@@ -145,7 +145,7 @@ function loginShell(
       LOGNAME: "rakazo",
       PATH: `${home}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`,
       USER: "rakazo",
-      RAKAZO_LOCAL_BIN_SNIPPET: localBinSnippet,
+      BOBBOT_LOCAL_BIN_SNIPPET: localBinSnippet,
     },
   });
   return { stdout: stdout.trim() };

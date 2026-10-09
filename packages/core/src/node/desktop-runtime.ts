@@ -281,7 +281,7 @@ export function stopBrowserProfileCommand(profile: string, pidFile: string) {
 }
 
 function stopProfileDirectoriesCommand(profileList: string) {
-  const placeholder = "RAKAZO_INTERNAL_PROFILE";
+  const placeholder = "BOBBOT_INTERNAL_PROFILE";
   const stop = stopBrowserProfileCommand(placeholder, '"$pid_file"')
     .replaceAll(shellQuote(`--user-data-dir=${placeholder}`), '"--user-data-dir=$profile"')
     .replaceAll(shellQuote(placeholder), '"$profile"');
@@ -601,7 +601,7 @@ export function interactiveScreenCommand(
     return [
       `if [ -f ${tokenFile} ] && [ "$(cat ${tokenFile})" = ${shellQuote(controlToken)} ]; then`,
       stopProcesses,
-      "printf 'RAKAZO_CONTROL_RELEASED\\n'",
+      "printf 'BOBBOT_CONTROL_RELEASED\\n'",
       "fi",
     ].join("\n");
   }
@@ -678,7 +678,7 @@ export function startTerminalCommand(
 }
 
 const REGISTRY = "/tmp/rakazo/desktop-assignments";
-const TOKEN_PLACEHOLDER = "RAKAZO_INTERNAL_VIEW_TOKEN";
+const TOKEN_PLACEHOLDER = "BOBBOT_INTERNAL_VIEW_TOKEN";
 
 function registryLockCommand(screenId: string) {
   return [
@@ -746,7 +746,7 @@ print(index)
     'mv "$slot.next" "$slot"',
     "flock -u 9; exec 9>&-",
     `bash -eu -c ${shellQuote(renderEnsureScreenCommand(undefined, screenId, TOKEN_PLACEHOLDER, env).replace(shellQuote(TOKEN_PLACEHOLDER), '"$2"'))} desktop "$index" "$view_token"`,
-    'printf "RAKAZO_DESKTOP=%s:%s\\n" "$index" "$view_token"',
+    'printf "BOBBOT_DESKTOP=%s:%s\\n" "$index" "$view_token"',
   ].join("\n");
 }
 
@@ -767,7 +767,7 @@ export function releaseDesktopCommand(
     // lock or removal failure is not read as a browser that is still running.
     // set -e leaves that failure non-zero, and the slot is removed only while
     // the shared registry lock is held.
-    'printf "RAKAZO_DESKTOP_RELEASED=%s\\n" "$index"',
+    'printf "BOBBOT_DESKTOP_RELEASED=%s\\n" "$index"',
     'exec 9>"$dir/.lock"',
     "flock -w 120 9",
     'rm -f -- "$slot"',

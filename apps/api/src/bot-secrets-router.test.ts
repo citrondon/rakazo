@@ -155,7 +155,7 @@ describe("botSecrets router", () => {
   });
 
   it("rejects another user's bot and a missing bot before any secret access", async () => {
-    vi.stubEnv("RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP", "1");
+    vi.stubEnv("BOBBOT_SECRETS_ALLOW_PRIVATE_HTTP", "1");
     const { prisma, secrets, call } = botSecretDeps();
     for (const botId of ["bot-other", "missing-bot"]) {
       const results = [
@@ -221,7 +221,7 @@ describe("botSecrets router", () => {
   });
 
   it("stores a LAN http origin only with the private-HTTP opt-in", async () => {
-    vi.stubEnv("RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP", "1");
+    vi.stubEnv("BOBBOT_SECRETS_ALLOW_PRIVATE_HTTP", "1");
     const allowed = botSecretDeps();
     const saved = await allowed.call("put", putInput("http://192.168.1.20:8080"));
     expect(saved.status).toBe(200);
@@ -241,7 +241,7 @@ describe("botSecrets router", () => {
     expect(allowed.rows).toHaveLength(1);
     expect(allowed.rows[0]).toMatchObject({ userId: "user-1", spaceId: "space-1", botId: "bot-1" });
 
-    vi.stubEnv("RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP", "");
+    vi.stubEnv("BOBBOT_SECRETS_ALLOW_PRIVATE_HTTP", "");
     const denied = botSecretDeps();
     const rejected = await denied.call("put", putInput("http://192.168.1.20:8080"));
     expect(rejected.status).toBe(400);
@@ -253,7 +253,7 @@ describe("botSecrets router", () => {
 
   it("rejects public plain http and cloud-metadata hosts in both modes", async () => {
     for (const flag of ["1", ""]) {
-      vi.stubEnv("RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP", flag);
+      vi.stubEnv("BOBBOT_SECRETS_ALLOW_PRIVATE_HTTP", flag);
       for (const origin of [
         "http://example.com",
         "http://100.100.100.200",
@@ -325,7 +325,7 @@ describe("botSecrets router", () => {
   });
 
   it("lists a private-HTTP origin as remove-only when the opt-in is off", async () => {
-    vi.stubEnv("RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP", "");
+    vi.stubEnv("BOBBOT_SECRETS_ALLOW_PRIVATE_HTTP", "");
     const created = new Date("2026-08-01T00:00:00.000Z");
     const { call } = botSecretDeps([
       {

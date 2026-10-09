@@ -224,7 +224,7 @@ export type AutoReviewJudgeDecision = "pass" | "ask" | "error";
  * Deployment-wide rollout switch. Recorded decisions do not depend on it; only enforcement does.
  */
 export function deploymentActionFailClosed(env: NodeJS.ProcessEnv = process.env): boolean {
-  const value = env.RAKAZO_ACTION_FAIL_CLOSED?.trim().toLowerCase();
+  const value = env.BOBBOT_ACTION_FAIL_CLOSED?.trim().toLowerCase();
   return value === "1" || value === "true" || value === "yes" || value === "on";
 }
 

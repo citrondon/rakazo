@@ -28,14 +28,14 @@ describe("focus-or-launch desktop helper", () => {
           path.join(bin, "wmctrl"),
           [
             "#!/bin/sh",
-            'if [ "$1" = "-lxp" ]; then cat "$RAKAZO_TEST_WINDOWS";',
-            'else printf "wmctrl %s\\n" "$*" >> "$RAKAZO_TEST_ARGS"; fi',
+            'if [ "$1" = "-lxp" ]; then cat "$BOBBOT_TEST_WINDOWS";',
+            'else printf "wmctrl %s\\n" "$*" >> "$BOBBOT_TEST_ARGS"; fi',
           ].join("\n"),
         );
         for (const name of ["xterm", "rakazo-browser"]) {
           writeFileSync(
             path.join(bin, name),
-            `#!/bin/sh\nprintf '${name} %s\\n' "$*" >> "$RAKAZO_TEST_ARGS"\n`,
+            `#!/bin/sh\nprintf '${name} %s\\n' "$*" >> "$BOBBOT_TEST_ARGS"\n`,
           );
         }
         for (const name of ["wmctrl", "xterm", "rakazo-browser"]) {
@@ -51,8 +51,8 @@ describe("focus-or-launch desktop helper", () => {
               env: {
                 ...process.env,
                 PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-                RAKAZO_TEST_WINDOWS: windows,
-                RAKAZO_TEST_ARGS: argvLog,
+                BOBBOT_TEST_WINDOWS: windows,
+                BOBBOT_TEST_ARGS: argvLog,
               },
               encoding: "utf8",
             },
@@ -85,7 +85,7 @@ describe("focus-or-launch desktop helper", () => {
           path.join(bin, "rakazo-browser"),
           [
             "#!/bin/sh",
-            'printf \'rakazo-browser %s\\n\' "$*" >> "$RAKAZO_TEST_ARGS"',
+            'printf \'rakazo-browser %s\\n\' "$*" >> "$BOBBOT_TEST_ARGS"',
             `echo $$ >> ${JSON.stringify(pids)}`,
             "exec sleep 30",
             "",

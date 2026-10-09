@@ -59,7 +59,7 @@ function fixture() {
   git(upstream, "init", "-q", "-b", "main");
   const first = commit(upstream, "first");
   git(root, "clone", "-q", upstream, checkout);
-  write(path.join(checkout, ".env"), "RAKAZO_HOST=app.example.test\n");
+  write(path.join(checkout, ".env"), "BOBBOT_HOST=app.example.test\n");
   // The fixture starts with a stack already deployed at `first`.
   write(path.join(root, "running-revision"), `${first}\n`);
   // The script validates that every configured Compose file exists in the checkout.
@@ -122,8 +122,8 @@ exit 0
     PATH: [bin, "/usr/bin", "/bin"].join(path.delimiter),
     HOME: root,
     COMMAND_LOG: log,
-    RAKAZO_DEPLOY_DIR: checkout,
-    RAKAZO_DEPLOY_HEALTH_INTERVAL: "0",
+    BOBBOT_DEPLOY_DIR: checkout,
+    BOBBOT_DEPLOY_HEALTH_INTERVAL: "0",
     PG_UP: path.join(root, "pg-up"),
     RUNNING: path.join(root, "running-revision"),
   };
@@ -167,7 +167,7 @@ describe("production deploy script", () => {
     expect(missing.status).toBe(1);
     expect(missing.stderr).toContain("tested full commit SHA");
 
-    const absent = deploy.run({ RAKAZO_DEPLOY_REVISION: "0".repeat(40) });
+    const absent = deploy.run({ BOBBOT_DEPLOY_REVISION: "0".repeat(40) });
     expect(absent.status).toBe(1);
     expect(absent.stderr).toContain("not present");
     expect(deploy.docker()).toEqual([]);
@@ -180,7 +180,7 @@ describe("production deploy script", () => {
     git(deploy.upstream, "checkout", "-q", "main");
     git(deploy.checkout, "fetch", "-q", "origin", side);
 
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: side });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: side });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("not on origin/main");
     expect(deploy.docker()).toEqual([]);
@@ -188,7 +188,7 @@ describe("production deploy script", () => {
 
   it("fails instead of reporting success while another deploy holds the lock", () => {
     const deploy = fixture();
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: deploy.first, LOCK_HELD: "1" });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: deploy.first, LOCK_HELD: "1" });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("holds the lock");
     expect(deploy.docker()).toEqual([]);
@@ -198,7 +198,7 @@ describe("production deploy script", () => {
     const deploy = fixture();
     write(path.join(deploy.checkout, ".last-deployed-revision"), `${deploy.first}\n`);
 
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: deploy.first });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: deploy.first });
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("already at");
     expect(deploy.docker().some((line) => line.includes("internal/health"))).toBe(true);
@@ -210,7 +210,7 @@ describe("production deploy script", () => {
 
   it("deploys when the checkout matches the target but that revision was never recorded", () => {
     const deploy = fixture();
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: deploy.first });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: deploy.first });
     expect(result.status).toBe(0);
     expect(result.stdout).not.toContain("already at");
     expect(deploy.head()).toBe(deploy.first);
@@ -221,7 +221,7 @@ describe("production deploy script", () => {
     const deploy = fixture();
     commit(deploy.upstream, "next");
 
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: deploy.first });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: deploy.first });
     expect(result.status).toBe(0);
     expect(deploy.head()).toBe(deploy.first);
     expect(deploy.deployed()).toBe(deploy.first);
@@ -231,7 +231,7 @@ describe("production deploy script", () => {
 
   it("builds, waits for health, verifies revision and worker, then records the target", () => {
     const deploy = fixture();
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: deploy.first });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: deploy.first });
     expect(result.status).toBe(0);
 
     const core = deploy.docker().filter((line) => / (config --quiet|build|up -d )/.test(line));
@@ -251,7 +251,7 @@ describe("production deploy script", () => {
     commit(deploy.upstream, "broken");
     const next = git(deploy.upstream, "rev-parse", "HEAD");
 
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: next, FAIL_BUILD: "1" });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: next, FAIL_BUILD: "1" });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Rolled back to");
     expect(result.stderr).toContain("and it is serving");
@@ -270,7 +270,7 @@ describe("production deploy script", () => {
     commit(deploy.upstream, "stale");
     const next = git(deploy.upstream, "rev-parse", "HEAD");
 
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: next, NO_RECREATE: "1" });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: next, NO_RECREATE: "1" });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Rolled back to");
     expect(result.stderr).toContain("and it is serving");
@@ -282,7 +282,7 @@ describe("production deploy script", () => {
     commit(deploy.upstream, "workerless");
     const next = git(deploy.upstream, "rev-parse", "HEAD");
 
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: next, FAIL_WORKER: "1" });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: next, FAIL_WORKER: "1" });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("never became ready");
     expect(deploy.head()).toBe(deploy.first);
@@ -293,7 +293,7 @@ describe("production deploy script", () => {
     commit(deploy.upstream, "unhealthy");
     const next = git(deploy.upstream, "rev-parse", "HEAD");
 
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: next, FAIL_HEALTH: "1" });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: next, FAIL_HEALTH: "1" });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("never became ready");
     expect(deploy.head()).toBe(deploy.first);
@@ -303,7 +303,7 @@ describe("production deploy script", () => {
     const deploy = fixture();
     const next = commit(deploy.upstream, "next");
 
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: next, DB_PRESENT: "1" });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: next, DB_PRESENT: "1" });
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain("Pre-deploy database snapshot verified");
 
@@ -329,7 +329,7 @@ describe("production deploy script", () => {
   it("skips the snapshot on a first deploy when postgres is not running", () => {
     const deploy = fixture();
 
-    const result = deploy.run({ RAKAZO_DEPLOY_REVISION: deploy.first });
+    const result = deploy.run({ BOBBOT_DEPLOY_REVISION: deploy.first });
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain("skipping the pre-deploy snapshot");
     expect(deploy.commands().some((line) => line.includes("pg_dump"))).toBe(false);
@@ -342,7 +342,7 @@ describe("production deploy script", () => {
       const deploy = fixture();
       const next = commit(deploy.upstream, "next");
 
-      const result = deploy.run({ RAKAZO_DEPLOY_REVISION: next, DB_PRESENT: "1", ...failure });
+      const result = deploy.run({ BOBBOT_DEPLOY_REVISION: next, DB_PRESENT: "1", ...failure });
       expect(result.status).toBe(1);
       expect(result.stderr).toContain("refusing to update");
       expect(deploy.head()).not.toBe(next);
@@ -356,7 +356,7 @@ describe("production deploy script", () => {
     const next = commit(deploy.upstream, "migrating");
 
     const result = deploy.run({
-      RAKAZO_DEPLOY_REVISION: next,
+      BOBBOT_DEPLOY_REVISION: next,
       DB_PRESENT: "1",
       ROLLBACK_STALE: "1",
     });
@@ -370,8 +370,8 @@ describe("production deploy script", () => {
   it("rejects a Compose file outside the checkout before touching Docker", () => {
     const deploy = fixture();
     const result = deploy.run({
-      RAKAZO_DEPLOY_REVISION: deploy.first,
-      RAKAZO_DEPLOY_COMPOSE_FILES: "../evil.yml",
+      BOBBOT_DEPLOY_REVISION: deploy.first,
+      BOBBOT_DEPLOY_COMPOSE_FILES: "../evil.yml",
     });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Invalid Compose file");
@@ -386,8 +386,8 @@ describe("production deploy script", () => {
     );
 
     const result = deploy.run({
-      RAKAZO_DEPLOY_REVISION: deploy.first,
-      RAKAZO_DEPLOY_COMPOSE_FILES:
+      BOBBOT_DEPLOY_REVISION: deploy.first,
+      BOBBOT_DEPLOY_COMPOSE_FILES:
         "infra/compose/docker-compose.prod.yml infra/compose/docker-compose.prod.docker.yml",
     });
     expect(result.status).toBe(0);

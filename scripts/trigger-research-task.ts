@@ -4,7 +4,7 @@ const PROMPT =
   "Recherchiere bitte die neuesten Trends zu Open-Source MCP-Servern unter https://github.com/punkpeye/awesome-mcp-servers und fasse die 5 wichtigsten Kategorien zusammen. Speichere das Ergebnis als 'research/mcp-trends.md' im gemeinsamen Workspace.";
 
 async function main() {
-  const bot = await findBotByName(process.env.RAKAZO_RESEARCH_BOT_NAME ?? "OpenResearch");
+  const bot = await findBotByName(process.env.BOBBOT_RESEARCH_BOT_NAME ?? "OpenResearch");
   const { runId } = await sendToThread({ botId: bot.id, text: PROMPT });
   console.log(`Research run ${runId} triggered! Waiting...`);
 

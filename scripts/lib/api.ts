@@ -7,8 +7,8 @@
  * the same handlers a signed-in user would reach.
  *
  * Environment:
- *   RAKAZO_API_URL    Base URL of the API. Default: http://127.0.0.1:3100
- *   RAKAZO_API_TOKEN  A better-auth session token. The API accepts it as
+ *   BOBBOT_API_URL    Base URL of the API. Default: http://127.0.0.1:3100
+ *   BOBBOT_API_TOKEN  A better-auth session token. The API accepts it as
  *                     `Authorization: Bearer <token>`, so no cookie jar is required.
  */
 import type {
@@ -23,14 +23,14 @@ import type {
 import { isTerminal } from "@rakazo/core";
 
 function apiBaseUrl(): string {
-  return (process.env.RAKAZO_API_URL ?? "http://127.0.0.1:3100").replace(/\/+$/, "");
+  return (process.env.BOBBOT_API_URL ?? "http://127.0.0.1:3100").replace(/\/+$/, "");
 }
 
 function authToken(): string {
-  const token = process.env.RAKAZO_API_TOKEN;
+  const token = process.env.BOBBOT_API_TOKEN;
   if (!token) {
     throw new Error(
-      "RAKAZO_API_TOKEN is not set. Log in to the web app and export its better-auth session token.",
+      "BOBBOT_API_TOKEN is not set. Log in to the web app and export its better-auth session token.",
     );
   }
   return token;

@@ -64,10 +64,10 @@ test.afterEach(async () => {
 });
 
 function launch(extraEnv: Record<string, string> = {}) {
-  const env = { ...process.env, RAKAZO_PERFORMANCE_USER_DATA: userData };
-  // A stale RAKAZO_WEB_URL from the developer's shell would bypass setup entirely.
-  delete env.RAKAZO_WEB_URL;
-  const executablePath = process.env.RAKAZO_E2E_EXECUTABLE;
+  const env = { ...process.env, BOBBOT_PERFORMANCE_USER_DATA: userData };
+  // A stale BOBBOT_WEB_URL from the developer's shell would bypass setup entirely.
+  delete env.BOBBOT_WEB_URL;
+  const executablePath = process.env.BOBBOT_E2E_EXECUTABLE;
   return electron.launch({
     ...(executablePath ? { executablePath: path.resolve(executablePath) } : {}),
     args: executablePath ? [] : ["."],
@@ -78,7 +78,7 @@ function launch(extraEnv: Record<string, string> = {}) {
 
 test("first run asks whether to use a local or existing instance", async () => {
   app = await launch();
-  if (process.env.RAKAZO_E2E_EXECUTABLE) {
+  if (process.env.BOBBOT_E2E_EXECUTABLE) {
     expect(await app.evaluate(({ app }) => app.isPackaged)).toBe(true);
   }
   const setup = await app.firstWindow();
@@ -516,7 +516,7 @@ test("an unreachable saved server falls back to setup with a recovery message", 
 });
 
 test("the native application menu can reopen setup without exposing setup IPC to the server", async () => {
-  app = await launch({ RAKAZO_WEB_URL: serverUrl });
+  app = await launch({ BOBBOT_WEB_URL: serverUrl });
   const appWindow = await app.firstWindow();
   await expect(appWindow.getByText(APP_MARKER)).toBeVisible();
 
@@ -564,13 +564,13 @@ test("servers on the same host but different ports do not share login cookies", 
   }
 
   try {
-    app = await launch({ RAKAZO_WEB_URL: `http://127.0.0.1:${firstAddress.port}` });
+    app = await launch({ BOBBOT_WEB_URL: `http://127.0.0.1:${firstAddress.port}` });
     const firstWindow = await app.firstWindow();
     await expect(firstWindow.getByText("Cookie stored")).toBeVisible();
     await expect.poll(() => firstWindow.evaluate(() => document.cookie)).toContain("fake-one");
     await app.close();
 
-    app = await launch({ RAKAZO_WEB_URL: `http://127.0.0.1:${secondAddress.port}` });
+    app = await launch({ BOBBOT_WEB_URL: `http://127.0.0.1:${secondAddress.port}` });
     const secondWindow = await app.firstWindow();
     await expect(secondWindow.getByText("Cookies: none")).toBeVisible();
   } finally {
@@ -586,7 +586,7 @@ test("servers on the same host but different ports do not share login cookies", 
 });
 
 test("setup IPC is not reachable from the connected app window", async () => {
-  app = await launch({ RAKAZO_WEB_URL: serverUrl });
+  app = await launch({ BOBBOT_WEB_URL: serverUrl });
   const appWindow = await app.firstWindow();
   await expect(appWindow.getByText(APP_MARKER)).toBeVisible();
 

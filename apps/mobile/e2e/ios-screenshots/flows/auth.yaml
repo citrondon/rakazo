@@ -17,7 +17,7 @@ name: Auth
     timeout: 15000
 - takeScreenshot: 02-sign-in
 - tapOn: "Email"
-- inputText: ${RAKAZO_SCREENSHOT_EMAIL}
+- inputText: ${BOBBOT_SCREENSHOT_EMAIL}
 - tapOn: "Password"
 - inputText: "wrong-password"
 - hideKeyboard

@@ -34,7 +34,7 @@ Models** (oder im Onboarding) eine Verbindung anlegen:
    eigenen Endpunkt.
 2. Bei **OpenAI-compatible**: Server-URL eintragen, **Find models** klicken, Modell wählen. Ein API-Key
    ist optional und nur nötig, wenn der Server ihn verlangt; für öffentliche Hostnamen setzt die
-   `.env` `RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC=1`.
+   `.env` `BOBBOT_OPENAI_COMPAT_ALLOW_PUBLIC=1`.
 3. Laufzeit und Kosten richten sich nach der Modellwahl: Der Trend-Scan läuft viele Male am Tag und
    braucht ein schnelles Modell, die übrigen Presets ein starkes Coding- bzw. Reasoning-Modell.
 

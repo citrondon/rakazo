@@ -31,9 +31,9 @@ tags:
 - tapOn: "Cancel"
 
 - tapOn: "Email"
-- inputText: ${RAKAZO_SCREENSHOT_EMAIL}
+- inputText: ${BOBBOT_SCREENSHOT_EMAIL}
 - tapOn: "Password"
-- inputText: ${RAKAZO_SCREENSHOT_PASSWORD}
+- inputText: ${BOBBOT_SCREENSHOT_PASSWORD}
 - hideKeyboard
 - tapOn: "Sign in"
 - tapOn:
@@ -111,7 +111,7 @@ tags:
 - assertVisible: "Add MCP server"
 - takeScreenshot: "14-integrations-advanced"
 
-- openLink: "rakazo:///thread?botId=${RAKAZO_SCREENSHOT_BOT_ID}&name=Researcher"
+- openLink: "rakazo:///thread?botId=${BOBBOT_SCREENSHOT_BOT_ID}&name=Researcher"
 - extendedWaitUntil:
     visible: "The fixture workspace is ready."
     timeout: 10000
@@ -142,7 +142,7 @@ tags:
 - takeScreenshot: "16-bot-actions"
 - back
 
-- openLink: "rakazo:///bot-settings?botId=${RAKAZO_SCREENSHOT_BOT_ID}"
+- openLink: "rakazo:///bot-settings?botId=${BOBBOT_SCREENSHOT_BOT_ID}"
 - extendedWaitUntil:
     visible: "Researcher"
     timeout: 10000
@@ -153,13 +153,13 @@ tags:
 - assertVisible: "Space default.*"
 - takeScreenshot: "17-bot-settings"
 
-- openLink: "rakazo:///computer?botId=${RAKAZO_SCREENSHOT_BOT_ID}&name=Researcher"
+- openLink: "rakazo:///computer?botId=${BOBBOT_SCREENSHOT_BOT_ID}&name=Researcher"
 - extendedWaitUntil:
     visible: "Take control"
     timeout: 10000
 - takeScreenshot: "18-computer"
 
-- openLink: "rakazo:///group-thread?groupId=${RAKAZO_SCREENSHOT_GROUP_ID}&name=Launch%20team"
+- openLink: "rakazo:///group-thread?groupId=${BOBBOT_SCREENSHOT_GROUP_ID}&name=Launch%20team"
 - extendedWaitUntil:
     visible: "The fixture launch plan is ready."
     timeout: 10000
@@ -173,13 +173,13 @@ tags:
 - assertVisible: "More"
 - back
 
-- openLink: "rakazo:///group-settings?groupId=${RAKAZO_SCREENSHOT_GROUP_ID}"
+- openLink: "rakazo:///group-settings?groupId=${BOBBOT_SCREENSHOT_GROUP_ID}"
 - extendedWaitUntil:
     visible: "Delete group"
     timeout: 10000
 - takeScreenshot: "20-group-settings"
 
-- openLink: "rakazo:///routine?botId=${RAKAZO_SCREENSHOT_BOT_ID}&botName=Researcher&routineId=${RAKAZO_SCREENSHOT_ROUTINE_ID}"
+- openLink: "rakazo:///routine?botId=${BOBBOT_SCREENSHOT_BOT_ID}&botName=Researcher&routineId=${BOBBOT_SCREENSHOT_ROUTINE_ID}"
 - extendedWaitUntil:
     visible: "Weekly fixture review"
     timeout: 10000
@@ -205,25 +205,25 @@ tags:
 - assertVisible: "Customer support"
 - takeScreenshot: "25-new-space-dark"
 
-- openLink: "rakazo:///thread?botId=${RAKAZO_SCREENSHOT_BOT_ID}&name=Researcher"
+- openLink: "rakazo:///thread?botId=${BOBBOT_SCREENSHOT_BOT_ID}&name=Researcher"
 - extendedWaitUntil:
     visible: "The fixture workspace is ready."
     timeout: 10000
 - takeScreenshot: "26-thread-dark"
 
-- openLink: "rakazo:///group-thread?groupId=${RAKAZO_SCREENSHOT_GROUP_ID}&name=Launch%20team"
+- openLink: "rakazo:///group-thread?groupId=${BOBBOT_SCREENSHOT_GROUP_ID}&name=Launch%20team"
 - extendedWaitUntil:
     visible: "The fixture launch plan is ready."
     timeout: 10000
 - takeScreenshot: "27-group-thread-dark"
 
-- openLink: "rakazo:///group-settings?groupId=${RAKAZO_SCREENSHOT_GROUP_ID}"
+- openLink: "rakazo:///group-settings?groupId=${BOBBOT_SCREENSHOT_GROUP_ID}"
 - assertVisible: "Delete group"
 - takeScreenshot: "28-group-settings-dark"
 
 - openLink: "rakazo:///account"
 - tapOn: "Light"
-- openLink: "rakazo:///thread?botId=${RAKAZO_SCREENSHOT_BOT_ID}&name=Researcher"
+- openLink: "rakazo:///thread?botId=${BOBBOT_SCREENSHOT_BOT_ID}&name=Researcher"
 - assertVisible: "The fixture workspace is ready."
 - takeScreenshot: "29-thread-light-restored"
 

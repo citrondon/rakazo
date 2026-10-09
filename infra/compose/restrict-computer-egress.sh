@@ -30,10 +30,10 @@
 
 set -Eeuo pipefail
 
-IPTABLES="${RAKAZO_IPTABLES:-iptables}"
-IP6TABLES="${RAKAZO_IP6TABLES:-ip6tables}"
-SYSTEMCTL="${RAKAZO_SYSTEMCTL:-systemctl}"
-IF_INET6="${RAKAZO_IF_INET6:-/proc/net/if_inet6}"
+IPTABLES="${BOBBOT_IPTABLES:-${RAKAZO_IPTABLES:-iptables}}"
+IP6TABLES="${BOBBOT_IP6TABLES:-${RAKAZO_IP6TABLES:-ip6tables}}"
+SYSTEMCTL="${BOBBOT_SYSTEMCTL:-${RAKAZO_SYSTEMCTL:-systemctl}}"
+IF_INET6="${BOBBOT_IF_INET6:-${RAKAZO_IF_INET6:-/proc/net/if_inet6}}"
 BRIDGE_PREFIX="rakazo-c"
 INSTALLED_PATH=/usr/local/sbin/rakazo-computer-egress
 UNIT_PATH=/etc/systemd/system/rakazo-computer-egress.service
@@ -301,12 +301,12 @@ print_family() {
 
 require_root() {
   if ((EUID == 0)); then return 0; fi
-  if [[ "${RAKAZO_EGRESS_SUDOED:-}" == "1" ]]; then
+  if [[ "${BOBBOT_EGRESS_SUDOED:-${RAKAZO_EGRESS_SUDOED:-}}" == "1" ]]; then
     echo "root privileges required" >&2
     exit 1
   fi
-  export RAKAZO_EGRESS_SUDOED=1
-  exec sudo --preserve-env=RAKAZO_EGRESS_SUDOED bash "$0" "$@"
+  export BOBBOT_EGRESS_SUDOED=1
+  exec sudo --preserve-env=BOBBOT_EGRESS_SUDOED bash "$0" "$@"
 }
 
 install_persistence() {

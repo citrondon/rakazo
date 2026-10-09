@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import type { ServerUpdateRun } from "@rakazo/contracts";
 import {
+  applyLegacyEnvAliases,
   type ComposeUpdateStep,
   chooseUpdateStrategy,
   commitImageTag,
@@ -105,7 +106,7 @@ export function commandEnvironment(
   // allowlist rebuilds the child environment from scratch, so anything set on the service is
   // dropped before git ever runs. The value is the deployment directory the sidecar already
   // trusts, and it is applied after `overrides` so a caller cannot widen it.
-  const deployDir = source.RAKAZO_DEPLOY_DIR?.trim();
+  const deployDir = source.BOBBOT_DEPLOY_DIR?.trim();
   const gitOwnership =
     deployDir === undefined || deployDir === ""
       ? {}
@@ -465,7 +466,7 @@ export function createUpdaterApp(
     if (decision.strategy === "build") {
       if (!checkout.present) {
         throw new UpdateRefused(
-          "Building a fork needs the deployment's git checkout, and RAKAZO_DEPLOY_DIR has no .git directory. Clone the fork to the deployment directory, or switch back to the official repository to use published images.",
+          "Building a fork needs the deployment's git checkout, and BOBBOT_DEPLOY_DIR has no .git directory. Clone the fork to the deployment directory, or switch back to the official repository to use published images.",
         );
       }
       if (checkout.remoteUrl === null) {
@@ -781,6 +782,9 @@ export function createUpdaterApp(
 
 function startUpdater() {
   const logger = createRootLogger(SERVICE_NAMES.updater);
+  // Compose passes the new names; a deployment that still exports the earlier
+  // ones keeps working.
+  applyLegacyEnvAliases();
   const config = resolveUpdaterConfig(process.env);
   const app = createUpdaterApp(config, { logger });
   const server = serve({ fetch: app.fetch, hostname: config.host, port: config.port }, () => {

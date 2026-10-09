@@ -28,7 +28,7 @@ function parseArgs(argv) {
   }
   return {
     action,
-    localDir: path.resolve(flags.get("--dir") ?? process.env.RAKAZO_WORKSPACE_DIR ?? "workspace"),
+    localDir: path.resolve(flags.get("--dir") ?? process.env.BOBBOT_WORKSPACE_DIR ?? "workspace"),
     intervalMs: Number(flags.get("--interval") ?? 1000),
   };
 }

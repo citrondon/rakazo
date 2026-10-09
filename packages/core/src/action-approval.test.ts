@@ -408,12 +408,12 @@ describe("applyJudgeDecision", () => {
 describe("deploymentActionFailClosed", () => {
   it("is off unless the deployment turns it on", () => {
     expect(deploymentActionFailClosed({})).toBe(false);
-    expect(deploymentActionFailClosed({ RAKAZO_ACTION_FAIL_CLOSED: "false" })).toBe(false);
+    expect(deploymentActionFailClosed({ BOBBOT_ACTION_FAIL_CLOSED: "false" })).toBe(false);
   });
 
   it("reads the same spellings as the other deployment flags", () => {
     for (const value of ["1", "true", "yes", "on"]) {
-      expect(deploymentActionFailClosed({ RAKAZO_ACTION_FAIL_CLOSED: value })).toBe(true);
+      expect(deploymentActionFailClosed({ BOBBOT_ACTION_FAIL_CLOSED: value })).toBe(true);
     }
   });
 });

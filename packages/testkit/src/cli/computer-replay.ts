@@ -56,7 +56,7 @@ async function main() {
   Object.assign(env, {
     RUN_COMPUTER_REPLAY_DOCKER: "1",
     DATA_DIR: path.join(directory, "data"),
-    RAKAZO_COMPUTER_IMAGE: image,
+    BOBBOT_COMPUTER_IMAGE: image,
     SANDBOX_SUPERVISOR_TOKEN: "computer-replay-fixture-token-32chars",
     SANDBOX_SCREEN_NETWORK: "published",
     SANDBOX_SCREEN_HOST: "127.0.0.1",

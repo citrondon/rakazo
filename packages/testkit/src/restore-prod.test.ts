@@ -82,7 +82,7 @@ function fixture() {
   // .env is operator state, not tracked content, so editing it never looks dirty.
   write(
     path.join(checkout, ".env"),
-    "ENCRYPTION_KEY=fake-key-32-characters\nRAKAZO_HOST=app.example.test\n",
+    "ENCRYPTION_KEY=fake-key-32-characters\nBOBBOT_HOST=app.example.test\n",
   );
 
   const snapshot = path.join(snapshots, "rakazo-20261005T000000Z");
@@ -133,7 +133,7 @@ exit 0
     PATH: [bin, "/usr/bin", "/bin"].join(path.delimiter),
     HOME: root,
     COMMAND_LOG: path.join(root, "commands.log"),
-    RAKAZO_RESTORE_DIR: checkout,
+    BOBBOT_RESTORE_DIR: checkout,
     SQL_INPUT: path.join(root, "input.sql"),
     PG_UP: path.join(root, "pg-up"),
   };
@@ -179,9 +179,9 @@ describe("production snapshot restore", () => {
     expect(readFileSync(deploy.env.SQL_INPUT, "utf8")).toContain("custom-format-dump-contents");
   });
 
-  it("accepts the snapshot through RAKAZO_RESTORE_SNAPSHOT", () => {
+  it("accepts the snapshot through BOBBOT_RESTORE_SNAPSHOT", () => {
     const deploy = fixture();
-    const result = deploy.run([], { RAKAZO_RESTORE_SNAPSHOT: deploy.snapshot });
+    const result = deploy.run([], { BOBBOT_RESTORE_SNAPSHOT: deploy.snapshot });
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain("Production restore complete");
   });
@@ -215,7 +215,7 @@ describe("production snapshot restore", () => {
     const deploy = fixture();
     const result = deploy.run([deploy.snapshot], { DB_PRESENT: "1" });
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("RAKAZO_RESTORE_FORCE=1");
+    expect(result.stderr).toContain("BOBBOT_RESTORE_FORCE=1");
     expect(deploy.commands().filter((line) => !line.includes("pg_isready"))).toEqual([]);
   });
 
@@ -239,7 +239,7 @@ describe("production snapshot restore", () => {
 
   it("refuses to start application services without the original encryption key", () => {
     const deploy = fixture();
-    write(path.join(deploy.checkout, ".env"), "RAKAZO_HOST=app.example.test\n");
+    write(path.join(deploy.checkout, ".env"), "BOBBOT_HOST=app.example.test\n");
 
     const result = deploy.run([deploy.snapshot]);
     expect(result.status).toBe(1);
@@ -251,7 +251,7 @@ describe("production snapshot restore", () => {
     const deploy = fixture();
     write(path.join(deploy.checkout, "infra/compose/docker-compose.prod.yml"), "name: edited\n");
 
-    const result = deploy.run([deploy.snapshot], { RAKAZO_RESTORE_DIR: deploy.checkout });
+    const result = deploy.run([deploy.snapshot], { BOBBOT_RESTORE_DIR: deploy.checkout });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("dirty");
     expect(deploy.commands()).toEqual([]);
@@ -260,12 +260,12 @@ describe("production snapshot restore", () => {
   it("rejects relative targets, missing checkouts, and missing snapshots", () => {
     const deploy = fixture();
 
-    const relative = deploy.run([deploy.snapshot], { RAKAZO_RESTORE_DIR: "relative" });
+    const relative = deploy.run([deploy.snapshot], { BOBBOT_RESTORE_DIR: "relative" });
     expect(relative.status).toBe(1);
     expect(relative.stderr).toContain("absolute path");
     expect(deploy.commands()).toEqual([]);
 
-    const absent = deploy.run([deploy.snapshot], { RAKAZO_RESTORE_DIR: "/no/such/checkout" });
+    const absent = deploy.run([deploy.snapshot], { BOBBOT_RESTORE_DIR: "/no/such/checkout" });
     expect(absent.status).toBe(1);
     expect(absent.stderr).toContain("No .env");
     expect(deploy.commands()).toEqual([]);

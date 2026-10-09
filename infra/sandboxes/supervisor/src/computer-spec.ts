@@ -3,7 +3,7 @@ import path from "node:path";
 import { MAX_DESKTOP_DISPLAY, screenPorts } from "@rakazo/core/node/desktop-runtime";
 import type Docker from "dockerode";
 
-export const COMPUTER_IMAGE = process.env.RAKAZO_COMPUTER_IMAGE ?? "rakazo/computer:local";
+export const COMPUTER_IMAGE = process.env.BOBBOT_COMPUTER_IMAGE ?? "rakazo/computer:local";
 export const COMPUTER_UID = 1000;
 export const COMPUTER_GID = 1000;
 export const COMPUTER_USER = `${COMPUTER_UID}:${COMPUTER_GID}`;
@@ -122,16 +122,16 @@ function envOrDefault(name: string, fallback: string): string {
 /** The host resource ceilings applied to every bot computer. */
 export function computerResourceLimits() {
   const memoryBytes = parseMemoryBytes(
-    "RAKAZO_COMPUTER_MEMORY",
-    envOrDefault("RAKAZO_COMPUTER_MEMORY", DEFAULT_COMPUTER_MEMORY),
+    "BOBBOT_COMPUTER_MEMORY",
+    envOrDefault("BOBBOT_COMPUTER_MEMORY", DEFAULT_COMPUTER_MEMORY),
   );
   const nanoCpus = parseNanoCpus(
-    "RAKAZO_COMPUTER_CPUS",
-    envOrDefault("RAKAZO_COMPUTER_CPUS", DEFAULT_COMPUTER_CPUS),
+    "BOBBOT_COMPUTER_CPUS",
+    envOrDefault("BOBBOT_COMPUTER_CPUS", DEFAULT_COMPUTER_CPUS),
   );
   const pidsLimit = parsePidsLimit(
-    "RAKAZO_COMPUTER_PIDS_LIMIT",
-    envOrDefault("RAKAZO_COMPUTER_PIDS_LIMIT", DEFAULT_COMPUTER_PIDS_LIMIT),
+    "BOBBOT_COMPUTER_PIDS_LIMIT",
+    envOrDefault("BOBBOT_COMPUTER_PIDS_LIMIT", DEFAULT_COMPUTER_PIDS_LIMIT),
   );
   return {
     // Memory and MemorySwap are set together: leaving MemorySwap unset lets the
@@ -315,7 +315,7 @@ export function containerCreateOptions(input: ComputerCreateInput) {
       "PATH=/home/rakazo/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
       "NPM_CONFIG_PREFIX=/home/rakazo/.local",
       "PIP_USER=1",
-      ...(input.controlToken ? [`RAKAZO_COMPUTER_CONTROL_TOKEN=${input.controlToken}`] : []),
+      ...(input.controlToken ? [`BOBBOT_COMPUTER_CONTROL_TOKEN=${input.controlToken}`] : []),
     ],
     Labels: {
       "rakazo.managed": "true",

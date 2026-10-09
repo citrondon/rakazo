@@ -18,7 +18,7 @@ const DEDICATED_SECRET_PLACEHOLDERS = new Set([
 ]);
 
 export function isDevSecretAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
-  if (env.RAKAZO_ALLOW_DEV_SECRETS === "1") return true;
+  if (env.BOBBOT_ALLOW_DEV_SECRETS === "1") return true;
   if (env.VITEST === "true" || env.VITEST === "1") return true;
   const nodeEnv = env.NODE_ENV;
   return nodeEnv === "development" || nodeEnv === "test";
@@ -108,11 +108,11 @@ export function resolveScreenProxySecret(env: NodeJS.ProcessEnv = process.env): 
  */
 export function resolveUpdaterToken(env: NodeJS.ProcessEnv = process.env): string {
   return resolveDedicatedSecret(env, {
-    name: "RAKAZO_UPDATER_TOKEN",
+    name: "BOBBOT_UPDATER_TOKEN",
     conflicts: ["BETTER_AUTH_SECRET", "SANDBOX_SUPERVISOR_TOKEN", "SCREEN_PROXY_SECRET"],
-    missingMessage: "Set RAKAZO_UPDATER_TOKEN to a dedicated random updater credential.",
+    missingMessage: "Set BOBBOT_UPDATER_TOKEN to a dedicated random updater credential.",
     conflictMessage:
-      "RAKAZO_UPDATER_TOKEN must differ from BETTER_AUTH_SECRET, SANDBOX_SUPERVISOR_TOKEN, and SCREEN_PROXY_SECRET.",
+      "BOBBOT_UPDATER_TOKEN must differ from BETTER_AUTH_SECRET, SANDBOX_SUPERVISOR_TOKEN, and SCREEN_PROXY_SECRET.",
   });
 }
 

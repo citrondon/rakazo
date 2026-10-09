@@ -12,7 +12,7 @@ const targetCommit = "2".repeat(40);
 const oldTag = `local-${currentCommit}`;
 const originalRemote = "https://github.com/example/previous-fork";
 const nextRemote = "https://github.com/example/next-fork";
-const originalEnv = `RAKAZO_IMAGE_TAG=${oldTag}\nRAKAZO_IMAGE_TAG_PREVIOUS=v0.9.0\n`;
+const originalEnv = `BOBBOT_IMAGE_TAG=${oldTag}\nBOBBOT_IMAGE_TAG_PREVIOUS=v0.9.0\n`;
 const directories: string[] = [];
 
 afterEach(async () => {
@@ -55,7 +55,7 @@ if (command === "docker") {
   call.compose = fs.readFileSync(args[args.indexOf("--file") + 1], "utf8");
   call.serviceEnv = fs.readFileSync(fixture.serviceEnv, "utf8");
   call.envFile = fs.readFileSync(args[args.indexOf("--env-file") + 1], "utf8");
-  call.imageTag = process.env.RAKAZO_IMAGE_TAG;
+  call.imageTag = process.env.BOBBOT_IMAGE_TAG;
   log();
   if (!args.includes("up")) fail("Unexpected Docker command");
   if (args.includes("--build") && fixture.failures.length > 0) fail("new API unhealthy");
@@ -99,14 +99,14 @@ async function deployment(options: { failures: Failure[]; branch?: string; compo
   const bin = path.join(deployDir, "fake-bin");
   const composeFile = path.join(deployDir, options.composePath ?? DEFAULT_COMPOSE_FILE);
   const config = resolveUpdaterConfig({
-    RAKAZO_DEPLOY_DIR: deployDir,
-    RAKAZO_UPDATER_TOKEN: token,
-    RAKAZO_COMPOSE_FILE: options.composePath,
+    BOBBOT_DEPLOY_DIR: deployDir,
+    BOBBOT_UPDATER_TOKEN: token,
+    BOBBOT_COMPOSE_FILE: options.composePath,
     COMPOSE_PROJECT_NAME: "fixture-stack",
   });
   const serviceEnv = path.join(path.dirname(composeFile), "service.env");
   const compose = (revision: string) =>
-    `services:\n  api:\n    image: example/app:\${RAKAZO_IMAGE_TAG}\n    env_file: ./service.env\n    command: ${revision}\n`;
+    `services:\n  api:\n    image: example/app:\${BOBBOT_IMAGE_TAG}\n    env_file: ./service.env\n    command: ${revision}\n`;
   await Promise.all([
     mkdir(bin),
     mkdir(path.join(deployDir, ".git")),
@@ -291,7 +291,7 @@ describe.skipIf(process.platform === "win32")("fork recovery through fake execut
     expect(fixture.calls.filter((call) => call.command === "docker")).toHaveLength(1);
     expect(fixture.state).toEqual({ commit: targetCommit, branch: "main", remote: nextRemote });
     expect(await readFile(fixture.config.envFile, "utf8")).toContain(
-      `RAKAZO_IMAGE_TAG=local-${targetCommit}\n`,
+      `BOBBOT_IMAGE_TAG=local-${targetCommit}\n`,
     );
   });
 });

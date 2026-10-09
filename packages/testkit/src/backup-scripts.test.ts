@@ -190,7 +190,7 @@ describe("development backup failures", () => {
     const f = fixture();
     if (scenario === "skipped") write(path.join(f.checkout, "data/home.txt"), "example home");
     const result = f.run("scripts/backup.sh", ["example"], {
-      RAKAZO_BACKUP_SKIP_HOMES: scenario === "skipped" ? "1" : "0",
+      BOBBOT_BACKUP_SKIP_HOMES: scenario === "skipped" ? "1" : "0",
     });
     expect(result.status, result.stderr).toBe(0);
     expect(contents(path.join(f.checkout, "backups/example/homes.tgz"))).toBe("");
@@ -287,7 +287,7 @@ describe("production backup deployment and archive behavior", () => {
     const result = f.run(
       "infra/compose/backup-prod.sh",
       [],
-      custom ? { RAKAZO_DEPLOY_DIR: deployment } : {},
+      custom ? { BOBBOT_DEPLOY_DIR: deployment } : {},
     );
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain("Verified BobBot backup");
@@ -312,7 +312,7 @@ describe("production backup deployment and archive behavior", () => {
 
   it("rejects relative deployment paths before any backup commands", () => {
     const f = fixture();
-    const result = f.run("infra/compose/backup-prod.sh", [], { RAKAZO_DEPLOY_DIR: "relative" });
+    const result = f.run("infra/compose/backup-prod.sh", [], { BOBBOT_DEPLOY_DIR: "relative" });
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("absolute path");
     expect(f.commands()).toEqual([]);

@@ -51,7 +51,7 @@ def window_profile(pid):
 
 def browser_profile():
     """Profile rakazo-browser would use for this display."""
-    explicit = os.environ.get("RAKAZO_BROWSER_PROFILE", "")
+    explicit = os.environ.get("BOBBOT_BROWSER_PROFILE", "")
     if explicit:
         return explicit
     display = os.environ.get("DISPLAY", ":1")

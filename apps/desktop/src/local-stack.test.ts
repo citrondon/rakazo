@@ -54,7 +54,7 @@ describe("resolveImageTag", () => {
     expect(resolveImageTag({ version: "0.2.0-beta.1", packaged: true })).toBe("edge");
   });
 
-  it("lets RAKAZO_IMAGE_TAG override everything", () => {
+  it("lets BOBBOT_IMAGE_TAG override everything", () => {
     expect(resolveImageTag({ version: "0.2.0", packaged: true, override: " v9.9.9 " })).toBe(
       "v9.9.9",
     );
@@ -77,10 +77,10 @@ describe("renderStackEnv", () => {
     ]) {
       expect(lines).toContain(`${name}=${"ab".repeat(32)}`);
     }
-    expect(lines.some((line) => line.startsWith("RAKAZO_IMAGE_TAG="))).toBe(false);
-    expect(lines.some((line) => line.startsWith("RAKAZO_COMPUTER_IMAGE_TAG="))).toBe(false);
+    expect(lines.some((line) => line.startsWith("BOBBOT_IMAGE_TAG="))).toBe(false);
+    expect(lines.some((line) => line.startsWith("BOBBOT_COMPUTER_IMAGE_TAG="))).toBe(false);
     // Everything else, including the image names and empty optional keys, stays verbatim.
-    expect(lines).toContain("RAKAZO_IMAGE=ghcr.io/elie222/rakazo/app");
+    expect(lines).toContain("BOBBOT_IMAGE=ghcr.io/elie222/rakazo/app");
     expect(lines).toContain("SANDBOX_PROVIDER=docker");
     expect(lines).toContain("OPENROUTER_API_KEY=");
     expect(rendered.endsWith("\n")).toBe(template.endsWith("\n"));
@@ -406,21 +406,21 @@ describe("LocalStackController", () => {
       expect(call.binary).toBe("/usr/bin/docker");
       expect(call.cwd).toBe(stackPath);
       expect(call.env).toMatchObject({
-        RAKAZO_IMAGE_TAG: "v1.2.3",
-        RAKAZO_COMPUTER_IMAGE_TAG: "v1.2.3",
+        BOBBOT_IMAGE_TAG: "v1.2.3",
+        BOBBOT_COMPUTER_IMAGE_TAG: "v1.2.3",
         COMPOSE_PROGRESS: "plain",
         HOME: "/home/me",
       });
       expect(call.env).not.toHaveProperty("OPENROUTER_API_KEY");
     }
-    expect(calls.at(-1)?.env.RAKAZO_DESKTOP_STACK_TOKEN).toBe("ab".repeat(32));
+    expect(calls.at(-1)?.env.BOBBOT_DESKTOP_STACK_TOKEN).toBe("ab".repeat(32));
 
     await expect(readFile(path.join(stackPath, STACK_COMPOSE_FILE), "utf8")).resolves.toBe(
       await readFile(path.join(COMPOSE_DIR, STACK_COMPOSE_FILE), "utf8"),
     );
     const env = await readFile(path.join(stackPath, STACK_ENV_FILE), "utf8");
     expect(env).toContain(`POSTGRES_PASSWORD=${"ab".repeat(16)}`);
-    expect(env).not.toContain("RAKAZO_IMAGE_TAG=");
+    expect(env).not.toContain("BOBBOT_IMAGE_TAG=");
     if (process.platform !== "win32") {
       expect((await stat(path.join(stackPath, STACK_ENV_FILE))).mode & 0o777).toBe(0o600);
       expect((await stat(stackPath)).mode & 0o777).toBe(0o700);
@@ -650,10 +650,10 @@ describe("LocalStackController", () => {
     expect(stack.webUrl()).toBe("http://127.0.0.1:45174");
     expect(calls.filter((call) => call.args[7] === "pull")).toHaveLength(1);
     expect(
-      calls.filter((call) => call.args[7] === "up").map((call) => call.env.RAKAZO_WEB_PORT),
+      calls.filter((call) => call.args[7] === "up").map((call) => call.env.BOBBOT_WEB_PORT),
     ).toEqual(["5173", "45174"]);
     expect(calls.at(-1)?.env).toMatchObject({
-      RAKAZO_API_PORT: "0",
+      BOBBOT_API_PORT: "0",
       WEB_ORIGIN: stack.webUrl(),
       BETTER_AUTH_URL: stack.webUrl(),
       API_URL: stack.webUrl(),
@@ -685,7 +685,7 @@ describe("LocalStackController", () => {
     expect(stack.webUrl()).toBe("http://127.0.0.1:45174");
     expect(state.output.some((line) => line.includes("already in use"))).toBe(true);
     expect(
-      calls.filter((call) => call.args[7] === "up").map((call) => call.env.RAKAZO_WEB_PORT),
+      calls.filter((call) => call.args[7] === "up").map((call) => call.env.BOBBOT_WEB_PORT),
     ).toEqual(["45174"]);
     expect(await readFile(path.join(root, "stack", ".desktop-web-url"), "utf8")).toBe(
       "http://127.0.0.1:45174",

@@ -742,7 +742,7 @@ describe("connector read-only metadata and approval enforcement", () => {
 
 describe("fail-closed enforcement", () => {
   beforeEach(() => {
-    vi.stubEnv("RAKAZO_ACTION_FAIL_CLOSED", "1");
+    vi.stubEnv("BOBBOT_ACTION_FAIL_CLOSED", "1");
   });
   afterEach(() => {
     vi.unstubAllEnvs();

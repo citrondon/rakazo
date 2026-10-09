@@ -39,10 +39,10 @@ services:
       SUPERVISOR_PORT: "7091"
       SANDBOX_SUPERVISOR_TOKEN: topology-only-supervisor-token-at-least-32-characters
       DOCKER_SOCKET: /var/run/docker.sock
-      RAKAZO_COMPUTER_IMAGE: ${TOPOLOGY_COMPUTER_IMAGE:-rakazo/computer:topology}
-      RAKAZO_COMPUTER_MEMORY: ${RAKAZO_COMPUTER_MEMORY:-2g}
-      RAKAZO_COMPUTER_CPUS: ${RAKAZO_COMPUTER_CPUS:-2}
-      RAKAZO_COMPUTER_PIDS_LIMIT: ${RAKAZO_COMPUTER_PIDS_LIMIT:-2048}
+      BOBBOT_COMPUTER_IMAGE: ${TOPOLOGY_COMPUTER_IMAGE:-rakazo/computer:topology}
+      BOBBOT_COMPUTER_MEMORY: ${BOBBOT_COMPUTER_MEMORY:-${RAKAZO_COMPUTER_MEMORY:-2g}}
+      BOBBOT_COMPUTER_CPUS: ${BOBBOT_COMPUTER_CPUS:-${RAKAZO_COMPUTER_CPUS:-2}}
+      BOBBOT_COMPUTER_PIDS_LIMIT: ${BOBBOT_COMPUTER_PIDS_LIMIT:-${RAKAZO_COMPUTER_PIDS_LIMIT:-2048}}
       SANDBOX_SCREEN_NETWORK: isolated
       SANDBOX_COMPUTER_EGRESS: ${SANDBOX_COMPUTER_EGRESS:-open}
       LOG_LEVEL: info
@@ -131,7 +131,7 @@ services:
     environment:
       NODE_ENV: production
       API_PROXY_TARGET: http://api:3100
-      RAKAZO_HOST: localhost
+      BOBBOT_HOST: localhost
       SCREEN_PROXY_SECRET: topology-only-screen-proxy-secret-at-least-32-characters
     depends_on:
       api:

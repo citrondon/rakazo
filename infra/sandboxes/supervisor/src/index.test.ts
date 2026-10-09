@@ -365,7 +365,7 @@ describe("sandbox supervisor input containment", () => {
       argv: [
         "env",
         "DISPLAY=:2",
-        `RAKAZO_BROWSER_PROFILE=${profile}`,
+        `BOBBOT_BROWSER_PROFILE=${profile}`,
         "rakazo-focus-or-launch",
         "rakazo-browser",
       ],
@@ -397,7 +397,7 @@ describe("sandbox supervisor input containment", () => {
         argv: [
           "env",
           "DISPLAY=:2",
-          `RAKAZO_BROWSER_PROFILE=${profile}`,
+          `BOBBOT_BROWSER_PROFILE=${profile}`,
           "rakazo-browser",
           "https://example.com",
         ],
@@ -410,7 +410,7 @@ describe("sandbox supervisor input containment", () => {
         argv: [
           "env",
           "DISPLAY=:2",
-          `RAKAZO_BROWSER_PROFILE=${profile}`,
+          `BOBBOT_BROWSER_PROFILE=${profile}`,
           "xdg-open",
           "https://example.com",
         ],
@@ -574,7 +574,7 @@ describe("sandbox supervisor input containment", () => {
     expect(interactiveScreenCommand(true, "lease-new")).toMatch(/6080/);
     expect(interactiveScreenCommand(true, "lease-new")).not.toContain("sockets/view-1-");
     expect(interactiveScreenCommand(false, "lease-old")).toContain("= 'lease-old'");
-    expect(interactiveScreenCommand(false, "lease-old")).toContain("RAKAZO_CONTROL_RELEASED");
+    expect(interactiveScreenCommand(false, "lease-old")).toContain("BOBBOT_CONTROL_RELEASED");
   });
 
   it("assigns distinct screen indexes per Team bot and starts extra displays", () => {

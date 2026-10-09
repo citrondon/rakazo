@@ -38,7 +38,7 @@ test("live page helper preserves identity, masks passwords, and reports partial 
     }).toPass({ timeout: 5_000 });
     async function command(name: string, args: Record<string, unknown> = {}) {
       const { stdout } = await execute("python3", [helper, name, JSON.stringify(args)], {
-        env: { ...process.env, RAKAZO_CDP_PORT: port },
+        env: { ...process.env, BOBBOT_CDP_PORT: port },
         timeout: 30_000,
       });
       return JSON.parse(stdout);

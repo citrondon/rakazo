@@ -172,7 +172,7 @@ class MainTest(unittest.TestCase):
         # The fixture PIDs expose no profile, so the only chromium window is raised.
         self.assertEqual(calls, [("run", ["wmctrl", "-ia", "0x01800003"])])
         with patch.object(helper, "window_profile", return_value="/profiles/other"), patch.dict(
-            os.environ, {"RAKAZO_BROWSER_PROFILE": "/profiles/mine"}
+            os.environ, {"BOBBOT_BROWSER_PROFILE": "/profiles/mine"}
         ):
             calls = self.run_wrapper(["rakazo-browser"])
         self.assertEqual(
@@ -193,7 +193,7 @@ class ControlArgvTest(unittest.TestCase):
             [
                 "env",
                 "DISPLAY=:1",
-                f"RAKAZO_BROWSER_PROFILE={PROFILE}",
+                f"BOBBOT_BROWSER_PROFILE={PROFILE}",
                 "rakazo-focus-or-launch",
                 "rakazo-browser",
                 "https://example.test",
@@ -217,7 +217,7 @@ class ControlArgvTest(unittest.TestCase):
             [
                 "env",
                 "DISPLAY=:1",
-                f"RAKAZO_BROWSER_PROFILE={PROFILE}",
+                f"BOBBOT_BROWSER_PROFILE={PROFILE}",
                 "rakazo-focus-or-launch",
                 "xterm",
             ],
@@ -236,7 +236,7 @@ class ControlArgvTest(unittest.TestCase):
         argv = [
             "env",
             "DISPLAY=:1",
-            f"RAKAZO_BROWSER_PROFILE={PROFILE}",
+            f"BOBBOT_BROWSER_PROFILE={PROFILE}",
             "rakazo-focus-or-launch",
             "rakazo-browser",
         ]
@@ -309,19 +309,19 @@ class ScriptTest(unittest.TestCase):
                 wmctrl = bin_dir / "wmctrl"
                 wmctrl.write_text(
                     "#!/bin/sh\n"
-                    'if [ "$1" = "-lxp" ]; then cat "$RAKAZO_TEST_WINDOWS"; exit 0; fi\n'
-                    'printf "wmctrl %s\\n" "$*" >> "$RAKAZO_TEST_ARGS"\n'
+                    'if [ "$1" = "-lxp" ]; then cat "$BOBBOT_TEST_WINDOWS"; exit 0; fi\n'
+                    'printf "wmctrl %s\\n" "$*" >> "$BOBBOT_TEST_ARGS"\n'
                 )
                 browser = bin_dir / "rakazo-browser"
-                browser.write_text('#!/bin/sh\nprintf "browser %s\\n" "$*" >> "$RAKAZO_TEST_ARGS"\n')
+                browser.write_text('#!/bin/sh\nprintf "browser %s\\n" "$*" >> "$BOBBOT_TEST_ARGS"\n')
                 wmctrl.chmod(0o755)
                 browser.chmod(0o755)
                 env = {
                     **os.environ,
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}",
-                    "RAKAZO_BROWSER_PROFILE": "/profiles/mine",
-                    "RAKAZO_TEST_WINDOWS": str(windows),
-                    "RAKAZO_TEST_ARGS": str(args_log),
+                    "BOBBOT_BROWSER_PROFILE": "/profiles/mine",
+                    "BOBBOT_TEST_WINDOWS": str(windows),
+                    "BOBBOT_TEST_ARGS": str(args_log),
                 }
                 script = str(Path(__file__).with_name("rakazo-focus-or-launch"))
                 result = subprocess.run(

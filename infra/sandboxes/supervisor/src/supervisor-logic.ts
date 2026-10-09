@@ -366,7 +366,7 @@ export function containerActionStep(
     argv = [
       "env",
       `DISPLAY=${display}`,
-      ...(browserProfile ? [`RAKAZO_BROWSER_PROFILE=${browserProfile}`] : []),
+      ...(browserProfile ? [`BOBBOT_BROWSER_PROFILE=${browserProfile}`] : []),
       "xdg-open",
       target,
     ];
@@ -375,7 +375,7 @@ export function containerActionStep(
     argv = [
       "env",
       `DISPLAY=${display}`,
-      ...(browser && browserProfile ? [`RAKAZO_BROWSER_PROFILE=${browserProfile}`] : []),
+      ...(browser && browserProfile ? [`BOBBOT_BROWSER_PROFILE=${browserProfile}`] : []),
       // focus routes through the image wrapper, which raises a matching window
       // by WM_CLASS or execs the allowlisted launcher to spawn one.
       ...(action.kind === "focus" ? ["rakazo-focus-or-launch"] : []),

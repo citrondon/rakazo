@@ -25,10 +25,10 @@ Pass all fixture values at invocation time so credentials never land in source c
 
 ```sh
 pnpm --filter @rakazo/mobile test:e2e -- \
-  -e RAKAZO_E2E_EMAIL=mobile-smoke@example.test \
-  -e RAKAZO_E2E_PASSWORD='replace-with-the-disposable-password' \
-  -e RAKAZO_E2E_BOT_NAME=MaestroSmoke-001 \
-  -e RAKAZO_E2E_MESSAGE=mobile-smoke-message
+  -e BOBBOT_E2E_EMAIL=mobile-smoke@example.test \
+  -e BOBBOT_E2E_PASSWORD='replace-with-the-disposable-password' \
+  -e BOBBOT_E2E_BOT_NAME=MaestroSmoke-001 \
+  -e BOBBOT_E2E_MESSAGE=mobile-smoke-message
 ```
 
 Use a new bot name for each run if the backing database is persistent. `clearState` resets the app's

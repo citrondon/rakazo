@@ -2,14 +2,14 @@
 
 set -Eeuo pipefail
 
-DOWNLOAD_BASE="${RAKAZO_DOWNLOAD_BASE:-https://raw.githubusercontent.com/elie222/rakazo/main/infra/compose}"
+DOWNLOAD_BASE="${BOBBOT_DOWNLOAD_BASE:-${RAKAZO_DOWNLOAD_BASE:-https://raw.githubusercontent.com/elie222/rakazo/main/infra/compose}}"
 while [[ "$DOWNLOAD_BASE" == */ ]]; do
   DOWNLOAD_BASE="${DOWNLOAD_BASE%/}"
 done
 case "$DOWNLOAD_BASE" in
   https://*) ;;
   *)
-    echo "BobBot setup failed: RAKAZO_DOWNLOAD_BASE must use https." >&2
+    echo "BobBot setup failed: BOBBOT_DOWNLOAD_BASE must use https." >&2
     exit 1
     ;;
 esac
@@ -22,10 +22,10 @@ readonly ENV_FILE=".env"
 prepare_only=false
 skip_existing=false
 pull_never=false
-if [[ "${RAKAZO_DOWNLOAD_SKIP_EXISTING:-}" == "1" ]]; then
+if [[ "${BOBBOT_DOWNLOAD_SKIP_EXISTING:-${RAKAZO_DOWNLOAD_SKIP_EXISTING:-}}" == "1" ]]; then
   skip_existing=true
 fi
-if [[ "${RAKAZO_PULL_NEVER:-}" == "1" ]]; then
+if [[ "${BOBBOT_PULL_NEVER:-${RAKAZO_PULL_NEVER:-}}" == "1" ]]; then
   pull_never=true
 fi
 
@@ -272,11 +272,11 @@ validate_required_secrets() {
 services:
   api:
     environment:
-      _RAKAZO_VALIDATE_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-      _RAKAZO_VALIDATE_BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}
-      _RAKAZO_VALIDATE_ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env}
-      _RAKAZO_VALIDATE_SCREEN_PROXY_SECRET: ${SCREEN_PROXY_SECRET:?Set SCREEN_PROXY_SECRET in .env}
-      _RAKAZO_VALIDATE_SANDBOX_SUPERVISOR_TOKEN: ${SANDBOX_SUPERVISOR_TOKEN:?Set SANDBOX_SUPERVISOR_TOKEN in .env}
+      _BOBBOT_VALIDATE_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      _BOBBOT_VALIDATE_BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}
+      _BOBBOT_VALIDATE_ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env}
+      _BOBBOT_VALIDATE_SCREEN_PROXY_SECRET: ${SCREEN_PROXY_SECRET:?Set SCREEN_PROXY_SECRET in .env}
+      _BOBBOT_VALIDATE_SANDBOX_SUPERVISOR_TOKEN: ${SANDBOX_SUPERVISOR_TOKEN:?Set SANDBOX_SUPERVISOR_TOKEN in .env}
 YAML
   then
     fail "set every required secret in .env to a non-empty value."

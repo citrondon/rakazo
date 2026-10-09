@@ -221,7 +221,7 @@ describe("graphical computer spec", () => {
     expect(browser).toMatch(/\.browser-profiles\/chromium/);
     expect(browser).toMatch(/chromium-screen-\$DISPLAY_NUM/);
     expect(browser).toMatch(/USER_DATA_DIR_SET/);
-    expect(browser).toMatch(/RAKAZO_BROWSER_PROFILE/);
+    expect(browser).toMatch(/BOBBOT_BROWSER_PROFILE/);
     expect(desktop).toMatch(/Exec=\/usr\/local\/bin\/rakazo-browser %U/);
     expect(dockerfile).toMatch(/rakazo-page-browser/);
     expect(browser).toMatch(/remote-debugging-port/);
@@ -271,7 +271,7 @@ describe("graphical computer spec", () => {
       try {
         for (const name of ["xterm", "rakazo-browser"]) {
           const stub = path.join(bin, name);
-          writeFileSync(stub, '#!/bin/sh\nprintf "%s\\n" "$@" > "$RAKAZO_TEST_ARGS"\n');
+          writeFileSync(stub, '#!/bin/sh\nprintf "%s\\n" "$@" > "$BOBBOT_TEST_ARGS"\n');
           chmodSync(stub, 0o755);
         }
         const argvFor = (label: string) => {
@@ -285,7 +285,7 @@ describe("graphical computer spec", () => {
             env: {
               ...process.env,
               PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-              RAKAZO_TEST_ARGS: capture,
+              BOBBOT_TEST_ARGS: capture,
             },
             encoding: "utf8",
           });
@@ -380,7 +380,7 @@ describe("graphical computer spec", () => {
       const home = path.join(temp, "home");
       const chromium = path.join(bin, "chromium");
       mkdirSync(bin);
-      writeFileSync(chromium, '#!/bin/sh\nprintf "%s\\n" "$@" > "$RAKAZO_TEST_ARGS"\n');
+      writeFileSync(chromium, '#!/bin/sh\nprintf "%s\\n" "$@" > "$BOBBOT_TEST_ARGS"\n');
       chmodSync(chromium, 0o755);
 
       const run = (display: string, args: string[] = []) => {
@@ -390,7 +390,7 @@ describe("graphical computer spec", () => {
             DISPLAY: display,
             HOME: home,
             PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-            RAKAZO_TEST_ARGS: capture,
+            BOBBOT_TEST_ARGS: capture,
           },
           encoding: "utf8",
         });
@@ -436,7 +436,7 @@ describe("graphical computer spec", () => {
       const home = path.join(temp, "home");
       const chromium = path.join(bin, "chromium");
       mkdirSync(bin);
-      writeFileSync(chromium, '#!/bin/sh\nprintf "%s\\n" "$@" > "$RAKAZO_TEST_ARGS"\n');
+      writeFileSync(chromium, '#!/bin/sh\nprintf "%s\\n" "$@" > "$BOBBOT_TEST_ARGS"\n');
       chmodSync(chromium, 0o755);
 
       // browser-launch-N execs this wrapper with --user-data-dir and
@@ -460,7 +460,7 @@ describe("graphical computer spec", () => {
               DISPLAY: ":1",
               HOME: home,
               PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-              RAKAZO_TEST_ARGS: capture,
+              BOBBOT_TEST_ARGS: capture,
             },
             encoding: "utf8",
           },
@@ -485,7 +485,7 @@ describe("graphical computer spec", () => {
       const home = path.join(temp, "home");
       const chromium = path.join(bin, "chromium");
       mkdirSync(bin);
-      writeFileSync(chromium, '#!/bin/sh\nprintf "%s\\n" "$@" > "$RAKAZO_TEST_ARGS"\n');
+      writeFileSync(chromium, '#!/bin/sh\nprintf "%s\\n" "$@" > "$BOBBOT_TEST_ARGS"\n');
       chmodSync(chromium, 0o755);
       const profile = path.join(home, ".browser-profiles", "chromium-bot-screen");
       mkdirSync(profile, { recursive: true });
@@ -504,7 +504,7 @@ describe("graphical computer spec", () => {
               DISPLAY: ":1",
               HOME: home,
               PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-              RAKAZO_TEST_ARGS: capture,
+              BOBBOT_TEST_ARGS: capture,
             },
             encoding: "utf8",
           },
@@ -535,7 +535,7 @@ describe("graphical computer spec", () => {
       mkdirSync(path.dirname(prefsPath), { recursive: true });
       writeFileSync(
         path.join(bin, "chromium"),
-        '#!/bin/sh\nprintf "%s\\n" "$@" > "$RAKAZO_TEST_ARGS"\n',
+        '#!/bin/sh\nprintf "%s\\n" "$@" > "$BOBBOT_TEST_ARGS"\n',
       );
       chmodSync(path.join(bin, "chromium"), 0o755);
       // /proc/pid/exe is this binary, so the basename is chromium without compiling.
@@ -571,7 +571,7 @@ describe("graphical computer spec", () => {
               DISPLAY: ":1",
               HOME: home,
               PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-              RAKAZO_TEST_ARGS: capture,
+              BOBBOT_TEST_ARGS: capture,
             },
             encoding: "utf8",
           },
@@ -607,7 +607,7 @@ describe("graphical computer spec", () => {
       mkdirSync(path.dirname(prefsPath), { recursive: true });
       writeFileSync(
         path.join(bin, "chromium"),
-        '#!/bin/sh\nprintf "%s\\n" "$@" > "$RAKAZO_TEST_ARGS"\n',
+        '#!/bin/sh\nprintf "%s\\n" "$@" > "$BOBBOT_TEST_ARGS"\n',
       );
       chmodSync(path.join(bin, "chromium"), 0o755);
       const sleeper = path.join(bin, "sleeper");
@@ -634,7 +634,7 @@ describe("graphical computer spec", () => {
               DISPLAY: ":1",
               HOME: home,
               PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-              RAKAZO_TEST_ARGS: capture,
+              BOBBOT_TEST_ARGS: capture,
             },
             encoding: "utf8",
           },
@@ -665,7 +665,7 @@ describe("graphical computer spec", () => {
       const chromium = path.join(bin, "chromium");
       const capture = path.join(temp, "args");
       mkdirSync(bin);
-      writeFileSync(chromium, '#!/bin/sh\nprintf "%s\\n" "$@" > "$RAKAZO_TEST_ARGS"\n');
+      writeFileSync(chromium, '#!/bin/sh\nprintf "%s\\n" "$@" > "$BOBBOT_TEST_ARGS"\n');
       chmodSync(chromium, 0o755);
 
       const profile = path.join(home, ".browser-profiles/chromium");
@@ -686,7 +686,7 @@ describe("graphical computer spec", () => {
             DISPLAY: ":1",
             HOME: home,
             PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-            RAKAZO_TEST_ARGS: capture,
+            BOBBOT_TEST_ARGS: capture,
           },
           encoding: "utf8",
         });
@@ -722,7 +722,7 @@ describe("graphical computer spec", () => {
               DISPLAY: ":1",
               HOME: home,
               PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-              RAKAZO_TEST_ARGS: capture,
+              BOBBOT_TEST_ARGS: capture,
             },
             encoding: "utf8",
           });
@@ -816,7 +816,7 @@ describe("graphical computer spec", () => {
                     DISPLAY: ":1",
                     HOME: spacedHome,
                     PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-                    RAKAZO_TEST_ARGS: capture,
+                    BOBBOT_TEST_ARGS: capture,
                   },
                   encoding: "utf8",
                 });
@@ -881,7 +881,7 @@ describe("graphical computer spec", () => {
       mkdirSync(bin);
       writeFileSync(
         path.join(bin, "chromium"),
-        '#!/bin/sh\nprintf "%s\\n" "$@" > "$RAKAZO_TEST_ARGS"\n',
+        '#!/bin/sh\nprintf "%s\\n" "$@" > "$BOBBOT_TEST_ARGS"\n',
       );
       chmodSync(path.join(bin, "chromium"), 0o755);
       symlinkSync(path.join(root, "rakazo-browser"), path.join(bin, "rakazo-browser"));
@@ -898,7 +898,7 @@ describe("graphical computer spec", () => {
           "state = {'consumed': False, 'listed': False, 'mode': ''}",
           "def mode():",
           "    try:",
-          "        with open(os.environ['RAKAZO_TEST_DROP'], encoding='utf-8') as handle:",
+          "        with open(os.environ['BOBBOT_TEST_DROP'], encoding='utf-8') as handle:",
           "            current = handle.read().strip()",
           "    except OSError:",
           "        current = ''",
@@ -936,7 +936,7 @@ describe("graphical computer spec", () => {
           "            return",
           "        query = self.path.split('?', 1)[1] if '?' in self.path else ''",
           "        opened = urllib.parse.unquote(query)",
-          "        with open(os.environ['RAKAZO_TEST_URLS'], 'a', encoding='utf-8') as handle:",
+          "        with open(os.environ['BOBBOT_TEST_URLS'], 'a', encoding='utf-8') as handle:",
           "            handle.write(self.path + '\\n')",
           "        current = mode()",
           "        if current == 'before' and not state['listed']:",
@@ -957,7 +957,7 @@ describe("graphical computer spec", () => {
           "    def log_message(self, fmt, *args):",
           "        return",
           "server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)",
-          "with open(os.environ['RAKAZO_TEST_PORT'], 'w', encoding='utf-8') as handle:",
+          "with open(os.environ['BOBBOT_TEST_PORT'], 'w', encoding='utf-8') as handle:",
           "    handle.write(str(server.server_address[1]))",
           "server.serve_forever()",
           "",
@@ -973,11 +973,11 @@ describe("graphical computer spec", () => {
           "sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)",
           "sock.bind(('127.0.0.1', 0))",
           "sock.listen(8)",
-          "with open(os.environ['RAKAZO_TEST_PORT'], 'w', encoding='utf-8') as handle:",
+          "with open(os.environ['BOBBOT_TEST_PORT'], 'w', encoding='utf-8') as handle:",
           "    handle.write(str(sock.getsockname()[1]))",
           "while True:",
           "    connection, _addr = sock.accept()",
-          "    with open(os.environ['RAKAZO_TEST_ACCEPTED'], 'a', encoding='utf-8') as handle:",
+          "    with open(os.environ['BOBBOT_TEST_ACCEPTED'], 'a', encoding='utf-8') as handle:",
           "        handle.write('accepted\\n')",
           "    time.sleep(30)",
           "    connection.close()",
@@ -999,17 +999,17 @@ describe("graphical computer spec", () => {
         DISPLAY: ":1",
         HOME: home,
         PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-        RAKAZO_BROWSER_PROFILE: profile,
-        RAKAZO_TEST_ARGS: capture,
+        BOBBOT_BROWSER_PROFILE: profile,
+        BOBBOT_TEST_ARGS: capture,
       };
       const endpointProcess = spawn("python3", [endpoint], {
         stdio: "ignore",
         detached: true,
         env: {
           ...process.env,
-          RAKAZO_TEST_PORT: portFile,
-          RAKAZO_TEST_URLS: urlsFile,
-          RAKAZO_TEST_DROP: dropFile,
+          BOBBOT_TEST_PORT: portFile,
+          BOBBOT_TEST_URLS: urlsFile,
+          BOBBOT_TEST_DROP: dropFile,
         },
       });
       const children = [endpointProcess];
@@ -1160,8 +1160,8 @@ describe("graphical computer spec", () => {
           detached: true,
           env: {
             ...process.env,
-            RAKAZO_TEST_PORT: hungPortFile,
-            RAKAZO_TEST_ACCEPTED: acceptedFile,
+            BOBBOT_TEST_PORT: hungPortFile,
+            BOBBOT_TEST_ACCEPTED: acceptedFile,
           },
         });
         children.push(hung);
@@ -1556,9 +1556,9 @@ describe("graphical computer spec", () => {
 
 describe("computer resource limits", () => {
   const KEYS = [
-    "RAKAZO_COMPUTER_MEMORY",
-    "RAKAZO_COMPUTER_CPUS",
-    "RAKAZO_COMPUTER_PIDS_LIMIT",
+    "BOBBOT_COMPUTER_MEMORY",
+    "BOBBOT_COMPUTER_CPUS",
+    "BOBBOT_COMPUTER_PIDS_LIMIT",
   ] as const;
   const saved = new Map<string, string | undefined>();
 
@@ -1594,9 +1594,9 @@ describe("computer resource limits", () => {
 
   it("falls back to the defaults when a variable is blank", () => {
     // .env.example ships these keys blank; a blank value must read as "unset".
-    process.env.RAKAZO_COMPUTER_MEMORY = "";
-    process.env.RAKAZO_COMPUTER_CPUS = "  ";
-    process.env.RAKAZO_COMPUTER_PIDS_LIMIT = "";
+    process.env.BOBBOT_COMPUTER_MEMORY = "";
+    process.env.BOBBOT_COMPUTER_CPUS = "  ";
+    process.env.BOBBOT_COMPUTER_PIDS_LIMIT = "";
     const { HostConfig } = containerCreateOptions(createInput);
     expect(HostConfig.Memory).toBe(2 * 1024 ** 3);
     expect(HostConfig.NanoCpus).toBe(2e9);
@@ -1604,21 +1604,21 @@ describe("computer resource limits", () => {
   });
 
   it("pins MemorySwap to Memory so the ceiling cannot be swapped past", () => {
-    process.env.RAKAZO_COMPUTER_MEMORY = "1536m";
+    process.env.BOBBOT_COMPUTER_MEMORY = "1536m";
     const { HostConfig } = containerCreateOptions(createInput);
     expect(HostConfig.Memory).toBe(1536 * 1024 ** 2);
     expect(HostConfig.MemorySwap).toBe(1536 * 1024 ** 2);
   });
 
   it("accepts fractional CPUs", () => {
-    process.env.RAKAZO_COMPUTER_CPUS = "1.5";
+    process.env.BOBBOT_COMPUTER_CPUS = "1.5";
     expect(containerCreateOptions(createInput).HostConfig.NanoCpus).toBe(1_500_000_000);
   });
 
   it("lets an operator opt out explicitly", () => {
-    process.env.RAKAZO_COMPUTER_MEMORY = "unlimited";
-    process.env.RAKAZO_COMPUTER_CPUS = "0";
-    process.env.RAKAZO_COMPUTER_PIDS_LIMIT = "none";
+    process.env.BOBBOT_COMPUTER_MEMORY = "unlimited";
+    process.env.BOBBOT_COMPUTER_CPUS = "0";
+    process.env.BOBBOT_COMPUTER_PIDS_LIMIT = "none";
     const { HostConfig } = containerCreateOptions(createInput);
     expect(HostConfig.Memory).toBe(0);
     expect(HostConfig.NanoCpus).toBe(0);
@@ -1626,44 +1626,44 @@ describe("computer resource limits", () => {
   });
 
   it("rejects a malformed size instead of silently falling back", () => {
-    process.env.RAKAZO_COMPUTER_MEMORY = "2 gigs";
-    expect(() => containerCreateOptions(createInput)).toThrow(/RAKAZO_COMPUTER_MEMORY/);
+    process.env.BOBBOT_COMPUTER_MEMORY = "2 gigs";
+    expect(() => containerCreateOptions(createInput)).toThrow(/BOBBOT_COMPUTER_MEMORY/);
   });
 
   it("rejects a negative cpu count", () => {
-    process.env.RAKAZO_COMPUTER_CPUS = "-1";
-    expect(() => containerCreateOptions(createInput)).toThrow(/RAKAZO_COMPUTER_CPUS/);
+    process.env.BOBBOT_COMPUTER_CPUS = "-1";
+    expect(() => containerCreateOptions(createInput)).toThrow(/BOBBOT_COMPUTER_CPUS/);
   });
 
   it("rejects a pids limit that is not a positive integer", () => {
-    process.env.RAKAZO_COMPUTER_PIDS_LIMIT = "12.5";
-    expect(() => containerCreateOptions(createInput)).toThrow(/RAKAZO_COMPUTER_PIDS_LIMIT/);
+    process.env.BOBBOT_COMPUTER_PIDS_LIMIT = "12.5";
+    expect(() => containerCreateOptions(createInput)).toThrow(/BOBBOT_COMPUTER_PIDS_LIMIT/);
   });
 
   it("rejects a memory limit below Docker's 6 MiB minimum", () => {
     // The daemon refuses these at container creation, so accepting them here would turn a typo
     // into a 500 on the first bot rather than a startup failure naming the variable.
     for (const value of ["1", "1m", "5m", "5242880"]) {
-      process.env.RAKAZO_COMPUTER_MEMORY = value;
-      expect(() => containerCreateOptions(createInput)).toThrow(/RAKAZO_COMPUTER_MEMORY/);
+      process.env.BOBBOT_COMPUTER_MEMORY = value;
+      expect(() => containerCreateOptions(createInput)).toThrow(/BOBBOT_COMPUTER_MEMORY/);
     }
-    process.env.RAKAZO_COMPUTER_MEMORY = "6m";
+    process.env.BOBBOT_COMPUTER_MEMORY = "6m";
     expect(containerCreateOptions(createInput).HostConfig.Memory).toBe(6 * 1024 ** 2);
   });
 
   it("rejects a CPU count that would floor to Docker's unlimited", () => {
     // Math.floor(1e-10 * 1e9) is 0, and 0 NanoCpus means uncapped. An accepted value must never
     // turn a ceiling into no ceiling.
-    process.env.RAKAZO_COMPUTER_CPUS = "0.0000000001";
-    expect(() => containerCreateOptions(createInput)).toThrow(/RAKAZO_COMPUTER_CPUS/);
+    process.env.BOBBOT_COMPUTER_CPUS = "0.0000000001";
+    expect(() => containerCreateOptions(createInput)).toThrow(/BOBBOT_COMPUTER_CPUS/);
   });
 
   it("rejects a CPU count that leaves the safe-integer NanoCpus range", () => {
     // 1e300 is finite, but Math.floor(1e300 * 1e9) is Infinity. 1e7 CPUs yields a non-safe
     // integer. Both must fail closed rather than reach HostConfig.NanoCpus.
     for (const value of ["1e300", "10000000"]) {
-      process.env.RAKAZO_COMPUTER_CPUS = value;
-      expect(() => containerCreateOptions(createInput)).toThrow(/RAKAZO_COMPUTER_CPUS/);
+      process.env.BOBBOT_COMPUTER_CPUS = value;
+      expect(() => containerCreateOptions(createInput)).toThrow(/BOBBOT_COMPUTER_CPUS/);
     }
   });
 

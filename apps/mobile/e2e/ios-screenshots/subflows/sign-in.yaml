@@ -10,9 +10,9 @@ appId: com.rakazo.app
     visible: "Sign in to BobBot"
     timeout: 15000
 - tapOn: "Email"
-- inputText: ${RAKAZO_ACTIVE_EMAIL}
+- inputText: ${BOBBOT_ACTIVE_EMAIL}
 - tapOn: "Password"
-- inputText: ${RAKAZO_SCREENSHOT_PASSWORD}
+- inputText: ${BOBBOT_SCREENSHOT_PASSWORD}
 - hideKeyboard
 - tapOn: "Sign in"
 - tapOn:

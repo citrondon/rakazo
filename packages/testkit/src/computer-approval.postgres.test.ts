@@ -16,7 +16,7 @@ describe.skipIf(!databaseAvailable)("offline Pi computer approval", () => {
   beforeAll(() => {
     // Use the existing compatible-endpoint capability declaration so the real
     // executor exposes computer tools without mocking its model vision gate.
-    vi.stubEnv("RAKAZO_OPENAI_COMPATIBLE_VISION_MODELS", "offline-fixture");
+    vi.stubEnv("BOBBOT_OPENAI_COMPATIBLE_VISION_MODELS", "offline-fixture");
   });
   afterAll(() => vi.unstubAllEnvs());
 

@@ -37,7 +37,12 @@ describe("the production computer provider", () => {
  * break by accident in YAML, so they are asserted rather than reviewed.
  */
 /** The Compose interpolation this file is expected to carry, as Compose spells it. */
-const interpolated = (name: string, fallback = "") => `\${${name}:-${fallback}}`;
+const interpolated = (name: string, fallback = "") =>
+  name.startsWith("BOBBOT_")
+    ? // A renamed setting keeps a fallback to the earlier name, so a deployment
+      // that has not followed the rename still resolves to its own value.
+      `\${${name}:-\${RAKAZO_${name.slice("BOBBOT_".length)}:-${fallback}}}`
+    : `\${${name}:-${fallback}}`;
 
 describe("the updater compose service", () => {
   it("exists and runs the updater image", () => {
@@ -70,13 +75,13 @@ describe("the updater compose service", () => {
   });
 
   it("is bind-mounted at the same path it has on the host", () => {
-    const mount = (updater.volumes ?? []).find((volume) => volume.includes("RAKAZO_DEPLOY_DIR"));
+    const mount = (updater.volumes ?? []).find((volume) => volume.includes("BOBBOT_DEPLOY_DIR"));
     // biome-ignore lint/suspicious/noTemplateCurlyInString: this is the literal Compose expression
-    const deployDir = "${RAKAZO_DEPLOY_DIR:-/srv/rakazo}";
+    const deployDir = "${BOBBOT_DEPLOY_DIR:-${RAKAZO_DEPLOY_DIR:-/srv/rakazo}}";
     const separatorIndex = mount?.indexOf("}:${") ?? -1;
     const source = separatorIndex < 0 ? undefined : mount?.slice(0, separatorIndex + 1);
     const destination = separatorIndex < 0 ? undefined : mount?.slice(separatorIndex + 2);
-    expect(updater.environment?.RAKAZO_DEPLOY_DIR).toBe(deployDir);
+    expect(updater.environment?.BOBBOT_DEPLOY_DIR).toBe(deployDir);
     expect(mount).toBe(`${deployDir}:${deployDir}`);
     expect(source).toBe(destination);
   });
@@ -89,9 +94,9 @@ describe("the updater compose service", () => {
   });
 
   it("pins its own image tag separately from the application image", () => {
-    expect(updater.image).toContain("RAKAZO_UPDATER_IMAGE_TAG");
+    expect(updater.image).toContain("BOBBOT_UPDATER_IMAGE_TAG");
     for (const service of RECREATED_SERVICES) {
-      expect(compose.services[service]?.image).toContain("RAKAZO_IMAGE_TAG");
+      expect(compose.services[service]?.image).toContain("BOBBOT_IMAGE_TAG");
     }
   });
 
@@ -111,11 +116,11 @@ describe("the updater compose service", () => {
     // environment is exactly what this file declares. Pinning them here would make the documented
     // variables inert: the operator sets them, the updater never sees them, and the overlay is
     // dropped on every recreate.
-    expect(updater.environment?.RAKAZO_COMPOSE_FILE).toBe(
-      interpolated("RAKAZO_COMPOSE_FILE", "infra/compose/docker-compose.prod.yml"),
+    expect(updater.environment?.BOBBOT_COMPOSE_FILE).toBe(
+      interpolated("BOBBOT_COMPOSE_FILE", "infra/compose/docker-compose.prod.yml"),
     );
-    expect(updater.environment?.RAKAZO_UPDATE_SERVICES).toBe(
-      interpolated("RAKAZO_UPDATE_SERVICES"),
+    expect(updater.environment?.BOBBOT_UPDATE_SERVICES).toBe(
+      interpolated("BOBBOT_UPDATE_SERVICES"),
     );
     expect(updater.environment?.COMPOSE_PATH_SEPARATOR).toBe(
       interpolated("COMPOSE_PATH_SEPARATOR"),
@@ -129,13 +134,12 @@ describe("the updater compose service", () => {
 
   it("does not load the application env_file into the root-equivalent process", () => {
     expect(updater.env_file).toBeUndefined();
-    // biome-ignore lint/suspicious/noTemplateCurlyInString: this is the literal Compose expression
-    expect(updater.environment?.RAKAZO_UPDATER_TOKEN).toBe("${RAKAZO_UPDATER_TOKEN:-}");
+    expect(updater.environment?.BOBBOT_UPDATER_TOKEN).toBe(interpolated("BOBBOT_UPDATER_TOKEN"));
   });
 
   it("does not let the api container reach the Docker socket to update itself", () => {
     expect(compose.services.api?.volumes ?? []).not.toContain("/var/run/docker.sock");
-    expect(compose.services.api?.environment?.RAKAZO_UPDATER_URL).toBe("http://updater:7092");
+    expect(compose.services.api?.environment?.BOBBOT_UPDATER_URL).toBe("http://updater:7092");
   });
 
   it("passes logging configuration without using env_file", () => {

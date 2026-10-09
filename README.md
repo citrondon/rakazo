@@ -80,8 +80,8 @@ with the matching API key.
 Default image tag is `edge` (main builds, `linux/amd64` + `linux/arm64`). Details and tags:
 [self-hosting guide](./docs/self-host.md#published-images-no-checkout).
 
-On restricted networks, override the installer download base (`RAKAZO_DOWNLOAD_BASE`), skip
-existing Compose files (`--local` / `RAKAZO_DOWNLOAD_SKIP_EXISTING`), or mirror the bootstrap
+On restricted networks, override the installer download base (`BOBBOT_DOWNLOAD_BASE`), skip
+existing Compose files (`--local` / `BOBBOT_DOWNLOAD_SKIP_EXISTING`), or mirror the bootstrap
 script URL — see
 [Restricted networks / mirror downloads](./docs/self-host.md#restricted-networks--mirror-downloads).
 
@@ -94,7 +94,7 @@ the desktop app, the mobile app, or a browser.
 
 ```bash
 bash install-images.sh --prepare-only
-# edit .env: SANDBOX_PROVIDER=box (or e2b / daytona / createos) with its API key, RAKAZO_HOST=your.domain
+# edit .env: SANDBOX_PROVIDER=box (or e2b / daytona / createos) with its API key, BOBBOT_HOST=your.domain
 bash install-images.sh
 ```
 
@@ -192,8 +192,8 @@ instance. The stack keeps running after the app quits; **Stop Local Stack** in t
 menu turns it off.
 
 Use **Change BobBot Server…** in the application menu to reconnect. Closing that window without
-saving returns to the previous instance. For development automation, set `RAKAZO_WEB_URL` to point
-the shell somewhere else without changing the saved instance, or `RAKAZO_FORCE_SETUP=1` to run
+saving returns to the previous instance. For development automation, set `BOBBOT_WEB_URL` to point
+the shell somewhere else without changing the saved instance, or `BOBBOT_FORCE_SETUP=1` to run
 setup again.
 
 Mobile build and release instructions live in [docs/mobile-release.md](./docs/mobile-release.md).

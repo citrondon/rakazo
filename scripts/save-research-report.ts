@@ -7,13 +7,13 @@ import { findGroupByName, latestReply } from "./lib/api.js";
  * The reply is read through the API; only the file lands on disk.
  */
 async function main() {
-  const spaceId = process.env.RAKAZO_SPACE_ID;
+  const spaceId = process.env.BOBBOT_SPACE_ID;
   if (!spaceId) {
-    console.error("RAKAZO_SPACE_ID is required to locate the shared workspace folder.");
+    console.error("BOBBOT_SPACE_ID is required to locate the shared workspace folder.");
     process.exit(1);
   }
 
-  const group = await findGroupByName(process.env.RAKAZO_RESEARCH_GROUP ?? "Research Intelligence");
+  const group = await findGroupByName(process.env.BOBBOT_RESEARCH_GROUP ?? "Research Intelligence");
   const text = await latestReply({ groupId: group.id });
   if (!text) {
     console.error(`No text reply found in "${group.name}".`);

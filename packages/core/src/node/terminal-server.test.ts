@@ -198,7 +198,7 @@ describe.skipIf(!canRunScript)("terminal start script", () => {
     expect(release("lease-a").status).toBe(0);
     current.client.write(encodeTerminalInput("echo alive-$((40 + 5))\n"));
     await current.waitFor(/alive-45/);
-    expect(release("lease-b").stdout).toContain("RAKAZO_CONTROL_RELEASED");
+    expect(release("lease-b").stdout).toContain("BOBBOT_CONTROL_RELEASED");
     await expect(current.closed).resolves.toBeDefined();
     expect(readFileSync(target, "utf8")).toBe("");
 

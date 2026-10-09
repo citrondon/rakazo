@@ -7,7 +7,7 @@ import type {
 import type { ComposioCatalogItem, ComposioProvider } from "./composio-connector.js";
 import { expandComposioMultiExecute, filterCatalog } from "./composio-connector.js";
 import {
-  DEFAULT_RAKAZO_EMULATED_RELEASES,
+  DEFAULT_BOBBOT_EMULATED_RELEASES,
   type EmulatedGithubRelease,
   RELEASE_WATCH_GITHUB_TOOL_NAMES,
 } from "./release-watch.js";
@@ -340,7 +340,7 @@ function findAccountIndex(refs: readonly string[], connectionRef: string): numbe
 export class ComposioEmulator implements ComposioProvider {
   private readonly connectedByUser = new Map<string, string[]>();
   private readonly mailboxesByUser = new Map<string, Mailbox>();
-  private githubReleases: EmulatedGithubRelease[] = [...DEFAULT_RAKAZO_EMULATED_RELEASES];
+  private githubReleases: EmulatedGithubRelease[] = [...DEFAULT_BOBBOT_EMULATED_RELEASES];
   private nextAccountSeq = 0;
   readonly executions: Array<{
     userId: string;

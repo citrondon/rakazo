@@ -13,17 +13,17 @@
 # Usage: restore-prod.sh /var/backups/rakazo/<stamp>
 set -Eeuo pipefail
 
-if [[ -z "${RAKAZO_RESTORE_DIR:-}" && -r /etc/rakazo/restore.env ]]; then
+if [[ -z "${BOBBOT_RESTORE_DIR:-${RAKAZO_RESTORE_DIR:-}}" && -r /etc/rakazo/restore.env ]]; then
   # shellcheck disable=SC1091
   source /etc/rakazo/restore.env
 fi
-TARGET_DIR="${RAKAZO_RESTORE_DIR:-/srv/rakazo}"
-[[ "${TARGET_DIR}" == /* ]] || { echo "RAKAZO_RESTORE_DIR must be an absolute path" >&2; exit 1; }
+TARGET_DIR="${BOBBOT_RESTORE_DIR:-${RAKAZO_RESTORE_DIR:-/srv/rakazo}}"
+[[ "${TARGET_DIR}" == /* ]] || { echo "BOBBOT_RESTORE_DIR must be an absolute path" >&2; exit 1; }
 COMPOSE_FILE="${TARGET_DIR}/infra/compose/docker-compose.prod.yml"
 ENV_FILE="${TARGET_DIR}/.env"
 [[ -f "${ENV_FILE}" ]] || { echo "No .env at ${TARGET_DIR}; copy it from the source installation" >&2; exit 1; }
 
-snapshot="${1:-${RAKAZO_RESTORE_SNAPSHOT:-}}"
+snapshot="${1:-${BOBBOT_RESTORE_SNAPSHOT:-${RAKAZO_RESTORE_SNAPSHOT:-}}}"
 [[ -n "${snapshot}" ]] || { echo "Usage: restore-prod.sh /var/backups/rakazo/<stamp>" >&2; exit 1; }
 snapshot="${snapshot%/}"
 [[ "${snapshot}" == /* ]] || { echo "Snapshot path must be absolute" >&2; exit 1; }
@@ -57,9 +57,9 @@ tar -tzf "${appdata}" >/dev/null || { echo "appdata.tgz is corrupt; refusing to 
 echo "Snapshot verified."
 
 # Refuse to clobber a populated database unless the operator says so explicitly.
-if [[ -z "${RAKAZO_RESTORE_FORCE:-}" ]]; then
+if [[ -z "${BOBBOT_RESTORE_FORCE:-${RAKAZO_RESTORE_FORCE:-}}" ]]; then
   if compose exec -T postgres pg_isready -U rakazo >/dev/null 2>&1; then
-    echo "Target database is reachable; pass RAKAZO_RESTORE_FORCE=1 to overwrite it." >&2
+    echo "Target database is reachable; pass BOBBOT_RESTORE_FORCE=1 to overwrite it." >&2
     exit 1
   fi
 fi

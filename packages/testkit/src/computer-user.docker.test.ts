@@ -32,7 +32,7 @@ describe.skipIf(process.env.RUN_COMPUTER_REPLAY_DOCKER !== "1")(
               "/tmp:mode=1777,exec",
               "--tmpfs",
               `/home/rakazo:uid=${uid},gid=${gid},mode=700`,
-              process.env.RAKAZO_COMPUTER_IMAGE ?? "rakazo/computer:local",
+              process.env.BOBBOT_COMPUTER_IMAGE ?? "rakazo/computer:local",
             ],
             { stdio: "pipe", timeout: 30_000 },
           );

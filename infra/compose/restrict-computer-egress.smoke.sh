@@ -148,7 +148,7 @@ STUB
   chmod +x "$bin/$tool"
 done
 
-RAKAZO_IPTABLES="$bin/iptables" RAKAZO_IP6TABLES="$bin/ip6tables" bash "$script" --apply
+BOBBOT_IPTABLES="$bin/iptables" BOBBOT_IP6TABLES="$bin/ip6tables" bash "$script" --apply
 v4_state="$STUB_DIR/iptables.state"
 v6_state="$STUB_DIR/ip6tables.state"
 v4_calls="$STUB_DIR/iptables.calls"
@@ -172,7 +172,7 @@ drop_at="$(grep -nxF 'INPUT -i rakazo-c+ -j DROP' "$v4_state" | head -1 | cut -d
 
 # Second apply inserts nothing when the managed rules are already the prefix.
 # The stub's -S output has already moved -d ahead of -i and swapped ctstate.
-RAKAZO_IPTABLES="$bin/iptables" RAKAZO_IP6TABLES="$bin/ip6tables" bash "$script" --apply
+BOBBOT_IPTABLES="$bin/iptables" BOBBOT_IP6TABLES="$bin/ip6tables" bash "$script" --apply
 [[ "$(grep -c '^-I ' "$v4_calls")" == 14 ]] ||
   fail "rules re-inserted on repeat apply"
 [[ "$(grep -c '^-I ' "$STUB_DIR/ip6tables.calls")" == 7 ]] ||
@@ -185,7 +185,7 @@ cp "$v4_state" "$scratch/v4.clean"
 # drop. --apply must install the drop and leave the foreign accept in place.
 sed 's/DOCKER-USER -i rakazo-c+ -d 169.254.0.0\/16 -j DROP/DOCKER-USER -i rakazo-c+ -d 169.254.0.0\/16 -j ACCEPT/' \
   "$scratch/v4.clean" >"$v4_state"
-RAKAZO_IPTABLES="$bin/iptables" RAKAZO_IP6TABLES="$bin/ip6tables" bash "$script" --apply
+BOBBOT_IPTABLES="$bin/iptables" BOBBOT_IP6TABLES="$bin/ip6tables" bash "$script" --apply
 grep -qxF 'DOCKER-USER -i rakazo-c+ -d 169.254.0.0/16 -j DROP' "$v4_state" ||
   fail "metadata drop not restored when an accept occupied its slot"
 grep -qxF 'DOCKER-USER -i rakazo-c+ -d 169.254.0.0/16 -j ACCEPT' "$v4_state" ||
@@ -204,7 +204,7 @@ meta_acc_at="$(grep -nxF 'DOCKER-USER -i rakazo-c+ -d 169.254.0.0/16 -j ACCEPT' 
     'DOCKER-USER -i rakazo-c+ -d 10.0.0.0/8 -p tcp --dport 22 -j DROP' \
     'INPUT -i rakazo-c+ -p tcp -j ACCEPT'
 } >"$v4_state"
-RAKAZO_IPTABLES="$bin/iptables" RAKAZO_IP6TABLES="$bin/ip6tables" bash "$script" --apply
+BOBBOT_IPTABLES="$bin/iptables" BOBBOT_IP6TABLES="$bin/ip6tables" bash "$script" --apply
 grep -qxF 'DOCKER-USER -i rakazo-c+ -d 10.0.0.0/8 -p tcp --dport 22 -j DROP' "$v4_state" ||
   fail "narrower drop was deleted"
 grep -qxF 'INPUT -i rakazo-c+ -p tcp -j ACCEPT' "$v4_state" ||
@@ -244,7 +244,7 @@ diff "$v6_state" "$replay_dir/ip6tables.state" >/dev/null ||
 # rules return to the head of DOCKER-USER and the foreign accept falls below.
 { printf '%s\n' 'DOCKER-USER -j ACCEPT'; cat "$v4_state"; } >"$v4_state.tmp"
 mv "$v4_state.tmp" "$v4_state"
-RAKAZO_IPTABLES="$bin/iptables" RAKAZO_IP6TABLES="$bin/ip6tables" bash "$script" --apply
+BOBBOT_IPTABLES="$bin/iptables" BOBBOT_IP6TABLES="$bin/ip6tables" bash "$script" --apply
 first="$(head -1 "$v4_state")"
 [[ "$first" == 'DOCKER-USER -i rakazo-c+ -o rakazo-c+ -j RETURN' ]] ||
   fail "same-bridge RETURN was not restored to the head, got: $first"
@@ -264,7 +264,7 @@ meta_at="$(grep -nxF 'DOCKER-USER -i rakazo-c+ -d 169.254.0.0/16 -j DROP' "$v4_s
 mv "$v4_state.tmp" "$v4_state"
 rm -f "$STUB_DIR/mutation.count"
 calls_before="$(wc -l <"$v4_calls")"
-STUB_FAIL_ON_MUTATION=15 RAKAZO_IPTABLES="$bin/iptables" RAKAZO_IP6TABLES="$bin/ip6tables" \
+STUB_FAIL_ON_MUTATION=15 BOBBOT_IPTABLES="$bin/iptables" BOBBOT_IP6TABLES="$bin/ip6tables" \
   bash "$script" --apply && fail "repair should fail when iptables fails midway" || true
 meta_drop='DOCKER-USER -i rakazo-c+ -d 169.254.0.0/16 -j DROP'
 input_drop='INPUT -i rakazo-c+ -j DROP'
@@ -286,17 +286,17 @@ inet6_global="$scratch/if_inet6.global"
 printf '%s\n' "00000000000000000000000000000001 01 80 10 80 lo" >"$inet6_local"
 printf '%s\n' "20010db800000000000000000000000001 02 40 00 00 eth0" >"$inet6_global"
 rm -f "$v4_state" "$v6_state" "$v4_calls" "$STUB_DIR/ip6tables.calls"
-RAKAZO_IF_INET6="$inet6_local" RAKAZO_IPTABLES="$bin/iptables" \
-  RAKAZO_IP6TABLES="$bin/missing-ip6tables" bash "$script" --apply
+BOBBOT_IF_INET6="$inet6_local" BOBBOT_IPTABLES="$bin/iptables" \
+  BOBBOT_IP6TABLES="$bin/missing-ip6tables" bash "$script" --apply
 [[ ! -e "$v6_state" ]] || fail "IPv6 rules applied despite missing ip6tables"
 [[ -f "$v4_state" ]] || fail "IPv4 rules missing when ip6tables absent"
-RAKAZO_IF_INET6="$inet6_global" RAKAZO_IPTABLES="$bin/iptables" \
-  RAKAZO_IP6TABLES="$bin/missing-ip6tables" bash "$script" --apply &&
+BOBBOT_IF_INET6="$inet6_global" BOBBOT_IPTABLES="$bin/iptables" \
+  BOBBOT_IP6TABLES="$bin/missing-ip6tables" bash "$script" --apply &&
   fail "--apply succeeded on dual-stack host without programmable IPv6" || true
 
 # Missing IPv4 iptables must fail loudly — a silent no-op would claim
 # restricted egress while installing nothing.
-RAKAZO_IPTABLES="$bin/missing-iptables" RAKAZO_IP6TABLES="$bin/missing-ip6tables" \
+BOBBOT_IPTABLES="$bin/missing-iptables" BOBBOT_IP6TABLES="$bin/missing-ip6tables" \
   bash "$script" --apply && fail "--apply succeeded with no iptables binary" || true
 
 # Docs and Compose keep the flag and script wired together.

@@ -12,7 +12,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-TOKEN = os.environ.get("RAKAZO_COMPUTER_CONTROL_TOKEN", "")
+TOKEN = os.environ.get("BOBBOT_COMPUTER_CONTROL_TOKEN", "")
 MAX_BODY_BYTES = 256 * 1024
 MAX_ARGV = 32
 MAX_ARG_LEN = 16_384
@@ -158,7 +158,7 @@ def allowed_xdotool_argv(argv):
 
 def control_command_index(argv):
     """Locate the executable after the optional supervisor-owned browser profile."""
-    return 3 if len(argv) > 2 and argv[2].startswith("RAKAZO_BROWSER_PROFILE=") else 2
+    return 3 if len(argv) > 2 and argv[2].startswith("BOBBOT_BROWSER_PROFILE=") else 2
 
 
 def allowed_control_argv(argv, display):
@@ -174,7 +174,7 @@ def allowed_control_argv(argv, display):
         return False
     command = argv[index]
     if index == 3:
-        profile = argv[2].removeprefix("RAKAZO_BROWSER_PROFILE=")
+        profile = argv[2].removeprefix("BOBBOT_BROWSER_PROFILE=")
         if not re.fullmatch(r"/home/rakazo/\.browser-profiles/chromium-bot-[a-f0-9]{32}", profile):
             return False
         if command not in ("xdg-open", "rakazo-browser", FOCUS_OR_LAUNCH):

@@ -306,7 +306,7 @@ Use the same installer on a VPS when bots should stay running. Images Compose bi
 ${PUBLISHED_IMAGES_SERVER}
 \`\`\`
 
-Before the second command, set \`RAKAZO_HOST\` to the hostname and set \`BETTER_AUTH_URL\`, \`WEB_ORIGIN\`, and \`API_URL\` to that same \`https://\` origin. For a remote computer instead of local Docker, set \`SANDBOX_PROVIDER\` to \`e2b\`, \`daytona\`, \`createos\`, or \`box\` and add that provider's API key.
+Before the second command, set \`BOBBOT_HOST\` to the hostname and set \`BETTER_AUTH_URL\`, \`WEB_ORIGIN\`, and \`API_URL\` to that same \`https://\` origin. For a remote computer instead of local Docker, set \`SANDBOX_PROVIDER\` to \`e2b\`, \`daytona\`, \`createos\`, or \`box\` and add that provider's API key.
 
 \`\`\`Caddyfile
 ${CADDY_SNIPPET}

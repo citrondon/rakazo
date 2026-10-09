@@ -194,8 +194,8 @@ export class BoxSandboxProvider implements SandboxProvider {
           ttlSeconds: BOX_TTL_SECONDS,
           noEnv: true,
           env: {
-            RAKAZO_BOT_ID: request.botId,
-            RAKAZO_SANDBOX: "computer",
+            BOBBOT_BOT_ID: request.botId,
+            BOBBOT_SANDBOX: "computer",
           },
         },
       },

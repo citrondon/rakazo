@@ -79,7 +79,7 @@ it.skipIf(process.env.VERIFY_DOCKER_TEAM_SCREENS !== "1").each([false, true])(
         "--network",
         "none",
         "--shm-size=512m",
-        process.env.RAKAZO_COMPUTER_IMAGE ?? "rakazo/computer:local",
+        process.env.BOBBOT_COMPUTER_IMAGE ?? "rakazo/computer:local",
       );
       docker("cp", commandFile, `${name}:/tmp/team-desktops-commands.json`);
       docker(

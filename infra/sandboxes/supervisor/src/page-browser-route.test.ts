@@ -75,11 +75,11 @@ it("resolves the owned display and refuses an older fence before running the hel
   expect(mock.exec.mock.calls.at(-1)?.[0]).toMatchObject({
     Env: [
       "DISPLAY=:2",
-      "RAKAZO_CDP_PORT=9223",
+      "BOBBOT_CDP_PORT=9223",
       "HOME=/home/rakazo",
       "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-      "RAKAZO_BROWSER_WATCH_STDIN=1",
-      "RAKAZO_BROWSER_ARGS_STDIN=1",
+      "BOBBOT_BROWSER_WATCH_STDIN=1",
+      "BOBBOT_BROWSER_ARGS_STDIN=1",
     ],
   });
   mock.exec.mockClear();
@@ -174,6 +174,6 @@ it("sends a saved-login fill only over stdin, never in the helper's arguments", 
     options.Cmd.includes("/usr/local/bin/rakazo-page-browser"),
   )!;
   expect(JSON.stringify(helperCall[0].Cmd)).not.toContain("fake-password-1");
-  expect(helperCall[0].Env).toContain("RAKAZO_BROWSER_ARGS_STDIN=1");
+  expect(helperCall[0].Env).toContain("BOBBOT_BROWSER_ARGS_STDIN=1");
   expect(mock.stdin.join("")).toBe(`${JSON.stringify({ command: "act", actions })}\n`);
 });

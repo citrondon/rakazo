@@ -29,7 +29,7 @@ shutdown() {
 }
 trap shutdown TERM INT
 
-if [[ -n "${RAKAZO_COMPUTER_CONTROL_TOKEN:-}" ]]; then
+if [[ -n "${BOBBOT_COMPUTER_CONTROL_TOKEN:-}" ]]; then
   /usr/local/bin/rakazo-computer-control >/tmp/rakazo/control.log 2>&1 &
 fi
 

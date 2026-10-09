@@ -75,7 +75,7 @@ async function focusCommand(action: ComputerAction) {
     }),
     run: async (_computer, command) => {
       runs.push(command);
-      if (runs.length === 1) return { code: 0, stdout: "RAKAZO_DESKTOP=0:token\n" };
+      if (runs.length === 1) return { code: 0, stdout: "BOBBOT_DESKTOP=0:token\n" };
       return { code: 0, stdout: "" };
     },
     screenUrl: async () => "http://screen.example",

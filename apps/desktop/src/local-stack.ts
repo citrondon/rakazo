@@ -115,7 +115,7 @@ const GENERATED_SECRETS: Record<string, number> = {
   SCREEN_PROXY_SECRET: 32,
   SANDBOX_SUPERVISOR_TOKEN: 32,
 };
-const LAUNCH_SUPPLIED = ["RAKAZO_IMAGE_TAG", "RAKAZO_COMPUTER_IMAGE_TAG"];
+const LAUNCH_SUPPLIED = ["BOBBOT_IMAGE_TAG", "BOBBOT_COMPUTER_IMAGE_TAG"];
 
 /**
  * Port of install-images.sh `create_env`: fills the empty secret lines with random
@@ -618,14 +618,14 @@ export class LocalStackController {
     return this.deps.run(binary, args, {
       cwd: this.deps.stackDir,
       env: dockerSpawnEnv(this.deps.platform, this.deps.env, binary, {
-        RAKAZO_IMAGE_TAG: this.deps.imageTag,
-        RAKAZO_COMPUTER_IMAGE_TAG: this.deps.imageTag,
+        BOBBOT_IMAGE_TAG: this.deps.imageTag,
+        BOBBOT_COMPUTER_IMAGE_TAG: this.deps.imageTag,
         ...(this.currentStackToken === null
           ? {}
-          : { RAKAZO_DESKTOP_STACK_TOKEN: this.currentStackToken }),
-        RAKAZO_WEB_PORT: new URL(this.currentWebUrl).port || "80",
+          : { BOBBOT_DESKTOP_STACK_TOKEN: this.currentStackToken }),
+        BOBBOT_WEB_PORT: new URL(this.currentWebUrl).port || "80",
         // Only web needs a stable host address. Docker allocates the API host port.
-        RAKAZO_API_PORT: "0",
+        BOBBOT_API_PORT: "0",
         BETTER_AUTH_URL: this.currentWebUrl,
         WEB_ORIGIN: this.currentWebUrl,
         API_URL: this.currentWebUrl,

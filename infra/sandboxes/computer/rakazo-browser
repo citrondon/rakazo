@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-RAKAZO_HOME="${HOME:-/home/rakazo}"
+BOBBOT_HOME="${HOME:-/home/rakazo}"
 # start.sh exports the session bus for the whole desktop; the supervisor may
 # launch this script with a minimal environment, so recover the bus address.
 if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -r /tmp/rakazo/dbus-session ]; then
@@ -17,14 +17,14 @@ esac
 while [ "${DISPLAY_NUM#0}" != "$DISPLAY_NUM" ]; do DISPLAY_NUM="${DISPLAY_NUM#0}"; done
 DISPLAY_NUM="${DISPLAY_NUM:-0}"
 DEBUG_PORT=$((9221 + DISPLAY_NUM))
-if [ -n "${RAKAZO_BROWSER_PROFILE:-}" ]; then
-  PROFILE="$RAKAZO_BROWSER_PROFILE"
+if [ -n "${BOBBOT_BROWSER_PROFILE:-}" ]; then
+  PROFILE="$BOBBOT_BROWSER_PROFILE"
 elif [ -s "/tmp/rakazo/browser-profile-$DISPLAY_NUM" ]; then
   PROFILE="$(cat "/tmp/rakazo/browser-profile-$DISPLAY_NUM")"
 else
   case "$DISPLAY_NUM" in
-    1) PROFILE="$RAKAZO_HOME/.browser-profiles/chromium" ;;
-    *) PROFILE="$RAKAZO_HOME/.browser-profiles/chromium-screen-$DISPLAY_NUM" ;;
+    1) PROFILE="$BOBBOT_HOME/.browser-profiles/chromium" ;;
+    *) PROFILE="$BOBBOT_HOME/.browser-profiles/chromium-screen-$DISPLAY_NUM" ;;
   esac
 fi
 mkdir -p "$PROFILE"

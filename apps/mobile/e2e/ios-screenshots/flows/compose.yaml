@@ -4,7 +4,7 @@ name: Compose
 - runFlow:
     file: ../subflows/sign-in.yaml
     env:
-      RAKAZO_ACTIVE_EMAIL: ${RAKAZO_SCREENSHOT_EMAIL}
+      BOBBOT_ACTIVE_EMAIL: ${BOBBOT_SCREENSHOT_EMAIL}
 - openLink: "rakazo:///new"
 - extendedWaitUntil:
     visible: "Name this bot"

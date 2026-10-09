@@ -60,7 +60,7 @@ describe.each([undefined, profile])(
           ((action.kind === "launch" || action.kind === "focus") &&
             action.application === "chromium"))
       ) {
-        expect(step.argv[2]).toBe(`RAKAZO_BROWSER_PROFILE=${browserProfile}`);
+        expect(step.argv[2]).toBe(`BOBBOT_BROWSER_PROFILE=${browserProfile}`);
       }
       expect(check(step.argv)).toEqual({
         allowed: true,
@@ -78,33 +78,33 @@ describe.each([undefined, profile])(
 
 describe("controller argv restrictions", () => {
   it.each([
-    ["env", `DISPLAY=${display}`, `RAKAZO_BROWSER_PROFILE=${profile}`],
-    ["env", `DISPLAY=${display}`, "RAKAZO_BROWSER_PROFILE=", "rakazo-browser"],
-    ["env", `DISPLAY=${display}`, `RAKAZO_BROWSER_PROFILE=${profile}a`, "rakazo-browser"],
+    ["env", `DISPLAY=${display}`, `BOBBOT_BROWSER_PROFILE=${profile}`],
+    ["env", `DISPLAY=${display}`, "BOBBOT_BROWSER_PROFILE=", "rakazo-browser"],
+    ["env", `DISPLAY=${display}`, `BOBBOT_BROWSER_PROFILE=${profile}a`, "rakazo-browser"],
     [
       "env",
       `DISPLAY=${display}`,
-      `RAKAZO_BROWSER_PROFILE=${profile.toUpperCase()}`,
+      `BOBBOT_BROWSER_PROFILE=${profile.toUpperCase()}`,
       "rakazo-browser",
     ],
-    ["env", `DISPLAY=${display}`, `RAKAZO_BROWSER_PROFILE=${profile}`, "xterm"],
+    ["env", `DISPLAY=${display}`, `BOBBOT_BROWSER_PROFILE=${profile}`, "xterm"],
     [
       "env",
       `DISPLAY=${display}`,
-      `RAKAZO_BROWSER_PROFILE=${profile}`,
+      `BOBBOT_BROWSER_PROFILE=${profile}`,
       "/usr/bin/xdg-open",
       "https://example.com",
     ],
-    ["env", `DISPLAY=${display}`, `RAKAZO_BROWSER_PROFILE=${profile}`, "xdg-open"],
+    ["env", `DISPLAY=${display}`, `BOBBOT_BROWSER_PROFILE=${profile}`, "xdg-open"],
     [
       "env",
       `DISPLAY=${display}`,
-      `RAKAZO_BROWSER_PROFILE=${profile}`,
+      `BOBBOT_BROWSER_PROFILE=${profile}`,
       "rakazo-browser",
       "one",
       "two",
     ],
-    ["env", "DISPLAY=:8", `RAKAZO_BROWSER_PROFILE=${profile}`, "rakazo-browser"],
+    ["env", "DISPLAY=:8", `BOBBOT_BROWSER_PROFILE=${profile}`, "rakazo-browser"],
     ["env", "DISPLAY=:8", "xdg-open", "https://example.com"],
     ["env", `DISPLAY=${display}`, "rakazo-focus-or-launch"],
     ["env", `DISPLAY=${display}`, "rakazo-focus-or-launch", "sh"],
@@ -114,21 +114,21 @@ describe("controller argv restrictions", () => {
     [
       "env",
       `DISPLAY=${display}`,
-      `RAKAZO_BROWSER_PROFILE=${profile}`,
+      `BOBBOT_BROWSER_PROFILE=${profile}`,
       "rakazo-focus-or-launch",
       "xterm",
     ],
     ["env", "DISPLAY=:8", "rakazo-focus-or-launch", "xterm"],
     ["env", `DISPLAY=${display}`, "LD_PRELOAD=/tmp/unsafe", "xdg-open", "https://example.com"],
-    ["env", `DISPLAY=${display}`, "RAKAZO_BROWSER_PROFILE=/tmp/unsafe", "rakazo-browser"],
-    ["env", `DISPLAY=${display}`, `RAKAZO_BROWSER_PROFILE=${profile}/../other`, "rakazo-browser"],
-    ["env", `DISPLAY=${display}`, `RAKAZO_BROWSER_PROFILE=${profile}`, "sh", "-c", "true"],
-    ["env", `DISPLAY=${display}`, `RAKAZO_BROWSER_PROFILE=${profile}`, "xdotool", "key", "Return"],
+    ["env", `DISPLAY=${display}`, "BOBBOT_BROWSER_PROFILE=/tmp/unsafe", "rakazo-browser"],
+    ["env", `DISPLAY=${display}`, `BOBBOT_BROWSER_PROFILE=${profile}/../other`, "rakazo-browser"],
+    ["env", `DISPLAY=${display}`, `BOBBOT_BROWSER_PROFILE=${profile}`, "sh", "-c", "true"],
+    ["env", `DISPLAY=${display}`, `BOBBOT_BROWSER_PROFILE=${profile}`, "xdotool", "key", "Return"],
     [
       "env",
       `DISPLAY=${display}`,
-      `RAKAZO_BROWSER_PROFILE=${profile}`,
-      `RAKAZO_BROWSER_PROFILE=${profile}`,
+      `BOBBOT_BROWSER_PROFILE=${profile}`,
+      `BOBBOT_BROWSER_PROFILE=${profile}`,
       "rakazo-browser",
     ],
   ])("rejects malformed or unauthorized argv %j", (...argv) => {

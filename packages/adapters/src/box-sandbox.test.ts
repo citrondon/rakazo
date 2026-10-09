@@ -34,7 +34,7 @@ describe("BoxSandboxProvider", () => {
         createBoxRequest: {
           ttlSeconds: 7200,
           noEnv: true,
-          env: { RAKAZO_BOT_ID: "bot-a", RAKAZO_SANDBOX: "computer" },
+          env: { BOBBOT_BOT_ID: "bot-a", BOBBOT_SANDBOX: "computer" },
         },
       },
       { signal: context.signal },

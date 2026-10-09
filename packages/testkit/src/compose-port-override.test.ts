@@ -21,9 +21,9 @@ describe("compose host port overrides", () => {
     for (const composePath of COMPOSE_FILES) {
       const compose = read(composePath);
       // biome-ignore lint/suspicious/noTemplateCurlyInString: this is the literal Compose expression
-      expect(compose).toContain('"127.0.0.1:${RAKAZO_API_PORT:-3100}:3100"');
+      expect(compose).toContain('"127.0.0.1:${BOBBOT_API_PORT:-${RAKAZO_API_PORT:-3100}}:3100"');
       // biome-ignore lint/suspicious/noTemplateCurlyInString: this is the literal Compose expression
-      expect(compose).toContain('"127.0.0.1:${RAKAZO_WEB_PORT:-5173}:5173"');
+      expect(compose).toContain('"127.0.0.1:${BOBBOT_WEB_PORT:-${RAKAZO_WEB_PORT:-5173}}:5173"');
     }
   });
 
@@ -34,9 +34,9 @@ describe("compose host port overrides", () => {
   it("documents both variables commented out, so an unset value leaves the defaults", () => {
     for (const template of ENV_TEMPLATES) {
       const content = read(template);
-      expect(content).toContain("RAKAZO_API_PORT");
-      expect(content).toContain("RAKAZO_WEB_PORT");
-      expect(content).not.toMatch(/^RAKAZO_(API|WEB)_PORT=/m);
+      expect(content).toContain("BOBBOT_API_PORT");
+      expect(content).toContain("BOBBOT_WEB_PORT");
+      expect(content).not.toMatch(/^BOBBOT_(API|WEB)_PORT=/m);
     }
   });
 
@@ -51,8 +51,8 @@ describe("compose host port overrides", () => {
     expect(docs).toContain("lsof -nP -iTCP:3100 -sTCP:LISTEN");
     expect(docs).toContain("bind: address already in use");
     expect(docs).toContain("port is already allocated");
-    expect(docs).toContain("RAKAZO_API_PORT=0");
-    expect(docs).toContain("RAKAZO_WEB_PORT=5174");
+    expect(docs).toContain("BOBBOT_API_PORT=0");
+    expect(docs).toContain("BOBBOT_WEB_PORT=5174");
   });
 
   it("quotes the desktop notice the app actually prints", () => {

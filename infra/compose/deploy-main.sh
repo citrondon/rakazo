@@ -7,37 +7,37 @@
 set -Eeuo pipefail
 
 # A forced SSH command carries no environment, so read the checkout path from a root-owned file.
-if [[ -z "${RAKAZO_DEPLOY_DIR:-}" && -r /etc/rakazo/deploy.env ]]; then
+if [[ -z "${BOBBOT_DEPLOY_DIR:-${RAKAZO_DEPLOY_DIR:-}}" && -r /etc/rakazo/deploy.env ]]; then
   # shellcheck disable=SC1091
   source /etc/rakazo/deploy.env
 fi
-APP_DIR="${RAKAZO_DEPLOY_DIR:-/srv/rakazo}"
-[[ "${APP_DIR}" == /* ]] || { echo "RAKAZO_DEPLOY_DIR must be an absolute path" >&2; exit 1; }
+APP_DIR="${BOBBOT_DEPLOY_DIR:-${RAKAZO_DEPLOY_DIR:-/srv/rakazo}}"
+[[ "${APP_DIR}" == /* ]] || { echo "BOBBOT_DEPLOY_DIR must be an absolute path" >&2; exit 1; }
 
 # The privileged interface takes exactly one input: the full commit CI already tested.
-target_revision="${RAKAZO_DEPLOY_REVISION:-}"
+target_revision="${BOBBOT_DEPLOY_REVISION:-${RAKAZO_DEPLOY_REVISION:-}}"
 if [[ -z "${target_revision}" && -n "${SSH_ORIGINAL_COMMAND:-}" ]]; then
   read -r target_revision _ <<<"${SSH_ORIGINAL_COMMAND}"
 fi
 if [[ ! "${target_revision}" =~ ^[0-9a-f]{40}$ ]]; then
-  echo "Pass the tested full commit SHA as RAKAZO_DEPLOY_REVISION or the SSH command" >&2
+  echo "Pass the tested full commit SHA as BOBBOT_DEPLOY_REVISION or the SSH command" >&2
   exit 1
 fi
 
 # Topology is a space/comma separated list so an overlay stack deploys with the files it runs with.
-COMPOSE_FILES_RAW="${RAKAZO_DEPLOY_COMPOSE_FILES:-infra/compose/docker-compose.prod.yml}"
+COMPOSE_FILES_RAW="${BOBBOT_DEPLOY_COMPOSE_FILES:-${RAKAZO_DEPLOY_COMPOSE_FILES:-infra/compose/docker-compose.prod.yml}}"
 # CI allows 30 minutes: 15m build + 5m start + ~1m of readiness retries + 8m rollback.
-BUILD_TIMEOUT="${RAKAZO_DEPLOY_BUILD_TIMEOUT:-15m}"
-UP_TIMEOUT="${RAKAZO_DEPLOY_UP_TIMEOUT:-5m}"
-UP_WAIT_SECONDS="${RAKAZO_DEPLOY_UP_WAIT_SECONDS:-300}"
-ROLLBACK_TIMEOUT="${RAKAZO_DEPLOY_ROLLBACK_TIMEOUT:-8m}"
-SNAPSHOT_TIMEOUT="${RAKAZO_DEPLOY_SNAPSHOT_TIMEOUT:-5m}"
-HEALTH_INTERVAL="${RAKAZO_DEPLOY_HEALTH_INTERVAL:-2}"
+BUILD_TIMEOUT="${BOBBOT_DEPLOY_BUILD_TIMEOUT:-${RAKAZO_DEPLOY_BUILD_TIMEOUT:-15m}}"
+UP_TIMEOUT="${BOBBOT_DEPLOY_UP_TIMEOUT:-${RAKAZO_DEPLOY_UP_TIMEOUT:-5m}}"
+UP_WAIT_SECONDS="${BOBBOT_DEPLOY_UP_WAIT_SECONDS:-${RAKAZO_DEPLOY_UP_WAIT_SECONDS:-300}}"
+ROLLBACK_TIMEOUT="${BOBBOT_DEPLOY_ROLLBACK_TIMEOUT:-${RAKAZO_DEPLOY_ROLLBACK_TIMEOUT:-8m}}"
+SNAPSHOT_TIMEOUT="${BOBBOT_DEPLOY_SNAPSHOT_TIMEOUT:-${RAKAZO_DEPLOY_SNAPSHOT_TIMEOUT:-5m}}"
+HEALTH_INTERVAL="${BOBBOT_DEPLOY_HEALTH_INTERVAL:-${RAKAZO_DEPLOY_HEALTH_INTERVAL:-2}}"
 
 cd "${APP_DIR}"
 
 read -r -a COMPOSE_FILES <<<"${COMPOSE_FILES_RAW//,/ }"
-[[ ${#COMPOSE_FILES[@]} -gt 0 ]] || { echo "RAKAZO_DEPLOY_COMPOSE_FILES is empty" >&2; exit 1; }
+[[ ${#COMPOSE_FILES[@]} -gt 0 ]] || { echo "BOBBOT_DEPLOY_COMPOSE_FILES is empty" >&2; exit 1; }
 for file in "${COMPOSE_FILES[@]}"; do
   if [[ "${file}" == /* || "${file}" == *".."* || ! "${file}" =~ ^[A-Za-z0-9._/-]+\.ya?ml$ || ! -f "${file}" ]]; then
     echo "Invalid Compose file '${file}'; use a relative .yml/.yaml path inside the checkout" >&2
@@ -47,10 +47,10 @@ done
 COMPOSE_ARGS=(--env-file .env)
 for file in "${COMPOSE_FILES[@]}"; do COMPOSE_ARGS+=(-f "${file}"); done
 
-if [[ -z "${RAKAZO_HEALTH_URL:-}" ]]; then
-  host="$(sed -n 's/^RAKAZO_HOST=//p' .env | tail -n 1)"
-  [[ -n "${host}" ]] || { echo "Set RAKAZO_HOST in .env or RAKAZO_HEALTH_URL" >&2; exit 1; }
-  RAKAZO_HEALTH_URL="https://${host}/health"
+if [[ -z "${BOBBOT_HEALTH_URL:-${RAKAZO_HEALTH_URL:-}}" ]]; then
+  host="$(sed -n 's/^BOBBOT_HOST=//p' .env | tail -n 1)"
+  [[ -n "${host}" ]] || { echo "Set BOBBOT_HOST in .env or BOBBOT_HEALTH_URL" >&2; exit 1; }
+  BOBBOT_HEALTH_URL="https://${host}/health"
 fi
 
 # The revision baked into the images being built; the rollback switches it to the previous commit.
@@ -64,7 +64,7 @@ compose() {
 }
 
 healthy() {
-  curl --fail --silent --show-error --max-time 15 "${RAKAZO_HEALTH_URL}" >/dev/null
+  curl --fail --silent --show-error --max-time 15 "${BOBBOT_HEALTH_URL:-${RAKAZO_HEALTH_URL:-}}" >/dev/null
 }
 
 # The public health endpoint is constant liveness, so the running revision is read from the

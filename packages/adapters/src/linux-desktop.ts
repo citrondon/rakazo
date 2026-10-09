@@ -71,7 +71,7 @@ export class LinuxDesktop {
       managedDesktopCommand(key, context.screenLeaseId, env, randomUUID()),
       context,
     );
-    const match = output.match(/RAKAZO_DESKTOP=(\d+):([a-zA-Z0-9_-]+)/);
+    const match = output.match(/BOBBOT_DESKTOP=(\d+):([a-zA-Z0-9_-]+)/);
     if (!match) throw new ComputerScreenUnavailableError();
     const index = Number(match[1]);
     const ports = screenPorts(index, env);
@@ -213,7 +213,7 @@ export class LinuxDesktop {
       releaseDesktopCommand(screenSessionKey(context), context.screenLeaseId, env),
       context,
     );
-    if (result.stdout.includes("RAKAZO_DESKTOP_RELEASED=")) {
+    if (result.stdout.includes("BOBBOT_DESKTOP_RELEASED=")) {
       if (result.code !== 0 && result.code !== 75) throw new BrowserStoppedReleaseError();
       return;
     }
@@ -327,9 +327,9 @@ function focusOrLaunchActionCommand(
           "  fi",
         ]
       : ["  wid=$id", "  break"]),
-    "done <<RAKAZO_WINDOWS",
+    "done <<BOBBOT_WINDOWS",
     `$(DISPLAY=${layout.display} wmctrl -lxp 2>/dev/null || true)`,
-    "RAKAZO_WINDOWS",
+    "BOBBOT_WINDOWS",
     'if [ -z "$wid" ] && [ "$saw_profile" -eq 0 ]; then wid=$fallback; fi',
     'if [ -n "$wid" ]; then',
     ...(action.uri !== undefined ? [`  ${background}`] : []),

@@ -7,7 +7,7 @@ export { OPENAI_COMPATIBLE_PROVIDER_ID };
 const METADATA_HOSTS = new Set(["metadata.google.internal", "metadata.goog"]);
 
 export function openAiCompatAllowPublicHosts(): boolean {
-  return process.env.RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC === "1";
+  return process.env.BOBBOT_OPENAI_COMPAT_ALLOW_PUBLIC === "1";
 }
 
 export function normalizeOpenAiCompatibleBaseUrl(raw: string): string {
@@ -113,7 +113,7 @@ export function assertAllowedOpenAiCompatibleRequestUrl(
   if (isPrivateOpenAiCompatibleHostname(hostname)) return url;
   if (!allowPublic) {
     throw new Error(
-      "Public model endpoints are blocked. Set RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC=1 to allow them. A private reverse proxy on localhost or an RFC1918 address does not need that gate.",
+      "Public model endpoints are blocked. Set BOBBOT_OPENAI_COMPAT_ALLOW_PUBLIC=1 to allow them. A private reverse proxy on localhost or an RFC1918 address does not need that gate.",
     );
   }
   return url;

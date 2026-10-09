@@ -30,7 +30,7 @@ export interface UpdaterProxyConfig {
   url: string | null;
   token: string | null;
   gitSha: string | undefined;
-  /** Current `RAKAZO_IMAGE_TAG` when known; selects compose pull vs rebuild commands. */
+  /** Current `BOBBOT_IMAGE_TAG` when known; selects compose pull vs rebuild commands. */
   imageTag?: string | null;
   disabled?: boolean;
   /** Override for tests; defaults to process.cwd(). */
@@ -102,7 +102,7 @@ export async function readServerUpdateStatus(
     disabled: config.disabled === true,
   });
   const supervisor = detectRestartSupervisor(process.env);
-  const imageTagHint = config.imageTag?.trim() || process.env.RAKAZO_IMAGE_TAG?.trim() || null;
+  const imageTagHint = config.imageTag?.trim() || process.env.BOBBOT_IMAGE_TAG?.trim() || null;
   const base: ServerUpdateStatus = {
     supported: install.kind === "sidecar",
     unsupportedReason: install.kind === "sidecar" ? null : install.reason,

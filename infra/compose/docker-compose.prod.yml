@@ -37,8 +37,8 @@ services:
     #
     # The default tag is `local`, which no registry serves, so a fresh install builds from the
     # checkout via `up -d --build` instead of failing on a `pull` of an image that does not exist
-    # yet. Once a release is published, pin RAKAZO_IMAGE_TAG to it and the pull path takes over.
-    image: ${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}:${RAKAZO_IMAGE_TAG:-local}
+    # yet. Once a release is published, pin BOBBOT_IMAGE_TAG to it and the pull path takes over.
+    image: ${BOBBOT_IMAGE:-${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}}:${BOBBOT_IMAGE_TAG:-${RAKAZO_IMAGE_TAG:-local}}
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
@@ -92,7 +92,7 @@ services:
       http_proxy: ${http_proxy:-${HTTP_PROXY:-}}
       https_proxy: ${https_proxy:-${HTTPS_PROXY:-}}
       no_proxy: ${no_proxy:-${NO_PROXY:-}}
-      RAKAZO_UPDATER_URL: http://updater:7092
+      BOBBOT_UPDATER_URL: http://updater:7092
     expose:
       - "3100"
     volumes:
@@ -115,7 +115,7 @@ services:
       retries: 20
 
   worker:
-    image: ${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}:${RAKAZO_IMAGE_TAG:-local}
+    image: ${BOBBOT_IMAGE:-${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}}:${BOBBOT_IMAGE_TAG:-${RAKAZO_IMAGE_TAG:-local}}
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
@@ -176,7 +176,7 @@ services:
         condition: service_healthy
 
   web:
-    image: ${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}:${RAKAZO_IMAGE_TAG:-local}
+    image: ${BOBBOT_IMAGE:-${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}}:${BOBBOT_IMAGE_TAG:-${RAKAZO_IMAGE_TAG:-local}}
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
@@ -195,7 +195,7 @@ services:
     environment:
       NODE_ENV: production
       API_PROXY_TARGET: http://api:3100
-      RAKAZO_HOST: ${RAKAZO_HOST:-app.example.com}
+      BOBBOT_HOST: ${BOBBOT_HOST:-${RAKAZO_HOST:-app.example.com}}
       SCREEN_PROXY_SECRET: ${SCREEN_PROXY_SECRET:?Set SCREEN_PROXY_SECRET in .env}
     expose:
       - "5173"
@@ -225,7 +225,7 @@ services:
     profiles: [updater]
     # Pinned separately from the application image: the updater does not recreate itself, so moving
     # its own version is an operator action, not something an update can do underneath itself.
-    image: ${RAKAZO_UPDATER_IMAGE:-ghcr.io/elie222/rakazo/updater}:${RAKAZO_UPDATER_IMAGE_TAG:-local}
+    image: ${BOBBOT_UPDATER_IMAGE:-${RAKAZO_UPDATER_IMAGE:-ghcr.io/elie222/rakazo/updater}}:${BOBBOT_UPDATER_IMAGE_TAG:-${RAKAZO_UPDATER_IMAGE_TAG:-local}}
     build:
       context: ../..
       dockerfile: infra/updater/Dockerfile
@@ -243,21 +243,21 @@ services:
       NODE_ENV: production
       # Keep interpolation optional so deployments that do not enable this profile need no token.
       # resolveUpdaterConfig still refuses to start the sidecar without a dedicated secure value.
-      RAKAZO_UPDATER_TOKEN: ${RAKAZO_UPDATER_TOKEN:-}
-      RAKAZO_UPDATER_HOST: "0.0.0.0"
-      RAKAZO_UPDATER_PORT: "7092"
-      RAKAZO_IMAGE: ${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}
+      BOBBOT_UPDATER_TOKEN: ${BOBBOT_UPDATER_TOKEN:-${RAKAZO_UPDATER_TOKEN:-}}
+      BOBBOT_UPDATER_HOST: "0.0.0.0"
+      BOBBOT_UPDATER_PORT: "7092"
+      BOBBOT_IMAGE: ${BOBBOT_IMAGE:-${RAKAZO_IMAGE:-ghcr.io/elie222/rakazo/app}}
       # `-p` is available to Compose interpolation but is not injected into containers unless it is
       # declared here. The sidecar must target the project the operator actually started.
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-rakazo-prod}
       # Must equal the host path it is mounted from, or every relative bind mount in this file would
       # resolve somewhere else. /srv/rakazo is the supported Linux production layout.
-      RAKAZO_DEPLOY_DIR: ${RAKAZO_DEPLOY_DIR:-/srv/rakazo}
+      BOBBOT_DEPLOY_DIR: ${BOBBOT_DEPLOY_DIR:-${RAKAZO_DEPLOY_DIR:-/srv/rakazo}}
       # A deployment that layers an overlay has to be reconciled with the same file list and the
       # same services the operator runs by hand, so these are read from the environment rather
       # than pinned to the base stack. Defaults reproduce the previous behaviour exactly.
-      RAKAZO_COMPOSE_FILE: ${RAKAZO_COMPOSE_FILE:-infra/compose/docker-compose.prod.yml}
-      RAKAZO_UPDATE_SERVICES: ${RAKAZO_UPDATE_SERVICES:-}
+      BOBBOT_COMPOSE_FILE: ${BOBBOT_COMPOSE_FILE:-${RAKAZO_COMPOSE_FILE:-infra/compose/docker-compose.prod.yml}}
+      BOBBOT_UPDATE_SERVICES: ${BOBBOT_UPDATE_SERVICES:-${RAKAZO_UPDATE_SERVICES:-}}
       COMPOSE_PATH_SEPARATOR: ${COMPOSE_PATH_SEPARATOR:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_FORMAT: ${LOG_FORMAT:-}
@@ -267,7 +267,7 @@ services:
       AXIOM_EDGE_URL: ${AXIOM_EDGE_URL:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${RAKAZO_DEPLOY_DIR:-/srv/rakazo}:${RAKAZO_DEPLOY_DIR:-/srv/rakazo}
+      - ${BOBBOT_DEPLOY_DIR:-${RAKAZO_DEPLOY_DIR:-/srv/rakazo}}:${BOBBOT_DEPLOY_DIR:-${RAKAZO_DEPLOY_DIR:-/srv/rakazo}}
     networks:
       - control
     healthcheck:
@@ -294,7 +294,7 @@ services:
     pids_limit: 128
     mem_limit: 256m
     environment:
-      RAKAZO_HOST: ${RAKAZO_HOST:-app.example.com}
+      BOBBOT_HOST: ${BOBBOT_HOST:-${RAKAZO_HOST:-app.example.com}}
     ports:
       - "80:80"
       - "443:443"

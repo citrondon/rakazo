@@ -13,7 +13,7 @@ if [[ -f "$ROOT/.env" ]]; then compose=(docker compose --env-file "$ROOT/.env" -
 mkdir -p "$ROOT/backups"
 mkdir -m 700 "$OUT"
 "${compose[@]}" exec -T postgres pg_dump -U rakazo rakazo > "$OUT/rakazo.sql"
-if [[ "${RAKAZO_BACKUP_SKIP_HOMES:-0}" == "1" ]] || [[ ! -e "$ROOT/data" && ! -L "$ROOT/data" ]]; then
+if [[ "${BOBBOT_BACKUP_SKIP_HOMES:-${RAKAZO_BACKUP_SKIP_HOMES:-0}}" == "1" ]] || [[ ! -e "$ROOT/data" && ! -L "$ROOT/data" ]]; then
   tar -czf "$OUT/homes.tgz" --files-from /dev/null
 else
   [[ -d "$ROOT/data" ]] || { echo "data is not a directory" >&2; exit 1; }

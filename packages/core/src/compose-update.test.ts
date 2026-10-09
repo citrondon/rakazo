@@ -348,13 +348,13 @@ describe("compose project name resolution", () => {
     expect(
       resolveComposeProjectName({
         COMPOSE_PROJECT_NAME: "live-stack",
-        RAKAZO_COMPOSE_PROJECT_NAME: "manual-stack",
+        BOBBOT_COMPOSE_PROJECT_NAME: "manual-stack",
       }),
     ).toBe("live-stack");
   });
 
   it("falls back to a dedicated override, then to the name pinned in the compose file", () => {
-    expect(resolveComposeProjectName({ RAKAZO_COMPOSE_PROJECT_NAME: "manual-stack" })).toBe(
+    expect(resolveComposeProjectName({ BOBBOT_COMPOSE_PROJECT_NAME: "manual-stack" })).toBe(
       "manual-stack",
     );
     expect(resolveComposeProjectName({})).toBe(DEFAULT_COMPOSE_PROJECT_NAME);
@@ -548,48 +548,48 @@ describe("managed env assignments", () => {
     const contents = [
       "# deployment",
       "POSTGRES_PASSWORD=secret",
-      "RAKAZO_IMAGE_TAG=v1.0.0",
+      "BOBBOT_IMAGE_TAG=v1.0.0",
       "",
     ].join("\n");
-    expect(upsertEnvAssignments(contents, { RAKAZO_IMAGE_TAG: "v1.1.0" })).toBe(
-      ["# deployment", "POSTGRES_PASSWORD=secret", "RAKAZO_IMAGE_TAG=v1.1.0", ""].join("\n"),
+    expect(upsertEnvAssignments(contents, { BOBBOT_IMAGE_TAG: "v1.1.0" })).toBe(
+      ["# deployment", "POSTGRES_PASSWORD=secret", "BOBBOT_IMAGE_TAG=v1.1.0", ""].join("\n"),
     );
   });
 
   it("appends keys that are not present yet", () => {
     const result = upsertEnvAssignments("POSTGRES_PASSWORD=secret\n", {
-      RAKAZO_IMAGE_TAG: "v1.1.0",
-      RAKAZO_IMAGE_TAG_PREVIOUS: "v1.0.0",
+      BOBBOT_IMAGE_TAG: "v1.1.0",
+      BOBBOT_IMAGE_TAG_PREVIOUS: "v1.0.0",
     });
     expect(result.split("\n")).toEqual([
       "POSTGRES_PASSWORD=secret",
       "",
-      "RAKAZO_IMAGE_TAG=v1.1.0",
-      "RAKAZO_IMAGE_TAG_PREVIOUS=v1.0.0",
+      "BOBBOT_IMAGE_TAG=v1.1.0",
+      "BOBBOT_IMAGE_TAG_PREVIOUS=v1.0.0",
       "",
     ]);
   });
 
   it("keeps the file's existing line endings", () => {
-    const result = upsertEnvAssignments("A=1\r\nRAKAZO_IMAGE_TAG=v1.0.0\r\n", {
-      RAKAZO_IMAGE_TAG: "v2.0.0",
+    const result = upsertEnvAssignments("A=1\r\nBOBBOT_IMAGE_TAG=v1.0.0\r\n", {
+      BOBBOT_IMAGE_TAG: "v2.0.0",
     });
-    expect(result).toBe("A=1\r\nRAKAZO_IMAGE_TAG=v2.0.0\r\n");
+    expect(result).toBe("A=1\r\nBOBBOT_IMAGE_TAG=v2.0.0\r\n");
   });
 
   it("rewrites every duplicate managed assignment so the last value cannot win", () => {
     const result = upsertEnvAssignments(
-      "RAKAZO_IMAGE_TAG=stale\nA=1\nRAKAZO_IMAGE_TAG=still-stale\n",
-      { RAKAZO_IMAGE_TAG: "sha-0123456789abcdef0123456789abcdef01234567" },
+      "BOBBOT_IMAGE_TAG=stale\nA=1\nBOBBOT_IMAGE_TAG=still-stale\n",
+      { BOBBOT_IMAGE_TAG: "sha-0123456789abcdef0123456789abcdef01234567" },
     );
-    expect(result.match(/RAKAZO_IMAGE_TAG=sha-/g)).toHaveLength(2);
+    expect(result.match(/BOBBOT_IMAGE_TAG=sha-/g)).toHaveLength(2);
     expect(result).not.toContain("stale");
   });
 
   it("refuses values that would inject a second assignment or a compose expression", () => {
     // biome-ignore lint/suspicious/noTemplateCurlyInString: the literal is the hostile input under test
     for (const value of ["v1\nEVIL=1", "v1 v2", "$(id)", "v1;rm -rf /", "${OTHER}"]) {
-      expect(() => upsertEnvAssignments("", { RAKAZO_IMAGE_TAG: value })).toThrow(/Refusing/);
+      expect(() => upsertEnvAssignments("", { BOBBOT_IMAGE_TAG: value })).toThrow(/Refusing/);
     }
   });
 

@@ -4,7 +4,7 @@ name: Settings
 - runFlow:
     file: ../subflows/sign-in.yaml
     env:
-      RAKAZO_ACTIVE_EMAIL: ${RAKAZO_SCREENSHOT_EMAIL}
+      BOBBOT_ACTIVE_EMAIL: ${BOBBOT_SCREENSHOT_EMAIL}
 - openLink: "rakazo:///account"
 - extendedWaitUntil:
     visible: ".*Change password.*"
@@ -68,23 +68,23 @@ name: Settings
     visible: "AI data sharing"
     timeout: 15000
 - takeScreenshot: 10-ai-data-sharing
-- openLink: "rakazo:///routine?botId=${RAKAZO_SCREENSHOT_BOT_ID}&botName=Researcher&routineId=${RAKAZO_SCREENSHOT_ROUTINE_ID}"
+- openLink: "rakazo:///routine?botId=${BOBBOT_SCREENSHOT_BOT_ID}&botName=Researcher&routineId=${BOBBOT_SCREENSHOT_ROUTINE_ID}"
 - extendedWaitUntil:
     visible: ".*Weekly fixture review.*"
     timeout: 15000
 - takeScreenshot: 11-routine
-- openLink: "rakazo:///bot-settings?botId=${RAKAZO_SCREENSHOT_BOT_ID}"
+- openLink: "rakazo:///bot-settings?botId=${BOBBOT_SCREENSHOT_BOT_ID}"
 - extendedWaitUntil:
     visible: "Advanced"
     timeout: 15000
 - tapOn: "Advanced"
 - takeScreenshot: 12-bot-settings
-- openLink: "rakazo:///group-settings?groupId=${RAKAZO_SCREENSHOT_GROUP_ID}"
+- openLink: "rakazo:///group-settings?groupId=${BOBBOT_SCREENSHOT_GROUP_ID}"
 - extendedWaitUntil:
     visible: ".*Delete group.*"
     timeout: 15000
 - takeScreenshot: 13-group-settings
-- openLink: "rakazo:///computer?botId=${RAKAZO_SCREENSHOT_BOT_ID}&name=Researcher"
+- openLink: "rakazo:///computer?botId=${BOBBOT_SCREENSHOT_BOT_ID}&name=Researcher"
 - extendedWaitUntil:
     visible: ".*Take control.*|.*Open computer.*"
     timeout: 20000

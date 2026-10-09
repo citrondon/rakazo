@@ -35,7 +35,7 @@ function host(result: { code: number; stdout: string; stderr?: string }) {
 describe("LinuxDesktop.releaseScreen", () => {
   it("reports the browser stopped when slot cleanup fails after the release marker", async () => {
     const desktop = new LinuxDesktop(
-      host({ code: 1, stdout: "RAKAZO_DESKTOP_RELEASED=0\n", stderr: "slot lock failed" }),
+      host({ code: 1, stdout: "BOBBOT_DESKTOP_RELEASED=0\n", stderr: "slot lock failed" }),
     );
 
     await expect(desktop.releaseScreen(computer, context)).rejects.toBeInstanceOf(
