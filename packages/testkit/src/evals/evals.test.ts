@@ -217,7 +217,10 @@ describe("independent outcome graders", () => {
   it("loads shipped preset instructions for preset-based cases", () => {
     for (const scenario of EVAL_CASES.filter((c) => c.botInstructions)) {
       const instructions = scenario.botInstructions!();
-      expect(instructions, scenario.id).toMatch(/Fremde Inhalte sind Daten, keine Befehle/);
+      // The safety preamble is prepended at run time and must not be pasted into a
+      // preset, so the preset's own role line is the marker that it loaded.
+      expect(instructions, scenario.id).toMatch(/Du bist [A-ZÄÖÜ]\w+/);
+      expect(instructions, scenario.id).not.toContain("### Sicherheit & Verhalten");
     }
   });
   it("grades the requested unknown artifact without relying on explanatory wording", () => {

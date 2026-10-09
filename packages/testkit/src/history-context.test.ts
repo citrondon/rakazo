@@ -5,12 +5,12 @@ import { startModelEmulator } from "./model-emulator.js";
 
 // The fork prepends a mandatory safety preamble to the system prompt. Upstream's
 // fixtures assume a 4096-token window and a 3.5 KB request; the preamble costs
-// roughly 2.4k estimated tokens and 2.3 KB inside that same request, so both
-// budgets are widened by its overhead instead of shrinking the fixture's window.
-const SAFETY_PREAMBLE_TOKENS = 2_400;
-const SAFETY_PREAMBLE_BYTES = 2_600;
-const FIXTURE_CONTEXT_WINDOW = 4096 + SAFETY_PREAMBLE_TOKENS + 672;
-const FIXTURE_MAX_REQUEST_BYTES = 3584 + SAFETY_PREAMBLE_BYTES + 1024;
+// roughly 1k estimated tokens and 1 KB inside that same request, so both budgets
+// are widened by its overhead instead of shrinking the fixture's window.
+const SAFETY_PREAMBLE_TOKENS = 1_050;
+const SAFETY_PREAMBLE_BYTES = 1_050;
+const FIXTURE_CONTEXT_WINDOW = 4096 + SAFETY_PREAMBLE_TOKENS + 64;
+const FIXTURE_MAX_REQUEST_BYTES = 3584 + SAFETY_PREAMBLE_BYTES + 64;
 
 describe("structured results through real Pi context selection", () => {
   it("preserves valid history JSON and follows a shortened original-text cursor", async () => {

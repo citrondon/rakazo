@@ -131,9 +131,7 @@ describe("Pi outgoing provider prefixes", () => {
       ).toMatchObject({ contextWindow: 4096, maxTokens: 2048 });
       for (const [index, configured] of [
         { contextWindow: 16_384 },
-        // 4096 with an implicit half-window reserve leaves no room for the fork's
-        // safety preamble, so this case pins the explicit small reserve instead.
-        { contextWindow: 6144, maxTokens: 2048 },
+        { contextWindow: 4096 },
         { contextWindow: 32_768, maxTokens: 12_000 },
       ].entries()) {
         const events = [];
