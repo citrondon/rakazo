@@ -93,9 +93,12 @@ Was auf dem Handy (noch) anders ist:
   Ein einzelner Bot funktioniert auch ohne Vorlage: lege ihn an und schreibe
   ihm, was er werden soll; er fragt dann selbst nach Rolle, Auftrag und
   Vorgaben.
-- Auf der Models-Seite steht oben **Active model** mit einem Beispielnamen, auch
-  wenn noch kein Modell verbunden ist. Trau dem nicht: erst Anbieter und
-  Schlüssel eintragen, verbinden, dann gilt das Modell.
+- Auf der Models-Seite steht oben **Active model**. Steht dort ein Modell, kannst
+  du sofort loslegen: es ist das Modell, das die Installation vorgibt, und es
+  gehört dir nicht — der Betreiber kann es ändern. Steht dort **No model
+  connected**, verbinde zuerst einen Anbieter mit deinem eigenen Schlüssel.
+  Unten in der Liste stehen alle Anbieter; der Schlüssel gehört in das Feld über
+  der Modellliste.
 - In den Kontoeinstellungen stellst du ein, wofür das Handy klingelt: den
   Live-Status während der Arbeit, Antworten der Bots, Alarme aus Routinen und
   alles, was Aufmerksamkeit braucht (Fragen, Freigaben, Übernahme).
