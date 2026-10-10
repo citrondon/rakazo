@@ -1,4 +1,4 @@
-package com.rakazo.notifications
+package com.bobbot.notifications
 
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
@@ -104,7 +104,10 @@ internal class NotificationStorage(context: Context) {
   }
 
   private companion object {
-    const val PREFERENCES = "com.rakazo.notifications"
+    // These two strings are device state, not branding: Android stores the
+// preferences file and the keystore entry under exactly these names, so
+// renaming them would drop the connection an installed app already has.
+const val PREFERENCES = "com.rakazo.notifications"
     const val LIVE = "live_connection"
     const val MESSAGES = "messages"
     const val SCHEDULED = "scheduled_tasks"

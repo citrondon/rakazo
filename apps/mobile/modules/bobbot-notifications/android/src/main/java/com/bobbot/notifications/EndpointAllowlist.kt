@@ -1,4 +1,4 @@
-package com.rakazo.notifications
+package com.bobbot.notifications
 
 import java.net.URI
 

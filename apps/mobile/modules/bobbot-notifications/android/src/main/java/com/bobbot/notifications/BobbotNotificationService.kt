@@ -1,4 +1,4 @@
-package com.rakazo.notifications
+package com.bobbot.notifications
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -53,7 +53,7 @@ private data class RunRecord(
 
 private class ApiException(val status: Int) : IOException()
 
-class RakazoNotificationService : Service() {
+class BobbotNotificationService : Service() {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private lateinit var manager: NotificationManager
   private var pollJob: Job? = null
@@ -229,7 +229,7 @@ class RakazoNotificationService : Service() {
     // One group per bot, so a roster reads as a stack per bot rather than one pile of
     // alerts from every bot at once, and the owner sees who spoke without opening anything.
     val alert = builder(copy.channel)
-      .setSmallIcon(R.drawable.ic_rakazo_notification)
+      .setSmallIcon(R.drawable.ic_bobbot_notification)
       .setGroup(botGroupKey(run.botId))
       .setContentTitle(copy.title)
       .setContentText(copy.body)
@@ -288,7 +288,7 @@ class RakazoNotificationService : Service() {
 
   private fun liveStatusIcon(run: RunRecord, avatarStyle: String): Icon {
     if (avatarStyle != "organic") {
-      return Icon.createWithResource(this, R.drawable.ic_rakazo_notification)
+      return Icon.createWithResource(this, R.drawable.ic_bobbot_notification)
     }
     return Icon.createWithBitmap(botAvatarBitmap(run))
   }
@@ -379,7 +379,7 @@ class RakazoNotificationService : Service() {
     private const val ACTION_THREAD_CHANGED = "com.rakazo.notifications.THREAD_CHANGED"
     private const val PROMOTED_ONGOING_EXTRA = "android.requestPromotedOngoing"
     private const val POLL_INTERVAL_MS = 8_000L
-    private const val STATE_PREFERENCES = "com.rakazo.notification_state"
+    private const val STATE_PREFERENCES = "com.bobbot.notification_state"
     private const val SEEN_RUNS = "seen_runs"
     private const val SEEN_RUNS_SEEDED = "seen_runs_seeded"
     private const val SEEN_RUNS_SPACE_ID = "seen_runs_space_id"
@@ -390,12 +390,12 @@ class RakazoNotificationService : Service() {
     private var openThreadId: String? = null
 
     fun start(context: Context) {
-      val intent = Intent(context, RakazoNotificationService::class.java)
+      val intent = Intent(context, BobbotNotificationService::class.java)
       context.startService(intent)
     }
 
     fun stop(context: Context) {
-      context.stopService(Intent(context, RakazoNotificationService::class.java))
+      context.stopService(Intent(context, BobbotNotificationService::class.java))
     }
 
     fun setOpenThread(context: Context, botId: String?, threadId: String?) {
@@ -407,7 +407,7 @@ class RakazoNotificationService : Service() {
         context.getSystemService(NotificationManager::class.java).cancel(threadId.hashCode())
       }
       context.startService(
-        Intent(context, RakazoNotificationService::class.java).setAction(ACTION_THREAD_CHANGED),
+        Intent(context, BobbotNotificationService::class.java).setAction(ACTION_THREAD_CHANGED),
       )
     }
 
@@ -436,6 +436,8 @@ private fun attentionCopy(run: RunRecord): NotificationCopy = when (run.status) 
   else -> NotificationCopy("${run.botName} needs your input", run.prompt, Channels.ATTENTION)
 }
 
+// Channel ids survive in the device's notification settings, and `rakazo://` is
+// the scheme installed apps and old notification links use. Keep both.
 private object Channels {
   const val LIVE = "rakazo_live"
   const val MESSAGES = "rakazo_messages"
