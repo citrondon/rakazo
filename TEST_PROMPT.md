@@ -93,9 +93,15 @@ dieselbe API wie das Web.
 # deshalb NICHT. adb reverse legt den Port durch den USB-Tunnel:
 adb devices -l
 adb reverse tcp:3100 tcp:3100
+# Der Desktop eines Bots läuft in einem WebView auf dem Web-Port, nicht auf dem API-Port.
+# Ohne diese Zeile zeigt „Open computer" im Chat nur „Could not load the desktop.
+# This device cannot reach the screen URL." — der Computer selbst ist dabei gesund.
+adb reverse tcp:5174 tcp:5174
+# Metro, wenn die App den Bundle selbst lädt (Dev-Client-Build statt Expo Go):
+adb reverse tcp:8081 tcp:8081
 adb shell 'toybox nc -w 3 127.0.0.1 3100 </dev/null && echo OPEN || echo CLOSED'   # muss OPEN sein
 EXPO_PUBLIC_API_URL=http://127.0.0.1:3100 pnpm --filter @bobbot/mobile android   # baut + installiert
-# Nach jedem adb-Neustart: adb reverse tcp:3100 tcp:3100 erneut ausführen.
+# Nach jedem adb-Neustart: alle drei adb reverse-Zeilen erneut ausführen.
 
 # Weg B — WLAN (nur wenn das Handy die API direkt erreichen soll). Achtung: der Port ist
 # auf Loopback gebunden, Weg B erfordert also eine Publish-Regel:
@@ -107,6 +113,11 @@ EXPO_PUBLIC_API_URL=http://<LAN-IP>:3100 pnpm --filter @bobbot/mobile start
 
 Beleg für die Schleife (Stand 2026-10-01, Commit 2a7b7906, Pixel 10 Pro / Android 17):
 `nc 10.241.46.111 3100` → `CLOSED`, nach `adb reverse` → `OPEN`.
+
+Beleg für den Bot-Desktop (Stand 2026-10-10, Pixel 10 Pro / Android 17, Dev-Stack auf 3100/5174):
+Mit nur `tcp:3100` rendert `computer.tsx` „Could not load the desktop. This device cannot reach the
+screen URL."; mit zusätzlichem `adb reverse tcp:5174 tcp:5174` erscheint der Desktop samt Taskleiste,
+„You have control" und dem Freigabe-Knopf.
 
 1. Auf dem Handy **Expo Go** öffnen und den QR-Code scannen. (Für SDK-57-Module oder wenn Expo Go
    die App nicht lädt: `pnpm --filter @bobbot/mobile android` an einem USB-Handy mit `adb`.)
