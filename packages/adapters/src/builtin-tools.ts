@@ -851,7 +851,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "skill_create",
     description:
-      "Create a reusable Claude Agent Skill (generic how-to SKILL.md) shared across assistants. The Pi runtime already understands this format; we persist and inject them. Use when a multi-step task is worth repeating or the user asks to save a skill. Do not include account names, channels, or inboxes — those belong in a routine.",
+      "Create a reusable Claude Agent Skill (generic how-to SKILL.md) shared across assistants. The Pi runtime already understands this format; we persist and inject them. Use when a multi-step task is worth repeating or the user asks to save a skill. The owner approves the skill before it is saved, so state in your message what it does and why it is worth keeping. Do not include account names, channels, or inboxes — those belong in a routine.",
     inputSchema: {
       type: "object",
       properties: {
@@ -875,7 +875,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "skill_update",
     description:
-      "Update a user-created skill by name or id. Builtin and plugin skills are read-only.",
+      "Update a user-created skill by name or id. Builtin and plugin skills are read-only. The owner approves the change before it is saved, so say what you are changing and why.",
     inputSchema: {
       type: "object",
       properties: {
@@ -891,7 +891,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "skill_delete",
     description:
-      "Delete a user-created skill by name or id. Builtin and plugin skills cannot be deleted.",
+      "Delete a user-created skill by name or id. Builtin and plugin skills cannot be deleted. The owner approves the deletion before it happens.",
     inputSchema: {
       type: "object",
       properties: {

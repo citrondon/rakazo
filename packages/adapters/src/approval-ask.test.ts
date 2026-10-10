@@ -31,6 +31,31 @@ describe("buildApprovalAskBlock", () => {
     });
   });
 
+  it("offers no permanent allow for a tool that answers per call", () => {
+    const block = buildApprovalAskBlock(
+      "effect-2",
+      "skill_create",
+      {
+        name: "kurzfassung-abc",
+        description: "Fasst lange Texte zusammen",
+        body: "Fasse in 3 Stichpunkten zusammen.",
+      },
+      [],
+      { effect: { action: "update", target: "skill_create", risk: "medium" } },
+    );
+
+    expect(block).toMatchObject({
+      kind: "ask",
+      text: "Review before skill_create",
+      detail:
+        "name: kurzfassung-abc\ndescription: Fasst lange Texte zusammen\nbody: Fasse in 3 Stichpunkten zusammen.",
+      actions: [
+        { id: "allow", label: "Allow once" },
+        { id: "deny", label: "Deny" },
+      ],
+    });
+  });
+
   it("redacts and bounds the effect target before persisting it", () => {
     const block = buildApprovalAskBlock("effect-1", "custom_write", {}, ["private-target"], {
       effect: {

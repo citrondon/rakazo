@@ -447,6 +447,15 @@ The `MCP_*` switches are read as the literal `true` and the `BOBBOT_*` escape ha
 `1`; any other spelling (`TRUE`, `yes`, `true` for a `BOBBOT_*` gate) leaves the gate off.
 `BOBBOT_ACTION_FAIL_CLOSED` is the one exception, and its row lists the spellings it accepts.
 
+### Skills a bot learns need the owner's approval
+
+`skill_create`, `skill_update` and `skill_delete` always ask the owner, whatever the auto-review
+setting or the approval rules say: a skill's body becomes instructions that later runs read and
+follow, so writing one is proposing a standing rule rather than making a change with a visible
+result. The card shows the skill's name, description and body, offers **Allow once** or **Deny**
+(no "always allow": a permanent rule here would be a blank cheque), and nothing is stored before
+the answer. A denied proposal writes no skill and the bot reports the refusal in the chat.
+
 Where the operator sees the refusal: adding an MCP server on web answers
 `MCP endpoint targets a private host (…)` plus the assignment to set, the same sentence carries the
 fix at connect time, and a blocked public model endpoint answers with

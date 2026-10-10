@@ -35,7 +35,16 @@ const APPROVAL_REQUIRED_BUILTIN_TOOLS = new Set([
   "cloud_agent_reply",
   "cloud_agent_cancel",
 ]);
-const EXPLICIT_APPROVAL_BUILTIN_TOOLS = new Set(["create_space"]);
+const EXPLICIT_APPROVAL_BUILTIN_TOOLS = new Set([
+  "create_space",
+  // A skill's body becomes instructions later runs read and follow, so a run that learns
+  // one is proposing a standing rule, not making a change with a visible result. The owner
+  // answers per proposal: this is the learning loop's approval line, and it stays explicit
+  // because "always allow" on a tool that writes its own future instructions is a blank cheque.
+  "skill_create",
+  "skill_update",
+  "skill_delete",
+]);
 
 const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
   "browser_snapshot",

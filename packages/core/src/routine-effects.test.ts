@@ -62,6 +62,18 @@ describe("planRoutineEffects", () => {
     ]);
   });
 
+  it("plans a skill write as a write, because it writes its own future instructions", () => {
+    expect(planRoutineEffects([descriptor("skill_create", { viaConnector: false })])).toEqual([
+      { action: "update", target: "skill_create", risk: "medium" },
+    ]);
+    expect(planRoutineEffects([descriptor("skill_delete", { viaConnector: false })])).toEqual([
+      { action: "delete", target: "skill_delete", risk: "high" },
+    ]);
+    expect(planRoutineEffects([descriptor("skill_read", { viaConnector: false })])).toEqual([
+      { action: "read", target: "skill_read", risk: "low" },
+    ]);
+  });
+
   it("returns no effects for a bot that reaches nothing", () => {
     expect(planRoutineEffects([])).toEqual([]);
   });

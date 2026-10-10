@@ -1,5 +1,5 @@
 import type { MessageBlock, TrustEffect } from "@bobbot/contracts";
-import { redactSecrets } from "@bobbot/core";
+import { redactSecrets, toolRequiresExplicitApproval } from "@bobbot/core";
 
 const MAX_APPROVAL_SUMMARY_LENGTH = 500;
 const MAX_APPROVAL_DETAIL_LENGTH = 4_000;
@@ -34,17 +34,24 @@ export function buildApprovalAskBlock(
     ),
     detail: safeDetail ? truncate(safeDetail, MAX_APPROVAL_DETAIL_LENGTH) : undefined,
     status: "pending",
+    // A tool that requires explicit approval answers per call: offering "Always allow" would
+    // record a rule the gate then ignores, which reads as a promise the product does not keep.
     actions:
       toolName === "create_space"
         ? [
             { id: "allow", label: "Create space", outcome: "created" },
             { id: "deny", label: "Cancel", outcome: "cancelled" },
           ]
-        : [
-            { id: "allow", label: "Allow once" },
-            { id: "always", label: "Always allow this tool" },
-            { id: "deny", label: "Deny" },
-          ],
+        : toolRequiresExplicitApproval(toolName)
+          ? [
+              { id: "allow", label: "Allow once" },
+              { id: "deny", label: "Deny" },
+            ]
+          : [
+              { id: "allow", label: "Allow once" },
+              { id: "always", label: "Always allow this tool" },
+              { id: "deny", label: "Deny" },
+            ],
   };
 }
 
@@ -80,7 +87,18 @@ function formatApprovalDetail(
       "Bots, groups, chats, files, memory, and integrations in this space stay separate from other spaces.",
     );
   }
-  for (const key of ["collection", "title", "to", "subject", "amount", "body"]) {
+  // `name`/`description` come first: a proposal a person has to judge (a skill, an MCP server)
+  // is unrecognisable from its body alone.
+  for (const key of [
+    "name",
+    "description",
+    "collection",
+    "title",
+    "to",
+    "subject",
+    "amount",
+    "body",
+  ]) {
     const value = args[key];
     if (value == null || value === "") continue;
     lines.push(`${key}: ${String(value)}`);
