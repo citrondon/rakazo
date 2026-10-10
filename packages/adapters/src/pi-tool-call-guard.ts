@@ -18,7 +18,7 @@ function hasToolCallName(name: string | undefined): boolean {
 function hasNamelessToolCall(messages: readonly Message[]): boolean {
   for (const message of messages) {
     if (message.role === "assistant") {
-      for (const part of message.content) {
+      for (const part of message.content ?? []) {
         if (part.type === "toolCall" && !hasToolCallName(part.name)) return true;
       }
     } else if (message.role === "toolResult") {
@@ -30,26 +30,34 @@ function hasNamelessToolCall(messages: readonly Message[]): boolean {
 
 export function withoutNamelessToolCalls(messages: readonly Message[]): Message[] {
   const droppedCallIds = new Set<string>();
+  const callNames = new Map<string, string>();
   const kept: Message[] = [];
   for (const message of messages) {
     if (message.role === "assistant") {
-      const content = message.content.filter((part) => {
-        if (part.type !== "toolCall" || hasToolCallName(part.name)) return true;
+      const originalContent = message.content ?? [];
+      const content = originalContent.filter((part) => {
+        if (part.type !== "toolCall") return true;
+        if (hasToolCallName(part.name)) {
+          callNames.set(part.id, part.name);
+          return true;
+        }
         droppedCallIds.add(part.id);
         return false;
       });
-      if (content.length === message.content.length) {
-        kept.push(message);
+      if (content.length === originalContent.length) {
+        kept.push(message.content == null ? { ...message, content } : message);
       } else if (content.length > 0) {
         kept.push({ ...message, content });
       }
       continue;
     }
-    if (
-      message.role === "toolResult" &&
-      (droppedCallIds.has(message.toolCallId) || !hasToolCallName(message.toolName))
-    ) {
-      continue;
+    if (message.role === "toolResult") {
+      if (droppedCallIds.has(message.toolCallId)) continue;
+      if (!hasToolCallName(message.toolName)) {
+        const toolName = callNames.get(message.toolCallId);
+        if (toolName) kept.push({ ...message, toolName });
+        continue;
+      }
     }
     kept.push(message);
   }

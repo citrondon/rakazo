@@ -56,11 +56,26 @@ describe("withoutNamelessToolCalls", () => {
     expect(withoutNamelessToolCalls([assistant])).toEqual([]);
   });
 
-  it("drops a result whose own tool name is missing", () => {
+  it("recovers a missing result name from its named call and keeps the content", () => {
     const assistant = fauxAssistantMessage(namedCall);
     const messages: Message[] = [assistant, toolResult("call_named", "  ")];
 
-    expect(withoutNamelessToolCalls(messages)).toEqual([assistant]);
+    expect(withoutNamelessToolCalls(messages)).toEqual([
+      assistant,
+      { ...messages[1], toolName: "list_tasks" },
+    ]);
+  });
+
+  it("drops a nameless result without a matching named call", () => {
+    expect(withoutNamelessToolCalls([toolResult("call_missing", "")])).toEqual([]);
+  });
+
+  it("handles legacy null assistant content while sanitizing a transcript", () => {
+    const assistant = { ...fauxAssistantMessage(""), content: null } as unknown as AssistantMessage;
+
+    expect(withoutNamelessToolCalls([assistant, fauxAssistantMessage(namelessCall)])).toEqual([
+      { ...assistant, content: [] },
+    ]);
   });
 
   it("keeps a transcript without tool calls untouched", () => {
@@ -95,11 +110,15 @@ describe("guardToolCallNames", () => {
         toolResult("call_nameless", ""),
       ],
     });
+    dirty.messages.unshift({
+      ...fauxAssistantMessage(""),
+      content: null,
+    } as unknown as AssistantMessage);
     const result = await provider!.streamSimple(model, dirty).result();
 
     expect(result.content).toEqual([fauxText("done")]);
     expect(seen).toHaveLength(1);
-    expect(seen[0]!.messages).toHaveLength(1);
+    expect(seen[0]!.messages).toHaveLength(2);
     expect(seen[0]!.messages[0]).toMatchObject({ role: "assistant" });
     expect(seen[0]).not.toBe(dirty);
   });

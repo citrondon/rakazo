@@ -328,7 +328,7 @@ export function registerOpenAiCompatibleRuntime(
       ),
     ]),
   );
-  return models;
+  return guardToolCallNames(models);
 }
 
 export type OpenAiCompatibleConnectInput = {
