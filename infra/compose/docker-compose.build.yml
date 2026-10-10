@@ -7,7 +7,7 @@
 #
 # postgres and data-init still use published images, so the database is not
 # rebuilt from source. Tag pinning therefore only applies to the built services.
-name: rakazo
+name: ${COMPOSE_PROJECT_NAME:-rakazo}
 
 services:
   api:
@@ -189,5 +189,10 @@ services:
     depends_on:
       - api
 
+# Volume names are pinned so a deployment rename copies data instead of
+# creating empty volumes: the default below is the name Docker derives from
+# the project name today, so an existing install keeps its data untouched
+# until rename-deployment.sh writes BOBBOT_VOLUME_PREFIX.
 volumes:
   pgdata:
+    name: ${BOBBOT_VOLUME_PREFIX:-${RAKAZO_VOLUME_PREFIX:-rakazo}}_pgdata

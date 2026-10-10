@@ -7,7 +7,7 @@
 # Pin a published vX.Y.Z tag for a fixed version; `latest` moves to each new stable release.
 # Default SANDBOX_PROVIDER=docker boots a local computer via the in-stack supervisor (no E2B key).
 # Optional: set e2b / daytona / box plus the matching API key for remote computers.
-name: rakazo
+name: ${COMPOSE_PROJECT_NAME:-rakazo}
 
 services:
   postgres:
@@ -272,10 +272,15 @@ services:
       api:
         condition: service_healthy
 
+# Volume names are pinned so a deployment rename copies data instead of
+# creating empty volumes: the default below is the name Docker derives from
+# the project name today, so an existing install keeps its data untouched
+# until rename-deployment.sh writes BOBBOT_VOLUME_PREFIX.
 volumes:
   pgdata:
+    name: ${BOBBOT_VOLUME_PREFIX:-${RAKAZO_VOLUME_PREFIX:-rakazo}}_pgdata
   appdata:
-
+    name: ${BOBBOT_VOLUME_PREFIX:-${RAKAZO_VOLUME_PREFIX:-rakazo}}_appdata
 networks:
   app:
   data:

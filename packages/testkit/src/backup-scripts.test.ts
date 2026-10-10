@@ -304,10 +304,11 @@ describe("production backup deployment and archive behavior", () => {
 
   it("provides optional systemd configuration for installed copies", () => {
     const service = readFileSync(
-      path.join(repoRoot, "infra/systemd/rakazo-backup.service"),
+      path.join(repoRoot, "infra/systemd/bobbot-backup.service"),
       "utf8",
     );
     expect(service).toContain("EnvironmentFile=-/etc/rakazo/backup.env");
+    expect(service).toContain("EnvironmentFile=-/etc/bobbot/backup.env");
   });
 
   it("rejects relative deployment paths before any backup commands", () => {

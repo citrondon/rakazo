@@ -637,6 +637,39 @@ set the same `COMPOSE_PROJECT_NAME` in that file. For a manual run, export these
 When updating an existing backup installation, reinstall both the script and service unit,
 then run `systemctl daemon-reload`.
 
+<a id="rename-the-deployment"></a>
+
+### Renaming the deployment to `bobbot` (optional)
+
+Earlier releases named the deployment `rakazo`: the Compose project, the volumes Docker derives from
+it, the deploy directory `/srv/rakazo`, `/etc/rakazo/backup.env`, and the `rakazo-backup` systemd
+units. Nothing forces you to change that — every one of those names keeps working, and the Compose
+files read the old volume prefix on purpose. If you want the new spelling anyway, do it in one go,
+with the stack stopped:
+
+```bash
+cd /srv/rakazo
+docker compose --env-file .env -f infra/compose/docker-compose.prod.yml down
+infra/compose/rename-deployment.sh --apply --systemd   # --systemd needs root
+```
+
+The script reads the volumes the running stack actually mounts (not a name rebuilt from the project
+name), refuses to run while a container still holds one of them, copies each volume to
+`bobbot-prod_<name>`, saves `.env` as `.env.rename-<timestamp>`, then writes
+`BOBBOT_VOLUME_PREFIX=bobbot-prod` and `COMPOSE_PROJECT_NAME=bobbot-prod`. It never deletes the old
+volumes, so the rollback is putting the old prefix back into `.env` and redeploying. It also installs
+`bobbot-backup.service`/`.timer`, `/usr/local/sbin/bobbot-backup` and a readable
+`/etc/bobbot/backup.env`, while `rakazo-backup.*` become symlinks to the new names so an existing
+timer or CI key keeps working. Without `--apply` it only prints the plan.
+
+For single-VM installs, install it as `/usr/local/sbin/rakazo-backup` today; after `--systemd` the same
+command exists as `/usr/local/sbin/bobbot-backup` and `/usr/local/sbin/rakazo-backup` links to it. Set
+`BOBBOT_DEPLOY_DIR` in `/etc/bobbot/backup.env`; the old `/etc/rakazo/backup.env` stays in the unit as
+a fallback, and a value in the new file wins.
+
+Not renamed, and not renameable: the published images `ghcr.io/elie222/rakazo/{app,updater,computer}`
+come from the upstream project. The blog URLs in `apps/www/src/content/blog/` keep their slugs.
+
 To deploy from CI, install `infra/compose/deploy-main.sh` as `/usr/local/sbin/rakazo-deploy-main`
 and give CI a key restricted to it in the deploy user's `authorized_keys`
 (`restrict,command="/usr/local/sbin/rakazo-deploy-main" ssh-ed25519 …`). CI waits for the checks on

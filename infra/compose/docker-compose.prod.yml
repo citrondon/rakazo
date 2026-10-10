@@ -1,4 +1,4 @@
-name: rakazo-prod
+name: ${COMPOSE_PROJECT_NAME:-rakazo-prod}
 
 # Bounded container logs even on hosts without infra/compose/docker-daemon.json;
 # same driver and limits it installs, so both layers agree.
@@ -312,12 +312,19 @@ services:
       web:
         condition: service_started
 
+# Volume names are pinned so a deployment rename copies data instead of
+# creating empty volumes: the default below is the name Docker derives from
+# the project name today, so an existing install keeps its data untouched
+# until rename-deployment.sh writes BOBBOT_VOLUME_PREFIX.
 volumes:
   pgdata:
+    name: ${BOBBOT_VOLUME_PREFIX:-${RAKAZO_VOLUME_PREFIX:-rakazo-prod}}_pgdata
   appdata:
+    name: ${BOBBOT_VOLUME_PREFIX:-${RAKAZO_VOLUME_PREFIX:-rakazo-prod}}_appdata
   caddydata:
+    name: ${BOBBOT_VOLUME_PREFIX:-${RAKAZO_VOLUME_PREFIX:-rakazo-prod}}_caddydata
   caddyconfig:
-
+    name: ${BOBBOT_VOLUME_PREFIX:-${RAKAZO_VOLUME_PREFIX:-rakazo-prod}}_caddyconfig
 networks:
   edge:
   app:

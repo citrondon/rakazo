@@ -5,8 +5,11 @@ After=docker.service
 
 [Service]
 Type=oneshot
+# The old config directory stays readable so an install that already has
+# /etc/rakazo/backup.env keeps its settings; a value in the new file wins.
 EnvironmentFile=-/etc/rakazo/backup.env
-ExecStart=/usr/local/sbin/rakazo-backup
+EnvironmentFile=-/etc/bobbot/backup.env
+ExecStart=/usr/local/sbin/bobbot-backup
 Nice=10
 IOSchedulingClass=best-effort
 IOSchedulingPriority=7
