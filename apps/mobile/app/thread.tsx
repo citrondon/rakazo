@@ -2185,7 +2185,7 @@ function Thread() {
             {message.role === "bot" && message.runId && receiptMessageIds.has(message.id) ? (
               <RunReceiptButton runId={message.runId} />
             ) : null}
-          </View>{" "}
+          </View>
         </View>
       </View>
     );
