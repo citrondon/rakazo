@@ -476,6 +476,15 @@ describe("createGroup", () => {
     const rows = createMany.mock.calls[0]![0].data as Array<{ botId: string; createdAt: Date }>;
     expect(rows.map((row) => row.botId)).toEqual(["lead", "build"]);
     expect(rows[0]!.createdAt.getTime()).toBeLessThan(rows[1]!.createdAt.getTime());
+    expect(tx.chatGroup.findFirstOrThrow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          members: expect.objectContaining({
+            orderBy: [{ createdAt: "asc" }, { botId: "asc" }],
+          }),
+        }),
+      }),
+    );
     expect(group.members.map((member) => member.botId)).toEqual(["lead", "build"]);
   });
 });
