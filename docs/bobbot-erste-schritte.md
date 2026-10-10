@@ -34,8 +34,14 @@ run" abbricht, fehlt genau dieser Schritt.
    Es gibt außerdem Roster für Ops, Research, Vertrieb, Marketing und andere
    Aufgaben.
 3. Ein Klick erzeugt alles zusammen: Gruppe, Bots, Rollen, Instruktionen und
-   einen gemeinsamen Team-Computer. Optional kommt eine Automations-Routine
-   dazu, die den Lead von allein weckt.
+einen gemeinsamen Team-Computer. Optional kommt eine Automations-Routine
+dazu, die den Lead von allein weckt.
+
+Sind mehrere Modelle verbunden, zeigt der Dialog unter **Model per member** für
+jedes Mitglied das Modell, mit dem es starten würde (Vorschlag: das Modell, das
+am besten zur Aufgabe passt, sonst dein Standardmodell). Du kannst die Auswahl
+pro Mitglied ändern — nimm nur Modelle, die du auch verbunden hast, sonst
+bricht der Start mit einem Hinweis darauf ab.
 
 Jedes Mitglied bringt zwei Dinge mit: eine Rolle (das Etikett, das du im Team
 siehst) und Instruktionen (die eigentliche Anweisung, was der Bot tun soll).

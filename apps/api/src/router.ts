@@ -124,6 +124,9 @@ import type {
   Me,
   ProductEvent,
   SpaceNavigation,
+  TeamModelChoice,
+  TeamModelPin,
+  TeamTemplate,
 } from "@bobbot/contracts";
 import {
   ATTACHMENT_MAX_BYTES,
@@ -136,6 +139,7 @@ import {
   OPENAI_COMPATIBLE_PROVIDER_ID,
   usableModelId,
 } from "@bobbot/contracts";
+import type { ModelFitOffer } from "@bobbot/core";
 import {
   ACTIVE_RUN_STATUSES,
   AttachmentValidationError,
@@ -147,6 +151,7 @@ import {
   hasMixedOneShotSchedule,
   isOneShotRoutineCrons,
   nextCronDateAcrossStrict,
+  planTeamModels,
   selectReferencedSkills,
 } from "@bobbot/core";
 import type { PrismaClient, ThreadEvents } from "@bobbot/db";
@@ -1667,7 +1672,17 @@ export function createRouter(deps: RouterDeps) {
       }),
     },
     teams: {
-      templates: authed.teams.templates.handler(async () => listTeamTemplates()),
+      templates: authed.teams.templates.handler(async ({ context }) => {
+        // A roster names the kind of work each member does; what that resolves to is
+        // decided here, against the models this caller actually has, so a client can
+        // show the plan before anything is created.
+        const offers = await connectedModelOffers(deps, context.actor);
+        const fallback = await defaultModelPin(deps, context.actor);
+        return listTeamTemplates().map((template) => ({
+          ...template,
+          modelPlan: planTeamModels({ members: template.members, offers, fallback }),
+        }));
+      }),
       identities: authed.teams.identities.handler(async () => listIdentities()),
       create: authed.teams.create.handler(async ({ context, input }) => {
         const template = resolveStartTeam(input);
@@ -1681,6 +1696,21 @@ export function createRouter(deps: RouterDeps) {
         if ((await modelSetup(deps, context.actor)).needsModel) {
           throw new ORPCError("BAD_REQUEST", { message: "Connect a model to start a run." });
         }
+        // Which model each member runs on is decided against the models this space has.
+        // The caller may name one per member; without a name the plan proposes, and a
+        // member nothing fits runs on the space default the way any bot without an
+        // override does.
+        const modelChoices = await resolveTeamModelChoices(
+          deps,
+          context.actor,
+          template,
+          planTeamModels({
+            members: template.members,
+            offers: await connectedModelOffers(deps, context.actor),
+            fallback: await defaultModelPin(deps, context.actor),
+          }),
+          input.models,
+        );
         // Skills live in the space, not in the bot, so they are written before the
         // bots. Two members may bring the same skill, and a name an earlier team
         // already created is reachable either way: a conflict is not a failed start.
@@ -1698,6 +1728,7 @@ export function createRouter(deps: RouterDeps) {
         }
         const bots: Bot[] = [];
         for (const member of start.bots) {
+          const model = modelChoices.get(member.preset);
           bots.push(
             await deps.prisma
               .$transaction(async (tx) => {
@@ -1706,6 +1737,14 @@ export function createRouter(deps: RouterDeps) {
                   // The preset's prompt plus this roster's duty and shared rules; the
                   // role line stays a label for the roster, never an instruction.
                   instructions: member.instructions,
+                  modelProvider: model?.provider ?? null,
+                  modelId: model?.modelId ?? null,
+                  thinkingLevel: model
+                    ? clampCatalogThinkingLevel(
+                        model.thinkingLevel,
+                        catalogThinkingLevels(model.provider ?? "", model.modelId ?? ""),
+                      )
+                    : null,
                   notifyOnFinish: true,
                   computerMode: "team",
                 });
@@ -5908,6 +5947,115 @@ async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
 function requireBilling(deps: RouterDeps): BillingService {
   if (!deps.billing) throw new ORPCError("NOT_FOUND", { message: "Billing is not enabled" });
   return deps.billing;
+}
+
+function modelOfferKey(provider: string, modelId: string): string {
+  return `${provider}\u0000${modelId}`;
+}
+
+/**
+ * The models this caller can run right now, in preference order: the ones this space
+ * already picked come first, so an equally good fit never displaces a model the user
+ * chose. Catalog availability already respects per-provider and per-model auth, so a
+ * provider the space does not hold a credential for cannot show up here.
+ */
+async function connectedModelOffers(deps: RouterDeps, actor: Actor): Promise<ModelFitOffer[]> {
+  const auth = await modelCredentialAuthKindsForSpace(deps.prisma, deps.secrets, actor);
+  const available = listAvailablePiCatalog(auth.byProvider, auth.byModel);
+  const preferences = await deps.prisma.spaceModelPreference.findMany({
+    where: { spaceId: actor.spaceId, userId: actor.userId },
+    include: { credential: true },
+    orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }, { id: "desc" }],
+  });
+  const picked = new Set(
+    preferences.flatMap((preference) => {
+      const modelId = usableModelId(preference.modelId);
+      return modelId ? [modelOfferKey(preference.credential.provider, modelId)] : [];
+    }),
+  );
+  const offers: ModelFitOffer[] = available.map((entry) => ({
+    provider: entry.provider,
+    modelId: entry.id,
+    label: entry.label,
+    reasoning: entry.reasoning,
+  }));
+  return [
+    ...offers.filter((offer) => picked.has(modelOfferKey(offer.provider, offer.modelId))),
+    ...offers.filter((offer) => !picked.has(modelOfferKey(offer.provider, offer.modelId))),
+  ];
+}
+
+/** The thinking levels a catalog model advertises, or undefined for an unknown id. */
+function catalogThinkingLevels(provider: string, modelId: string): readonly string[] | undefined {
+  return listPiCatalog().find((entry) => entry.provider === provider && entry.id === modelId)
+    ?.thinkingLevels;
+}
+
+/**
+ * What a member runs on when nothing was pinned and nothing fits: the model the run
+ * would fall back to anyway. Naming it keeps the plan honest instead of leaving the
+ * row looking unset, which a client could only read as "decide later".
+ */
+async function defaultModelPin(deps: RouterDeps, actor: Actor): Promise<TeamModelPin | null> {
+  const setup = await modelSetup(deps, actor);
+  if (setup.credential?.defaultModel) {
+    return {
+      provider: setup.credential.provider,
+      modelId: setup.credential.defaultModel,
+      thinkingLevel: setup.credential.thinkingLevel ?? null,
+    };
+  }
+  const modelId = usableModelId(deps.env.defaultModel);
+  if (deps.env.deploymentModelKey && modelId) {
+    return { provider: deps.env.defaultProvider, modelId, thinkingLevel: null };
+  }
+  return null;
+}
+
+/**
+ * One model per roster member: the caller's pick when they named one, otherwise the
+ * plan's proposal. A named model has to be connected, so a start cannot quietly run on
+ * something other than what was chosen.
+ */
+async function resolveTeamModelChoices(
+  deps: RouterDeps,
+  actor: Actor,
+  template: TeamTemplate,
+  plan: readonly TeamModelChoice[],
+  requested:
+    | readonly {
+        preset: string;
+        provider: string;
+        modelId: string;
+        thinkingLevel?: string | null;
+      }[]
+    | undefined,
+): Promise<Map<string, TeamModelChoice>> {
+  const byPreset = new Map(plan.map((choice) => [choice.preset, choice]));
+  for (const pick of requested ?? []) {
+    if (!template.members.some((member) => member.preset === pick.preset)) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: `${pick.preset} is not part of ${template.label}.`,
+      });
+    }
+    const credential = await findModelCredential(deps.prisma, actor, pick.provider, pick.modelId);
+    if (!credential) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: `Connect ${pick.provider} before running this team on ${pick.modelId}.`,
+      });
+    }
+    byPreset.set(pick.preset, {
+      preset: pick.preset,
+      provider: pick.provider,
+      modelId: pick.modelId,
+      thinkingLevel: clampCatalogThinkingLevel(
+        pick.thinkingLevel ?? null,
+        catalogThinkingLevels(pick.provider, pick.modelId),
+      ),
+      source: "pinned",
+    });
+  }
+  return byPreset;
 }
 
 async function modelSetup(deps: RouterDeps, actor: Actor) {

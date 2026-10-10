@@ -3059,6 +3059,10 @@ msgstr "Идентификатор модели"
 msgid "Model options"
 msgstr "Варианты модели"
 
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Model per member"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Model spend uses your provider keys."
 msgstr "Расходы на модель оплачиваются ключами вашего провайдера."
@@ -4003,6 +4007,10 @@ msgstr "Запустить в"
 msgid "Run history"
 msgstr "История запуска"
 
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Run on the space default"
+msgstr ""
+
 #: src/pages/Shell.tsx
 msgid "Run time must be in the future."
 msgstr "Время выполнения должно быть в будущем."
@@ -4372,6 +4380,7 @@ msgid "Something went wrong. Try again."
 msgstr "Что-то пошло не так. Попробуйте ещё раз."
 
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/TeamTemplateOverlay.tsx
 msgid "Space default"
 msgstr "Пространство по умолчанию"
 

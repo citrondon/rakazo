@@ -3874,11 +3874,15 @@ describe("team start", () => {
    * is the honest fake for a refusal: reaching it means the start tried to create
    * a roster it had already refused.
    */
-  function teamDeps(options: { agentRuntime?: string } = {}) {
+  function teamDeps(options: { agentRuntime?: string; deploymentModelKey?: string } = {}) {
     const createBot = vi.fn();
     const createGroup = vi.fn();
     const prisma = {
-      spaceModelPreference: { findFirst: vi.fn().mockResolvedValue(null) },
+      spaceModelPreference: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+      userModelCredential: { findMany: vi.fn().mockResolvedValue([]) },
       deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
       bot: { create: createBot },
       chatGroup: { create: createGroup },
@@ -3892,6 +3896,7 @@ describe("team start", () => {
         agentRuntime: options.agentRuntime ?? "scripted",
         defaultProvider: "fake",
         defaultModel: "fake-model",
+        deploymentModelKey: options.deploymentModelKey,
         webOrigin: "http://127.0.0.1:5173",
         screenProxySecret: "fake-test-secret",
         sandboxProvider: "fake",
@@ -3932,6 +3937,13 @@ describe("team start", () => {
         members: Array<{ preset: string; role: string }>;
         integrations: string[];
         firstTask: string;
+        modelPlan: Array<{
+          preset: string;
+          provider: string | null;
+          modelId: string | null;
+          thinkingLevel: string | null;
+          source: string;
+        }>;
       }>;
     };
     const ids = body.json.map((template) => template.id);
@@ -3950,7 +3962,93 @@ describe("team start", () => {
           `${template.id}: ${member.preset}`,
         ).toBeDefined();
       }
+      // A client shows what the team would run on before the user starts it, so the
+      // plan follows the roster order and covers every member.
+      expect(
+        template.modelPlan.map((entry) => entry.preset),
+        template.id,
+      ).toEqual(template.members.map((member) => member.preset));
     }
+  });
+
+  it("proposes the deployment model for every member while nothing else is connected", async () => {
+    const { actor, handler } = teamDeps({ deploymentModelKey: "fake-key" });
+
+    const response = await call(handler, actor, "teams/templates", null);
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      json: Array<{ id: string; modelPlan: Array<Record<string, unknown>> }>;
+    };
+    for (const template of body.json) {
+      for (const entry of template.modelPlan) {
+        expect(entry, template.id).toEqual({
+          preset: expect.any(String),
+          provider: "fake",
+          modelId: "fake-model",
+          thinkingLevel: null,
+          source: "default",
+        });
+      }
+    }
+  });
+
+  it("says none per member instead of guessing while nothing is connected", async () => {
+    const { actor, handler } = teamDeps();
+
+    const response = await call(handler, actor, "teams/templates", null);
+
+    const body = (await response.json()) as {
+      json: Array<{ modelPlan: Array<{ source: string; provider: string | null }> }>;
+    };
+    for (const template of body.json) {
+      for (const entry of template.modelPlan) {
+        expect(entry.source).toBe("none");
+        expect(entry.provider).toBeNull();
+      }
+    }
+  });
+
+  it("refuses a model the roster does not name", async () => {
+    const { actor, handler, createBot } = teamDeps();
+
+    const response = await call(handler, actor, "teams/create", {
+      templateId: "eng",
+      models: [{ preset: "not-a-member", provider: "fake", modelId: "fake-model" }],
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      json: expect.objectContaining({
+        code: "BAD_REQUEST",
+        message: expect.stringContaining("not-a-member is not part of"),
+      }),
+    });
+    expect(createBot).not.toHaveBeenCalled();
+  });
+
+  it("refuses a model nobody connected", async () => {
+    const { actor, handler, createBot } = teamDeps();
+    const templates = (await (await call(handler, actor, "teams/templates", null)).json()) as {
+      json: Array<{ id: string; members: Array<{ preset: string }> }>;
+    };
+    const roster = templates.json.find((template) => template.id === "eng");
+    const preset = roster?.members[0]?.preset;
+    expect(preset).toBeDefined();
+
+    const response = await call(handler, actor, "teams/create", {
+      templateId: "eng",
+      models: [{ preset, provider: "anthropic", modelId: "claude-opus-5" }],
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      json: expect.objectContaining({
+        code: "BAD_REQUEST",
+        message: "Connect anthropic before running this team on claude-opus-5.",
+      }),
+    });
+    expect(createBot).not.toHaveBeenCalled();
   });
 
   it("answers with identities that each name a roster it also offers", async () => {

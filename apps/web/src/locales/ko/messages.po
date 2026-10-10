@@ -3059,6 +3059,10 @@ msgstr "모델 ID"
 msgid "Model options"
 msgstr "모델 선택지"
 
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Model per member"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Model spend uses your provider keys."
 msgstr "모델 사용 비용은 연결한 서비스의 API 키로 청구됩니다."
@@ -4003,6 +4007,10 @@ msgstr "실행 시간"
 msgid "Run history"
 msgstr "실행 기록"
 
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Run on the space default"
+msgstr ""
+
 #: src/pages/Shell.tsx
 msgid "Run time must be in the future."
 msgstr "실행 시간은 미래여야 합니다."
@@ -4372,6 +4380,7 @@ msgid "Something went wrong. Try again."
 msgstr "문제가 발생했습니다. 다시 시도하세요."
 
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/TeamTemplateOverlay.tsx
 msgid "Space default"
 msgstr "스페이스 기본값"
 

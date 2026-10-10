@@ -3059,6 +3059,10 @@ msgstr "मॉडल आईडी"
 msgid "Model options"
 msgstr "मॉडल विकल्प"
 
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Model per member"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Model spend uses your provider keys."
 msgstr "मॉडल का खर्च आपकी प्रोवाइडर कुंजियों से होता है।"
@@ -4003,6 +4007,10 @@ msgstr ""
 msgid "Run history"
 msgstr ""
 
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Run on the space default"
+msgstr ""
+
 #: src/pages/Shell.tsx
 msgid "Run time must be in the future."
 msgstr ""
@@ -4372,6 +4380,7 @@ msgid "Something went wrong. Try again."
 msgstr "कुछ गलत हो गया। फिर से कोशिश करें।"
 
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/TeamTemplateOverlay.tsx
 msgid "Space default"
 msgstr "स्पेस डिफ़ॉल्ट"
 

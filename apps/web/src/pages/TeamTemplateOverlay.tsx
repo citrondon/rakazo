@@ -1,4 +1,5 @@
-import type { TeamTemplate } from "@bobbot/contracts";
+import type { ModelCatalogEntry, ModelCredential, TeamTemplatePlan } from "@bobbot/contracts";
+import { connectedModelChoices, modelOptionKey, parseModelOptionKey } from "@bobbot/core";
 import {
   Button,
   Dialog,
@@ -10,17 +11,31 @@ import {
 } from "@bobbot/ui-web";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { Users, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { rpc } from "../lib/rpc";
+
+/** The model a plan entry names, as a picker key. Empty when nothing is connected. */
+function planModelKey(entry: TeamTemplatePlan["modelPlan"][number] | undefined): string {
+  return entry?.provider && entry.modelId ? modelOptionKey(entry.provider, entry.modelId) : "";
+}
 
 /**
  * Create a team from a preset template (bot-library/teams/*.json).
- * Picks a template, reviews the roster, then creates the group + bots + first task.
- * Creation is server-orchestrated: one RPC call builds the whole team atomically.
+ * Picks a template, reviews the roster and the model each member would run on, then
+ * creates the group + bots + first task. Creation is server-orchestrated: one RPC call
+ * builds the whole team atomically, and a model the user changed travels with it.
  */
 export function TeamTemplateOverlay({ onClose }: { onClose: () => void }) {
   const { t } = useLingui();
-  const [templates, setTemplates] = useState<TeamTemplate[]>([]);
+  const [templates, setTemplates] = useState<TeamTemplatePlan[]>([]);
+  const [models, setModels] = useState<{
+    credentials: ModelCredential[];
+    catalog: ModelCatalogEntry[];
+  }>({
+    credentials: [],
+    catalog: [],
+  });
+  const [picks, setPicks] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [customName, setCustomName] = useState("");
@@ -30,13 +45,16 @@ export function TeamTemplateOverlay({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     let cancelled = false;
-    rpc.teams
-      .templates()
-      .then((list) => {
-        if (!cancelled) {
-          setTemplates(list);
-          setLoading(false);
-        }
+    Promise.all([
+      rpc.teams.templates(),
+      rpc.models.credentials().catch(() => [] as ModelCredential[]),
+      rpc.models.list().catch(() => [] as ModelCatalogEntry[]),
+    ])
+      .then(([list, credentials, catalog]) => {
+        if (cancelled) return;
+        setTemplates(list);
+        setModels({ credentials, catalog });
+        setLoading(false);
       })
       .catch(() => {
         if (!cancelled) setLoading(false);
@@ -46,16 +64,39 @@ export function TeamTemplateOverlay({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
+  const choices = useMemo(
+    () => connectedModelChoices(models.credentials, models.catalog),
+    [models],
+  );
   const selected = templates.find((tmpl) => tmpl.id === selectedId);
+  const selectedChoices = useMemo(() => {
+    const keys = new Set(selected?.modelPlan.map((entry) => planModelKey(entry)) ?? []);
+    // Every connected model stays pickable; the space's own models come first so the
+    // plan's suggestion is the near-by default in a long list.
+    return [...choices].sort((a, b) => Number(keys.has(b.key)) - Number(keys.has(a.key)));
+  }, [choices, selected]);
 
   async function runCreate() {
     if (!selectedId) return;
     setCreating(true);
     setError(null);
+    // Only members the user changed travel with the request; the rest keep the plan the
+    // server proposed, so a start never runs on a model that was not connected.
+    const overrides = (selected?.modelPlan ?? [])
+      .map((entry) => {
+        const key = picks[entry.preset] ?? planModelKey(entry);
+        if (!key || key === planModelKey(entry)) return null;
+        const picked = parseModelOptionKey(key);
+        return picked ? { preset: entry.preset, ...picked } : null;
+      })
+      .filter((entry): entry is { preset: string; provider: string; modelId: string } =>
+        Boolean(entry),
+      );
     try {
       const result = await rpc.teams.create({
         templateId: selectedId,
         name: customName.trim() || undefined,
+        ...(overrides.length ? { models: overrides } : {}),
       });
       setCreated({ groupId: result.group.id, botIds: result.bots.map((b) => b.id) });
     } catch (err) {
@@ -173,6 +214,54 @@ export function TeamTemplateOverlay({ onClose }: { onClose: () => void }) {
 
         {selected ? (
           <>
+            <div className="mt-4 flex flex-col gap-2 rounded-xl border border-border px-3 py-2">
+              <div className="text-sm text-muted-foreground">
+                <Trans>Model per member</Trans>
+              </div>
+              {selected.modelPlan.map((entry) => {
+                const planKey = planModelKey(entry);
+                const value = picks[entry.preset] ?? planKey;
+                const role = selected.members.find(
+                  (member) => member.preset === entry.preset,
+                )?.role;
+                return (
+                  <label
+                    key={entry.preset}
+                    className="flex items-center justify-between gap-2 text-[13px]"
+                  >
+                    <span className="min-w-0 flex-1 truncate">
+                      {entry.preset}{" "}
+                      {role ? <span className="text-muted-foreground">{role}</span> : null}
+                    </span>
+                    <select
+                      value={value}
+                      onChange={(event) =>
+                        setPicks((current) => ({ ...current, [entry.preset]: event.target.value }))
+                      }
+                      className="max-w-[55%] rounded border border-input bg-background px-2 py-1 text-[12px]"
+                    >
+                      {planKey ? null : (
+                        <option value="">
+                          {entry.source === "none" ? (
+                            <Trans>Run on the space default</Trans>
+                          ) : (
+                            <Trans>Space default</Trans>
+                          )}
+                        </option>
+                      )}
+                      {planKey && !selectedChoices.some((choice) => choice.key === planKey) ? (
+                        <option value={planKey}>{entry.modelId}</option>
+                      ) : null}
+                      {selectedChoices.map((choice) => (
+                        <option key={choice.key} value={choice.key}>
+                          {choice.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                );
+              })}
+            </div>
             <div className="mt-4 rounded-xl border border-border px-3 py-2">
               <label htmlFor="team-name" className="block text-sm text-muted-foreground">
                 <Trans>Group name (optional)</Trans>

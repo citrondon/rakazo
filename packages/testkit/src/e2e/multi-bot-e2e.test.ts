@@ -173,12 +173,14 @@ computerDefaults:
 
   it("orchestration blocks when credential guard finds secrets in tool args", async () => {
     const credentialGuard = new CredentialGuard();
-    const dangerousInput = 'shell("export PASSWORD=hunter2 && run-script.sh")';
+    // The guard only treats a value as a secret when it looks like one (length and
+    // character mix), so the fixture uses a realistic password rather than "hunter2".
+    const dangerousInput = 'shell("export PASSWORD=hunter2abc && run-script.sh")';
     const { clean, blocked } = credentialGuard.sanitizeInput(dangerousInput);
 
     expect(blocked).toBe(true);
     expect(clean).toContain("[REDACTED:PASSWORD]");
-    expect(clean).not.toContain("hunter2");
+    expect(clean).not.toContain("hunter2abc");
   });
 
   it("orchestration blocks merge when required gate fails", async () => {

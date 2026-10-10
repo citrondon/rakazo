@@ -107,7 +107,7 @@ import {
   IdentitySchema,
   TeamCreateInputSchema,
   TeamCreateOutputSchema,
-  TeamTemplateSchema,
+  TeamTemplatePlanSchema,
 } from "./teams.js";
 import {
   CreateTriggerInput,
@@ -328,8 +328,12 @@ export const appContract = {
     remove: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
   },
   teams: {
-    /** The shipped rosters, so a client can offer what the library actually has. */
-    templates: oc.output(z.array(TeamTemplateSchema)),
+    /**
+     * The shipped rosters, so a client can offer what the library actually has. Every
+     * entry also carries the model the caller would run each member on right now, so a
+     * roster can be reviewed before it starts instead of after the first failed run.
+     */
+    templates: oc.output(z.array(TeamTemplatePlanSchema)),
     /** The shipped identities: each one names the team a new space begins with. */
     identities: oc.output(z.array(IdentitySchema)),
     create: oc.input(TeamCreateInputSchema).output(TeamCreateOutputSchema),

@@ -3059,6 +3059,10 @@ msgstr "模型 ID"
 msgid "Model options"
 msgstr "模型选项"
 
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Model per member"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Model spend uses your provider keys."
 msgstr "模型费用使用你的提供方密钥。"
@@ -4003,6 +4007,10 @@ msgstr "运行时间"
 msgid "Run history"
 msgstr "运行记录"
 
+#: src/pages/TeamTemplateOverlay.tsx
+msgid "Run on the space default"
+msgstr ""
+
 #: src/pages/Shell.tsx
 msgid "Run time must be in the future."
 msgstr "运行时间必须是将来的时间。"
@@ -4372,6 +4380,7 @@ msgid "Something went wrong. Try again."
 msgstr "出了点问题。请重试。"
 
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/TeamTemplateOverlay.tsx
 msgid "Space default"
 msgstr "工作区默认"
 

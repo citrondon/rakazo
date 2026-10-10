@@ -13,6 +13,23 @@ export const TEAM_MEMBERS_MAX_COUNT = 4;
 /** Ids and preset names are lowercase slugs: they become file names and rpc input. */
 const TEAM_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
+/**
+ * What a member has to be good at. A roster says the kind of work, never a model
+ * name: which model fits is decided where the connected models are known, so the
+ * same roster works on a deployment with a different provider.
+ */
+export const TEAM_MODEL_NEEDS = ["coding", "reasoning", "fast", "vision"] as const;
+export const TeamModelNeedSchema = z.enum(TEAM_MODEL_NEEDS);
+export type TeamModelNeed = z.infer<typeof TeamModelNeedSchema>;
+
+/** A model pinned by a roster that must not be guessed (kept as an override). */
+export const TeamModelPinSchema = z.object({
+  provider: z.string().trim().min(1).max(64),
+  modelId: z.string().trim().min(1).max(200),
+  thinkingLevel: z.string().trim().min(1).max(32).nullable().default(null),
+});
+export type TeamModelPin = z.infer<typeof TeamModelPinSchema>;
+
 export const TeamTemplateMemberSchema = z.object({
   /** A bot preset in `bot-library`, named without the `.v1.json` suffix. */
   preset: z.string().trim().regex(TEAM_SLUG),
@@ -22,6 +39,10 @@ export const TeamTemplateMemberSchema = z.object({
    * starts. `role` stays a label for the roster; this is the text the bot reads.
    */
   instructions: z.string().trim().min(1).max(4_000).optional(),
+  /** Which kind of model this member needs; the start picks a connected one. */
+  needs: TeamModelNeedSchema.optional(),
+  /** An exact model, for a roster that only works on one. */
+  model: TeamModelPinSchema.optional(),
 });
 
 /**
@@ -60,6 +81,28 @@ export type TeamTemplate = z.infer<typeof TeamTemplateSchema>;
 export type TeamTemplateMember = z.infer<typeof TeamTemplateMemberSchema>;
 
 /**
+ * Where a member's model came from: the roster pinned it, a connected model fit the
+ * need, the space default answered, or nothing was connected at all (the run then
+ * falls back to the deployment default the way any bot without an override does).
+ */
+export const TEAM_MODEL_CHOICE_SOURCES = ["pinned", "fit", "default", "none"] as const;
+
+export const TeamModelChoiceSchema = z.object({
+  preset: z.string(),
+  provider: z.string().nullable(),
+  modelId: z.string().nullable(),
+  thinkingLevel: z.string().nullable(),
+  source: z.enum(TEAM_MODEL_CHOICE_SOURCES),
+});
+export type TeamModelChoice = z.infer<typeof TeamModelChoiceSchema>;
+
+/** A roster as the client sees it: the template plus what the caller could run it on. */
+export const TeamTemplatePlanSchema = TeamTemplateSchema.extend({
+  modelPlan: z.array(TeamModelChoiceSchema),
+});
+export type TeamTemplatePlan = z.infer<typeof TeamTemplatePlanSchema>;
+
+/**
  * The answer to "Who are you?" at the start. An identity does not describe a bot;
  * it names the team a new space begins with, so the first screen asks one question
  * instead of showing an empty roster.
@@ -86,6 +129,21 @@ export const TeamCreateInputSchema = z
     identityId: z.string().trim().regex(TEAM_SLUG).optional(),
     /** Overrides the group name; the template label is the default. */
     name: z.string().trim().min(1).max(80).optional(),
+    /**
+     * A model per member, keyed by preset. Absent means the server proposes one; a
+     * named model has to be connected, so a start cannot silently run on something else.
+     */
+    models: z
+      .array(
+        z.object({
+          preset: z.string().trim().regex(TEAM_SLUG),
+          provider: z.string().trim().min(1).max(64),
+          modelId: z.string().trim().min(1).max(200),
+          thinkingLevel: z.string().trim().min(1).max(32).nullable().default(null),
+        }),
+      )
+      .max(TEAM_MEMBERS_MAX_COUNT)
+      .optional(),
   })
   .refine((value) => (value.templateId ? value.identityId === undefined : !!value.identityId), {
     error: "Name either a template or an identity.",
