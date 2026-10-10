@@ -12,6 +12,7 @@ import {
   normalizeContext,
 } from "@earendil-works/pi-ai";
 import { describe, expect, it } from "vitest";
+import { OPENAI_COMPATIBLE_PROVIDER_ID } from "./openai-compatible-url.js";
 import { guardToolCallNames, withoutNamelessToolCalls } from "./pi-tool-call-guard.js";
 
 function toolResult(toolCallId: string, toolName: string): ToolResultMessage {
@@ -88,9 +89,9 @@ describe("withoutNamelessToolCalls", () => {
 describe("guardToolCallNames", () => {
   it("sanitizes the transcript handed to the provider and passes a clean one through", async () => {
     const models = createModels();
-    const faux = fauxProvider();
+    const faux = fauxProvider({ provider: OPENAI_COMPATIBLE_PROVIDER_ID });
     models.setProvider(faux.provider);
-    expect(guardToolCallNames(models)).toBe(models);
+    expect(guardToolCallNames(models, OPENAI_COMPATIBLE_PROVIDER_ID)).toBe(models);
 
     const seen: TranscriptContext[] = [];
     faux.setResponses([
@@ -125,12 +126,12 @@ describe("guardToolCallNames", () => {
 
   it("does not re-wrap providers and leaves a clean transcript by reference", async () => {
     const models = createModels();
-    const faux = fauxProvider();
+    const faux = fauxProvider({ provider: OPENAI_COMPATIBLE_PROVIDER_ID });
     models.setProvider(faux.provider);
 
-    guardToolCallNames(models);
+    guardToolCallNames(models, OPENAI_COMPATIBLE_PROVIDER_ID);
     const once = models.getProvider(faux.provider.id);
-    guardToolCallNames(models);
+    guardToolCallNames(models, OPENAI_COMPATIBLE_PROVIDER_ID);
     expect(models.getProvider(faux.provider.id)).toBe(once);
 
     const seen: TranscriptContext[] = [];

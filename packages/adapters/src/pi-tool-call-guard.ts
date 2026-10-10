@@ -71,25 +71,20 @@ function guardContext(context: TranscriptContext): TranscriptContext {
 
 const guardedProviders = new WeakSet<Provider>();
 
-/**
- * Wraps every registered provider so a transcript is sanitized just before it is
- * sent. Only providers that actually produced a nameless tool call are affected:
- * a clean transcript is passed through untouched.
- */
-export function guardToolCallNames(models: MutableModels): MutableModels {
-  for (const provider of models.getProviders()) {
-    if (guardedProviders.has(provider)) continue;
-    const guarded = {
-      ...provider,
-      stream(model, context, options) {
-        return provider.stream(model, guardContext(context), options);
-      },
-      streamSimple(model, context, options) {
-        return provider.streamSimple(model, guardContext(context), options);
-      },
-    } satisfies Provider;
-    guardedProviders.add(guarded);
-    models.setProvider(guarded);
-  }
+/** Sanitizes transcripts just before they are sent to the selected provider. */
+export function guardToolCallNames(models: MutableModels, providerId: string): MutableModels {
+  const provider = models.getProvider(providerId);
+  if (!provider || guardedProviders.has(provider)) return models;
+  const guarded = {
+    ...provider,
+    stream(model, context, options) {
+      return provider.stream(model, guardContext(context), options);
+    },
+    streamSimple(model, context, options) {
+      return provider.streamSimple(model, guardContext(context), options);
+    },
+  } satisfies Provider;
+  guardedProviders.add(guarded);
+  models.setProvider(guarded);
   return models;
 }

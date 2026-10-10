@@ -298,7 +298,7 @@ export function openAiCompatibleCatalogProvider(): Provider {
 
 export function registerOpenAiCompatibleCatalog(models: MutableModels): MutableModels {
   models.setProvider(openAiCompatibleCatalogProvider());
-  return guardToolCallNames(models);
+  return guardToolCallNames(models, OPENAI_COMPATIBLE_PROVIDER_ID);
 }
 
 /** Register a concrete model + base URL for an agent run. */
@@ -328,7 +328,7 @@ export function registerOpenAiCompatibleRuntime(
       ),
     ]),
   );
-  return guardToolCallNames(models);
+  return guardToolCallNames(models, OPENAI_COMPATIBLE_PROVIDER_ID);
 }
 
 export type OpenAiCompatibleConnectInput = {

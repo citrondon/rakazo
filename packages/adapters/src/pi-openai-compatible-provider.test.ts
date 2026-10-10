@@ -1,8 +1,13 @@
-import { createModels, fauxAssistantMessage, normalizeContext } from "@earendil-works/pi-ai";
+import {
+  createModels,
+  fauxAssistantMessage,
+  fauxProvider,
+  normalizeContext,
+} from "@earendil-works/pi-ai";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
 import { ModelConnectInputSchema, OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo/contracts";
 import { fetch as undiciFetch } from "undici";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { buildModelConnectPlaintext } from "./model-connect.js";
 import { listPiCatalog } from "./pi-models.js";
 import { parseModelSecret, secretValuesToRedact, serializeModelSecret } from "./pi-oauth.js";
@@ -188,6 +193,25 @@ describe("model connect", () => {
 });
 
 describe("openai-compatible provider", () => {
+  it("leaves other providers untouched during catalog and runtime registration", () => {
+    const models = createModels();
+    const other = fauxProvider();
+    models.setProvider(other.provider);
+    const setProvider = vi.spyOn(models, "setProvider");
+
+    registerOpenAiCompatibleCatalog(models);
+    registerOpenAiCompatibleRuntime(models, {
+      modelId: "fixture-model",
+      baseUrl: "http://127.0.0.1:8000/v1",
+    });
+
+    expect(models.getProvider(other.provider.id)).toBe(other.provider);
+    expect(setProvider).toHaveBeenCalledTimes(4);
+    for (const [provider] of setProvider.mock.calls) {
+      expect(provider.id).toBe(OPENAI_COMPATIBLE_PROVIDER_ID);
+    }
+  });
+
   it.each(["stream", "streamSimple"] as const)(
     "guards transcripts after runtime registration through %s",
     async (method) => {
