@@ -378,8 +378,8 @@ export function containerActionStep(
       ...(browser && browserProfile ? [`BOBBOT_BROWSER_PROFILE=${browserProfile}`] : []),
       // focus routes through the image wrapper, which raises a matching window
       // by WM_CLASS or execs the allowlisted launcher to spawn one.
-      ...(action.kind === "focus" ? ["rakazo-focus-or-launch"] : []),
-      browser ? "rakazo-browser" : action.application,
+      ...(action.kind === "focus" ? ["bobbot-focus-or-launch"] : []),
+      browser ? "bobbot-browser" : action.application,
       ...(action.uri ? [action.uri] : []),
     ];
   }

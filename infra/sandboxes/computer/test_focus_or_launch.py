@@ -20,7 +20,7 @@ def load_module(name, filename):
     return module
 
 
-helper = load_module("focus_or_launch", "rakazo-focus-or-launch")
+helper = load_module("focus_or_launch", "bobbot-focus-or-launch")
 control = load_module("control", "control.py")
 
 LISTING = """\
@@ -33,7 +33,7 @@ LISTING = """\
 
 class WmClassTest(unittest.TestCase):
     def test_known_launchers_have_fixed_classes(self):
-        self.assertEqual(helper.wm_class("rakazo-browser"), "chromium")
+        self.assertEqual(helper.wm_class("bobbot-browser"), "chromium")
         self.assertEqual(helper.wm_class("xterm"), "xterm")
 
     def test_other_launchers_match_their_binary_basename(self):
@@ -138,18 +138,18 @@ class MainTest(unittest.TestCase):
         self.assertEqual(calls, [["xterm"]])
 
     def test_arguments_reach_the_launcher_before_the_window_is_raised(self):
-        calls = self.run_wrapper(["rakazo-browser", "https://example.test"], launch_code=0)
+        calls = self.run_wrapper(["bobbot-browser", "https://example.test"], launch_code=0)
         self.assertEqual(
             calls,
             [
-                ("popen", ["rakazo-browser", "https://example.test"]),
-                ("wait", helper.LAUNCH_WAIT_SEC["rakazo-browser"]),
+                ("popen", ["bobbot-browser", "https://example.test"]),
+                ("wait", helper.LAUNCH_WAIT_SEC["bobbot-browser"]),
                 ("run", ["wmctrl", "-ia", "0x01800003"]),
             ],
         )
 
     def test_a_live_launcher_does_not_block_the_raise(self):
-        calls = self.run_wrapper(["rakazo-browser", "https://example.test"])
+        calls = self.run_wrapper(["bobbot-browser", "https://example.test"])
         self.assertEqual(calls[-1], ("run", ["wmctrl", "-ia", "0x01800003"]))
 
     def test_a_failing_launcher_does_not_raise_or_succeed(self):
@@ -168,16 +168,16 @@ class MainTest(unittest.TestCase):
             helper.main([])
 
     def test_a_different_browser_profile_is_not_raised(self):
-        calls = self.run_wrapper(["rakazo-browser"])
+        calls = self.run_wrapper(["bobbot-browser"])
         # The fixture PIDs expose no profile, so the only chromium window is raised.
         self.assertEqual(calls, [("run", ["wmctrl", "-ia", "0x01800003"])])
         with patch.object(helper, "window_profile", return_value="/profiles/other"), patch.dict(
             os.environ, {"BOBBOT_BROWSER_PROFILE": "/profiles/mine"}
         ):
-            calls = self.run_wrapper(["rakazo-browser"])
+            calls = self.run_wrapper(["bobbot-browser"])
         self.assertEqual(
             calls,
-            [("popen", ["rakazo-browser"]), ("wait", helper.LAUNCH_WAIT_SEC["rakazo-browser"])],
+            [("popen", ["bobbot-browser"]), ("wait", helper.LAUNCH_WAIT_SEC["bobbot-browser"])],
         )
 
 
@@ -187,15 +187,15 @@ PROFILE = "/home/rakazo/.browser-profiles/chromium-bot-" + "a" * 32
 class ControlArgvTest(unittest.TestCase):
     def test_accepts_wrapped_known_launchers(self):
         for argv in (
-            ["env", "DISPLAY=:1", "rakazo-focus-or-launch", "xterm"],
-            ["env", "DISPLAY=:1", "rakazo-focus-or-launch", "rakazo-browser"],
-            ["env", "DISPLAY=:1", "rakazo-focus-or-launch", "rakazo-browser", "https://example.test"],
+            ["env", "DISPLAY=:1", "bobbot-focus-or-launch", "xterm"],
+            ["env", "DISPLAY=:1", "bobbot-focus-or-launch", "bobbot-browser"],
+            ["env", "DISPLAY=:1", "bobbot-focus-or-launch", "bobbot-browser", "https://example.test"],
             [
                 "env",
                 "DISPLAY=:1",
                 f"BOBBOT_BROWSER_PROFILE={PROFILE}",
-                "rakazo-focus-or-launch",
-                "rakazo-browser",
+                "bobbot-focus-or-launch",
+                "bobbot-browser",
                 "https://example.test",
             ],
         ):
@@ -204,32 +204,32 @@ class ControlArgvTest(unittest.TestCase):
                 self.assertFalse(control.is_long_lived_control(argv))
 
     def test_rejects_launchers_outside_the_allowlist(self):
-        for inner in ("sh", "wmctrl", "rakazo-focus-or-launch", "/usr/bin/xterm"):
-            argv = ["env", "DISPLAY=:1", "rakazo-focus-or-launch", inner]
+        for inner in ("sh", "wmctrl", "bobbot-focus-or-launch", "/usr/bin/xterm"):
+            argv = ["env", "DISPLAY=:1", "bobbot-focus-or-launch", inner]
             with self.subTest(inner=inner):
                 self.assertFalse(control.allowed_control_argv(argv, ":1"))
 
     def test_rejects_bad_arity_and_a_browser_profile_on_other_launchers(self):
         for argv in (
-            ["env", "DISPLAY=:1", "rakazo-focus-or-launch"],
-            ["env", "DISPLAY=:1", "rakazo-focus-or-launch", "xterm", "one", "two"],
-            ["env", "DISPLAY=:1", "rakazo-focus-or-launch", "xterm", "-e", "sh"],
+            ["env", "DISPLAY=:1", "bobbot-focus-or-launch"],
+            ["env", "DISPLAY=:1", "bobbot-focus-or-launch", "xterm", "one", "two"],
+            ["env", "DISPLAY=:1", "bobbot-focus-or-launch", "xterm", "-e", "sh"],
             [
                 "env",
                 "DISPLAY=:1",
                 f"BOBBOT_BROWSER_PROFILE={PROFILE}",
-                "rakazo-focus-or-launch",
+                "bobbot-focus-or-launch",
                 "xterm",
             ],
-            ["env", "DISPLAY=:8", "rakazo-focus-or-launch", "xterm"],
+            ["env", "DISPLAY=:8", "bobbot-focus-or-launch", "xterm"],
         ):
             with self.subTest(argv=argv):
                 self.assertFalse(control.allowed_control_argv(argv, ":1"))
 
     def test_wrapped_browser_keeps_the_browser_spawn_poll(self):
-        argv = ["env", "DISPLAY=:1", "rakazo-focus-or-launch", "rakazo-browser"]
+        argv = ["env", "DISPLAY=:1", "bobbot-focus-or-launch", "bobbot-browser"]
         self.assertEqual(control.launch_spawn_poll_sec(argv), control.BROWSER_OPEN_POLL_SEC)
-        argv = ["env", "DISPLAY=:1", "rakazo-focus-or-launch", "xterm"]
+        argv = ["env", "DISPLAY=:1", "bobbot-focus-or-launch", "xterm"]
         self.assertEqual(control.launch_spawn_poll_sec(argv), control.LAUNCH_SPAWN_POLL_SEC)
 
     def test_focus_waits_for_the_wrapper_instead_of_the_spawn_poll(self):
@@ -237,8 +237,8 @@ class ControlArgvTest(unittest.TestCase):
             "env",
             "DISPLAY=:1",
             f"BOBBOT_BROWSER_PROFILE={PROFILE}",
-            "rakazo-focus-or-launch",
-            "rakazo-browser",
+            "bobbot-focus-or-launch",
+            "bobbot-browser",
         ]
         with patch.object(
             control.subprocess, "run", return_value=subprocess.CompletedProcess(argv, 0)
@@ -250,11 +250,11 @@ class ControlArgvTest(unittest.TestCase):
 
     def test_slow_focus_is_not_reported_before_the_wrapper_exits(self):
         with tempfile.TemporaryDirectory() as tmp:
-            script = Path(tmp) / "rakazo-focus-or-launch"
+            script = Path(tmp) / "bobbot-focus-or-launch"
             marker = Path(tmp) / "done"
             script.write_text(f"#!/bin/sh\nsleep 0.5\ntouch {marker}\n")
             script.chmod(script.stat().st_mode | stat.S_IEXEC)
-            argv = ["env", "DISPLAY=:1", "rakazo-focus-or-launch", "xterm"]
+            argv = ["env", "DISPLAY=:1", "bobbot-focus-or-launch", "xterm"]
             with patch.dict(os.environ, {"PATH": f"{tmp}{os.pathsep}{os.environ.get('PATH', '')}"}):
                 started = time.monotonic()
                 control.run_control_argv(argv, ":1")
@@ -312,7 +312,7 @@ class ScriptTest(unittest.TestCase):
                     'if [ "$1" = "-lxp" ]; then cat "$BOBBOT_TEST_WINDOWS"; exit 0; fi\n'
                     'printf "wmctrl %s\\n" "$*" >> "$BOBBOT_TEST_ARGS"\n'
                 )
-                browser = bin_dir / "rakazo-browser"
+                browser = bin_dir / "bobbot-browser"
                 browser.write_text('#!/bin/sh\nprintf "browser %s\\n" "$*" >> "$BOBBOT_TEST_ARGS"\n')
                 wmctrl.chmod(0o755)
                 browser.chmod(0o755)
@@ -323,9 +323,9 @@ class ScriptTest(unittest.TestCase):
                     "BOBBOT_TEST_WINDOWS": str(windows),
                     "BOBBOT_TEST_ARGS": str(args_log),
                 }
-                script = str(Path(__file__).with_name("rakazo-focus-or-launch"))
+                script = str(Path(__file__).with_name("bobbot-focus-or-launch"))
                 result = subprocess.run(
-                    ["python3", script, "rakazo-browser"],
+                    ["python3", script, "bobbot-browser"],
                     env=env,
                     capture_output=True,
                     text=True,
@@ -338,7 +338,7 @@ class ScriptTest(unittest.TestCase):
                 args_log.write_text("")
                 windows.write_text(f"0x111 0 {other.pid} chromium.Chromium host Other\n")
                 result = subprocess.run(
-                    ["python3", script, "rakazo-browser"],
+                    ["python3", script, "bobbot-browser"],
                     env=env,
                     capture_output=True,
                     text=True,

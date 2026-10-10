@@ -34,7 +34,7 @@ def cdp_port() -> int:
     override = os.environ.get("BOBBOT_CDP_PORT")
     if override:
         return int(override)
-    # rakazo-browser uses 9221 + display number (:1 -> 9222).
+    # bobbot-browser uses 9221 + display number (:1 -> 9222).
     return 9221 + display_num()
 
 
@@ -70,7 +70,7 @@ def discover_ws_url(port: int) -> str:
     return ws
 
 
-WORLD_NAME = "rakazo-page-browser"
+WORLD_NAME = "bobbot-page-browser"
 
 
 class CdpClient:
@@ -644,7 +644,7 @@ def run(argv: list[str]) -> int:
             json.dumps(
                 {
                     "ok": False,
-                    "error": "usage: rakazo-page-browser <command> [json-args]",
+                    "error": "usage: bobbot-page-browser <command> [json-args]",
                     "fallback": "computer_act",
                 }
             )

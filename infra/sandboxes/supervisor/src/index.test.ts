@@ -331,7 +331,7 @@ describe("sandbox supervisor input containment", () => {
       expect(
         containerActionStep({ kind: "launch", application, uri: "https://example.com" }, ":2"),
       ).toEqual({
-        argv: ["env", "DISPLAY=:2", "rakazo-browser", "https://example.com"],
+        argv: ["env", "DISPLAY=:2", "bobbot-browser", "https://example.com"],
       });
     }
     expect(containerActionStep({ kind: "launch", application: "xterm" }, ":3")).toEqual({
@@ -344,7 +344,7 @@ describe("sandbox supervisor input containment", () => {
 
   it("routes focus actions through the focus-or-launch wrapper", () => {
     expect(containerActionStep({ kind: "focus", application: "xterm" }, ":3")).toEqual({
-      argv: ["env", "DISPLAY=:3", "rakazo-focus-or-launch", "xterm"],
+      argv: ["env", "DISPLAY=:3", "bobbot-focus-or-launch", "xterm"],
     });
     expect(
       containerActionStep(
@@ -355,8 +355,8 @@ describe("sandbox supervisor input containment", () => {
       argv: [
         "env",
         "DISPLAY=:2",
-        "rakazo-focus-or-launch",
-        "rakazo-browser",
+        "bobbot-focus-or-launch",
+        "bobbot-browser",
         "https://example.com",
       ],
     });
@@ -366,13 +366,13 @@ describe("sandbox supervisor input containment", () => {
         "env",
         "DISPLAY=:2",
         `BOBBOT_BROWSER_PROFILE=${profile}`,
-        "rakazo-focus-or-launch",
-        "rakazo-browser",
+        "bobbot-focus-or-launch",
+        "bobbot-browser",
       ],
     });
     // A non-browser application never receives the per-screen browser profile.
     expect(containerActionStep({ kind: "focus", application: "xterm" }, ":2", profile)).toEqual({
-      argv: ["env", "DISPLAY=:2", "rakazo-focus-or-launch", "xterm"],
+      argv: ["env", "DISPLAY=:2", "bobbot-focus-or-launch", "xterm"],
     });
   });
 
@@ -381,7 +381,7 @@ describe("sandbox supervisor input containment", () => {
       expect(
         containerActionStep({ kind: "launch", application, uri: "https://example.com" }, ":2"),
       ).toEqual({
-        argv: ["env", "DISPLAY=:2", "rakazo-browser", "https://example.com"],
+        argv: ["env", "DISPLAY=:2", "bobbot-browser", "https://example.com"],
       });
     }
     expect(containerActionStep({ kind: "launch", application: "XTerm" }, ":3")).toEqual({
@@ -398,7 +398,7 @@ describe("sandbox supervisor input containment", () => {
           "env",
           "DISPLAY=:2",
           `BOBBOT_BROWSER_PROFILE=${profile}`,
-          "rakazo-browser",
+          "bobbot-browser",
           "https://example.com",
         ],
       },

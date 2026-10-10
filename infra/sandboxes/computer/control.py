@@ -18,15 +18,15 @@ MAX_ARGV = 32
 MAX_ARG_LEN = 16_384
 KNOWN_LAUNCH = frozenset(
     {
-        "rakazo-browser",
+        "bobbot-browser",
         "xterm",
     }
 )
-# Focus-or-launch wraps KNOWN_LAUNCH launchers: rakazo-focus-or-launch <launcher> [uri].
-FOCUS_OR_LAUNCH = "rakazo-focus-or-launch"
+# Focus-or-launch wraps KNOWN_LAUNCH launchers: bobbot-focus-or-launch <launcher> [uri].
+FOCUS_OR_LAUNCH = "bobbot-focus-or-launch"
 CONTROL_TIMEOUT_SEC = 10
 LAUNCH_SPAWN_POLL_SEC = 0.2
-# A live browser opens a URL in this process, then exits. rakazo-browser caps the
+# A live browser opens a URL in this process, then exits. bobbot-browser caps the
 # profile scan at 0.4s and that forward at 1.6s. This poll outlasts both, plus a
 # little shell, so a forward that fails after the scan is not reported as success.
 BROWSER_OPEN_POLL_SEC = 2.4
@@ -177,7 +177,7 @@ def allowed_control_argv(argv, display):
         profile = argv[2].removeprefix("BOBBOT_BROWSER_PROFILE=")
         if not re.fullmatch(r"/home/rakazo/\.browser-profiles/chromium-bot-[a-f0-9]{32}", profile):
             return False
-        if command not in ("xdg-open", "rakazo-browser", FOCUS_OR_LAUNCH):
+        if command not in ("xdg-open", "bobbot-browser", FOCUS_OR_LAUNCH):
             return False
     if command == "xdotool":
         return allowed_xdotool_argv(argv)
@@ -187,7 +187,7 @@ def allowed_control_argv(argv, display):
         return (
             len(argv) in (index + 2, index + 3)
             and argv[index + 1] in KNOWN_LAUNCH
-            and (index == 2 or argv[index + 1] == "rakazo-browser")
+            and (index == 2 or argv[index + 1] == "bobbot-browser")
         )
     if "/" in command or command not in KNOWN_LAUNCH:
         return False
@@ -218,7 +218,7 @@ def launch_spawn_poll_sec(argv):
     if command == FOCUS_OR_LAUNCH:
         # The wrapped launcher keeps its own poll bound through the wrapper.
         command = argv[index + 1] if len(argv) > index + 1 else ""
-    if command == "rakazo-browser":
+    if command == "bobbot-browser":
         return BROWSER_OPEN_POLL_SEC
     return LAUNCH_SPAWN_POLL_SEC
 

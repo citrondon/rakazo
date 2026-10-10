@@ -5,7 +5,7 @@ export DISPLAY="${DISPLAY:-:1}"
 export HOME="${HOME:-/home/rakazo}"
 AGENT_HOME="$HOME"
 mkdir -p "$AGENT_HOME" "$AGENT_HOME/.local/bin" "$AGENT_HOME/.config" /tmp/rakazo /tmp/.X11-unix /tmp/fluxbox-home
-# Login shells re-apply ~/.local/bin from /etc/profile.d/rakazo-local-bin.sh.
+# Login shells re-apply ~/.local/bin from /etc/profile.d/bobbot-local-bin.sh.
 export PATH="$AGENT_HOME/.local/bin:/usr/local/bin:$PATH"
 export NPM_CONFIG_PREFIX="$AGENT_HOME/.local"
 export PIP_USER=1
@@ -54,7 +54,7 @@ fi
 
 if command -v dbus-launch >/dev/null 2>&1; then
   eval "$(dbus-launch --sh-syntax)"
-  # rakazo-browser is launched later without this session's environment; the
+  # bobbot-browser is launched later without this session's environment; the
   # file-chooser portals only work if the browser finds the same bus.
   printf 'export DBUS_SESSION_BUS_ADDRESS=%s\n' "$DBUS_SESSION_BUS_ADDRESS" \
     > /tmp/rakazo/dbus-session
@@ -84,18 +84,18 @@ HOME=/tmp/fluxbox-home /tmp/fluxbox-home/.fluxbox/startup >/tmp/rakazo/fluxbox.l
 
 register_browser_handler() {
   local mime="$1"
-  if ! xdg-mime default rakazo-browser.desktop "$mime" >/dev/null 2>&1 \
-    || [[ "$(xdg-mime query default "$mime" 2>/dev/null || true)" != "rakazo-browser.desktop" ]]; then
-    echo "failed to register rakazo-browser for $mime" >&2
+  if ! xdg-mime default bobbot-browser.desktop "$mime" >/dev/null 2>&1 \
+    || [[ "$(xdg-mime query default "$mime" 2>/dev/null || true)" != "bobbot-browser.desktop" ]]; then
+    echo "failed to register bobbot-browser for $mime" >&2
     exit 1
   fi
 }
 register_browser_handler x-scheme-handler/http
 register_browser_handler x-scheme-handler/https
 register_browser_handler text/html
-if ! xdg-settings set default-web-browser rakazo-browser.desktop >/dev/null 2>&1 \
-  || [[ "$(xdg-settings get default-web-browser 2>/dev/null || true)" != "rakazo-browser.desktop" ]]; then
-  echo "failed to set default web browser to rakazo-browser" >&2
+if ! xdg-settings set default-web-browser bobbot-browser.desktop >/dev/null 2>&1 \
+  || [[ "$(xdg-settings get default-web-browser 2>/dev/null || true)" != "bobbot-browser.desktop" ]]; then
+  echo "failed to set default web browser to bobbot-browser" >&2
   exit 1
 fi
 

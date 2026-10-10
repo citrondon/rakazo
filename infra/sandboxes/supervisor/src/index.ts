@@ -497,7 +497,7 @@ app.post("/computers/:id/browser", async (c) => {
       // any process in the computer, including the bot's own shell. Other commands also keep the
       // argv copy so a computer still on an older image keeps working until it is replaced.
       [
-        "/usr/local/bin/rakazo-page-browser",
+        "/usr/local/bin/bobbot-page-browser",
         body.command,
         ...(carriesSavedLogin ? [] : [JSON.stringify(body)]),
       ],
@@ -1040,7 +1040,7 @@ async function ensureComputerImage() {
       }
       // Pack the whole context instead of a hand-listed set of files: the
       // list drifts from the Dockerfile's COPY sources and silently drops
-      // scripts (e.g. rakazo-local-bin.sh) from the fallback build.
+      // scripts (e.g. bobbot-local-bin.sh) from the fallback build.
       const stream = await docker.buildImage(
         {
           context: computerContext,

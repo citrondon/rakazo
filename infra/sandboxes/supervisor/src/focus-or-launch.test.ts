@@ -32,13 +32,13 @@ describe("focus-or-launch desktop helper", () => {
             'else printf "wmctrl %s\\n" "$*" >> "$BOBBOT_TEST_ARGS"; fi',
           ].join("\n"),
         );
-        for (const name of ["xterm", "rakazo-browser"]) {
+        for (const name of ["xterm", "bobbot-browser"]) {
           writeFileSync(
             path.join(bin, name),
             `#!/bin/sh\nprintf '${name} %s\\n' "$*" >> "$BOBBOT_TEST_ARGS"\n`,
           );
         }
-        for (const name of ["wmctrl", "xterm", "rakazo-browser"]) {
+        for (const name of ["wmctrl", "xterm", "bobbot-browser"]) {
           chmodSync(path.join(bin, name), 0o755);
         }
         const run = (listing: string, argv: string[]) => {
@@ -46,7 +46,7 @@ describe("focus-or-launch desktop helper", () => {
           writeFileSync(argvLog, "");
           const result = spawnSync(
             "python3",
-            [path.join(computerDir, "rakazo-focus-or-launch"), ...argv],
+            [path.join(computerDir, "bobbot-focus-or-launch"), ...argv],
             {
               env: {
                 ...process.env,
@@ -72,30 +72,30 @@ describe("focus-or-launch desktop helper", () => {
         expect(run(listing, ["xterm"])).toEqual(["wmctrl -ia 0x04000003"]);
         expect(run("", ["xterm"])).toEqual(["xterm"]);
         // A URI still reaches the live browser's launcher, then raises its window.
-        expect(run(listing, ["rakazo-browser", "https://example.test"])).toEqual([
-          "rakazo-browser https://example.test",
+        expect(run(listing, ["bobbot-browser", "https://example.test"])).toEqual([
+          "bobbot-browser https://example.test",
           "wmctrl -ia 0x01800003",
         ]);
-        expect(run("", ["rakazo-browser", "https://example.test"])).toEqual([
-          "rakazo-browser https://example.test",
+        expect(run("", ["bobbot-browser", "https://example.test"])).toEqual([
+          "bobbot-browser https://example.test",
         ]);
         // A launcher that stays up must not block the raise of the window already found.
         const pids = path.join(temp, "pids");
         writeFileSync(
-          path.join(bin, "rakazo-browser"),
+          path.join(bin, "bobbot-browser"),
           [
             "#!/bin/sh",
-            'printf \'rakazo-browser %s\\n\' "$*" >> "$BOBBOT_TEST_ARGS"',
+            'printf \'bobbot-browser %s\\n\' "$*" >> "$BOBBOT_TEST_ARGS"',
             `echo $$ >> ${JSON.stringify(pids)}`,
             "exec sleep 30",
             "",
           ].join("\n"),
         );
-        chmodSync(path.join(bin, "rakazo-browser"), 0o755);
+        chmodSync(path.join(bin, "bobbot-browser"), 0o755);
         writeFileSync(pids, "");
         const started = Date.now();
-        expect(run(listing, ["rakazo-browser", "https://example.test"])).toEqual([
-          "rakazo-browser https://example.test",
+        expect(run(listing, ["bobbot-browser", "https://example.test"])).toEqual([
+          "bobbot-browser https://example.test",
           "wmctrl -ia 0x01800003",
         ]);
         expect(Date.now() - started).toBeLessThan(5_000);

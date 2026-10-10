@@ -150,7 +150,7 @@ describe.skipIf(process.env.RUN_COMPUTER_REPLAY_DOCKER !== "1")(
                   computer!.id,
                   "bash",
                   "-c",
-                  "/usr/local/bin/rakazo-page-browser snapshot; tail -40 /tmp/rakazo/screen-1-browser.log",
+                  "/usr/local/bin/bobbot-page-browser snapshot; tail -40 /tmp/rakazo/screen-1-browser.log",
                 ],
                 { encoding: "utf8", timeout: 40_000 },
               );

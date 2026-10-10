@@ -28,7 +28,7 @@ beforeEach(() => {
       Duplex.from({
         readable: Readable.from([
           Buffer.from(
-            options.Cmd.includes("/usr/local/bin/rakazo-page-browser")
+            options.Cmd.includes("/usr/local/bin/bobbot-page-browser")
               ? JSON.stringify({
                   ok: true,
                   url: "https://example.test",
@@ -125,7 +125,7 @@ it("closes helper stdin when the request is cancelled", async () => {
   });
   const defaultExec = mock.exec.getMockImplementation()!;
   mock.exec.mockImplementation(async (options: { Cmd: string[]; AttachStdin?: boolean }) => {
-    if (!options.Cmd.includes("/usr/local/bin/rakazo-page-browser")) return defaultExec(options);
+    if (!options.Cmd.includes("/usr/local/bin/bobbot-page-browser")) return defaultExec(options);
     expect(options.AttachStdin).toBe(true);
     return {
       start: async (options: { stdin: boolean }) => {
@@ -171,7 +171,7 @@ it("sends a saved-login fill only over stdin, never in the helper's arguments", 
   });
   expect(await response.json()).toMatchObject({ ok: true });
   const helperCall = mock.exec.mock.calls.find(([options]) =>
-    options.Cmd.includes("/usr/local/bin/rakazo-page-browser"),
+    options.Cmd.includes("/usr/local/bin/bobbot-page-browser"),
   )!;
   expect(JSON.stringify(helperCall[0].Cmd)).not.toContain("fake-password-1");
   expect(helperCall[0].Env).toContain("BOBBOT_BROWSER_ARGS_STDIN=1");

@@ -3,7 +3,7 @@
 
 The control daemon only forwards allowlisted launchers here. A matched window
 is raised instead of spawning a duplicate. Arguments still reach the launcher
-first (rakazo-browser forwards a URL into its live window) but that launch is
+first (bobbot-browser forwards a URL into its live window) but that launch is
 not waited out: a GUI that stays up must not block the raise. The wrapper then
 exits, so a slow wmctrl listing is not reported as success before focus runs.
 """
@@ -13,11 +13,11 @@ import subprocess
 import sys
 
 # Launchers whose process WM_CLASS differs from the launcher name.
-WM_CLASS = {"rakazo-browser": "chromium"}
+WM_CLASS = {"bobbot-browser": "chromium"}
 WMCTRL_TIMEOUT_SEC = 5
 # control.py uses the same bounds: a browser may still be forwarding a URL
 # after its profile scan, and other apps only need an immediate-failure window.
-LAUNCH_WAIT_SEC = {"rakazo-browser": 2.4}
+LAUNCH_WAIT_SEC = {"bobbot-browser": 2.4}
 DEFAULT_LAUNCH_WAIT_SEC = 0.2
 
 
@@ -50,7 +50,7 @@ def window_profile(pid):
 
 
 def browser_profile():
-    """Profile rakazo-browser would use for this display."""
+    """Profile bobbot-browser would use for this display."""
     explicit = os.environ.get("BOBBOT_BROWSER_PROFILE", "")
     if explicit:
         return explicit
@@ -135,7 +135,7 @@ def activate(window):
 
 def main(argv):
     if not argv:
-        raise SystemExit("usage: rakazo-focus-or-launch <launcher> [args...]")
+        raise SystemExit("usage: bobbot-focus-or-launch <launcher> [args...]")
     launcher, args = argv[0], argv[1:]
     try:
         listing = subprocess.run(
@@ -143,7 +143,7 @@ def main(argv):
         ).stdout
     except (OSError, subprocess.SubprocessError):
         listing = ""
-    profile = browser_profile() if launcher.rsplit("/", 1)[-1] == "rakazo-browser" else None
+    profile = browser_profile() if launcher.rsplit("/", 1)[-1] == "bobbot-browser" else None
     window = matching_window(listing, wm_class(launcher), profile)
     if not window:
         code = run_launcher(launcher, args)

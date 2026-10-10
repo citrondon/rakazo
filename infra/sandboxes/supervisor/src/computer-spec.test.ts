@@ -199,37 +199,37 @@ describe("graphical computer spec", () => {
     const root = path.resolve(import.meta.dirname, "../../computer");
     const dockerfile = readFileSync(path.join(root, "Dockerfile"), "utf8");
     const start = readFileSync(path.join(root, "start.sh"), "utf8");
-    const browser = readFileSync(path.join(root, "rakazo-browser"), "utf8");
-    const desktop = readFileSync(path.join(root, "rakazo-browser.desktop"), "utf8");
+    const browser = readFileSync(path.join(root, "bobbot-browser"), "utf8");
+    const desktop = readFileSync(path.join(root, "bobbot-browser.desktop"), "utf8");
     expect(dockerfile).toMatch(/chromium/);
-    expect(dockerfile).toMatch(/rakazo-browser\.desktop/);
+    expect(dockerfile).toMatch(/bobbot-browser\.desktop/);
     expect(dockerfile).toMatch(/control.py/);
     expect(dockerfile).toMatch(/USER 1000:1000/);
     expect(start).toMatch(/rakazo-computer-control/);
-    expect(start).toMatch(/rakazo-browser/);
+    expect(start).toMatch(/bobbot-browser/);
     expect(start).not.toMatch(/browser\.log/);
-    expect(start).toMatch(/xdg-mime default rakazo-browser\.desktop/);
+    expect(start).toMatch(/xdg-mime default bobbot-browser\.desktop/);
     expect(start).toMatch(/register_browser_handler x-scheme-handler\/http/);
     expect(start).toMatch(/register_browser_handler x-scheme-handler\/https/);
     expect(start).toMatch(/register_browser_handler text\/html/);
     expect(start).toMatch(/xdg-mime query default/);
-    expect(start).toMatch(/failed to register rakazo-browser/);
+    expect(start).toMatch(/failed to register bobbot-browser/);
     expect(start).toMatch(/failed to set default web browser/);
-    expect(start).toMatch(/xdg-settings set default-web-browser rakazo-browser\.desktop/);
-    expect(start).not.toMatch(/xdg-mime default rakazo-browser\.desktop .*\|\| true/);
+    expect(start).toMatch(/xdg-settings set default-web-browser bobbot-browser\.desktop/);
+    expect(start).not.toMatch(/xdg-mime default bobbot-browser\.desktop .*\|\| true/);
     expect(start).toMatch(/x11vnc .* -viewonly /);
     expect(browser).toMatch(/\.browser-profiles\/chromium/);
     expect(browser).toMatch(/chromium-screen-\$DISPLAY_NUM/);
     expect(browser).toMatch(/USER_DATA_DIR_SET/);
     expect(browser).toMatch(/BOBBOT_BROWSER_PROFILE/);
-    expect(desktop).toMatch(/Exec=\/usr\/local\/bin\/rakazo-browser %U/);
-    expect(dockerfile).toMatch(/rakazo-page-browser/);
+    expect(desktop).toMatch(/Exec=\/usr\/local\/bin\/bobbot-browser %U/);
+    expect(dockerfile).toMatch(/bobbot-page-browser/);
     expect(browser).toMatch(/remote-debugging-port/);
     expect(desktop).toMatch(/x-scheme-handler\/http/);
     expect(desktop).toMatch(/x-scheme-handler\/https/);
     expect(start).not.toMatch(/windowsize 1280 800/);
     expect(dockerfile).toMatch(/wmctrl/);
-    expect(dockerfile).toMatch(/rakazo-focus-or-launch/);
+    expect(dockerfile).toMatch(/bobbot-focus-or-launch/);
   });
 
   it("ships a sha256-pinned gh CLI", () => {
@@ -269,7 +269,7 @@ describe("graphical computer spec", () => {
       const bin = path.join(temp, "bin");
       mkdirSync(bin);
       try {
-        for (const name of ["xterm", "rakazo-browser"]) {
+        for (const name of ["xterm", "bobbot-browser"]) {
           const stub = path.join(bin, name);
           writeFileSync(stub, '#!/bin/sh\nprintf "%s\\n" "$@" > "$BOBBOT_TEST_ARGS"\n');
           chmodSync(stub, 0o755);
@@ -374,7 +374,7 @@ describe("graphical computer spec", () => {
     "selects a display-specific browser profile and preserves explicit profiles",
     () => {
       const root = path.resolve(import.meta.dirname, "../../computer");
-      const temp = mkdtempSync(path.join(tmpdir(), "rakazo-browser-wrapper-"));
+      const temp = mkdtempSync(path.join(tmpdir(), "bobbot-browser-wrapper-"));
       const bin = path.join(temp, "bin");
       const capture = path.join(temp, "args");
       const home = path.join(temp, "home");
@@ -384,7 +384,7 @@ describe("graphical computer spec", () => {
       chmodSync(chromium, 0o755);
 
       const run = (display: string, args: string[] = []) => {
-        const result = spawnSync("sh", [path.join(root, "rakazo-browser"), ...args], {
+        const result = spawnSync("sh", [path.join(root, "bobbot-browser"), ...args], {
           env: {
             ...process.env,
             DISPLAY: display,
@@ -430,7 +430,7 @@ describe("graphical computer spec", () => {
     "spawns Chromium when the caller passes the profile and debug flags itself",
     () => {
       const root = path.resolve(import.meta.dirname, "../../computer");
-      const temp = mkdtempSync(path.join(tmpdir(), "rakazo-browser-self-"));
+      const temp = mkdtempSync(path.join(tmpdir(), "bobbot-browser-self-"));
       const bin = path.join(temp, "bin");
       const capture = path.join(temp, "args");
       const home = path.join(temp, "home");
@@ -450,7 +450,7 @@ describe("graphical computer spec", () => {
         const result = spawnSync(
           "sh",
           [
-            path.join(root, "rakazo-browser"),
+            path.join(root, "bobbot-browser"),
             `--user-data-dir=${profile}`,
             "--remote-debugging-port=9222",
           ],
@@ -476,10 +476,10 @@ describe("graphical computer spec", () => {
   );
 
   it.skipIf(process.platform !== "linux")(
-    "spawns Chromium when the wrapper is invoked as ./rakazo-browser",
+    "spawns Chromium when the wrapper is invoked as ./bobbot-browser",
     () => {
       const root = path.resolve(import.meta.dirname, "../../computer");
-      const temp = mkdtempSync(path.join(tmpdir(), "rakazo-browser-rel-"));
+      const temp = mkdtempSync(path.join(tmpdir(), "bobbot-browser-rel-"));
       const bin = path.join(temp, "bin");
       const capture = path.join(temp, "args");
       const home = path.join(temp, "home");
@@ -490,12 +490,12 @@ describe("graphical computer spec", () => {
       const profile = path.join(home, ".browser-profiles", "chromium-bot-screen");
       mkdirSync(profile, { recursive: true });
       // The kernel records the path passed to exec, so a relative invocation
-      // shows up as ./rakazo-browser rather than an absolute script path.
-      symlinkSync(path.join(root, "rakazo-browser"), path.join(temp, "rakazo-browser"));
+      // shows up as ./bobbot-browser rather than an absolute script path.
+      symlinkSync(path.join(root, "bobbot-browser"), path.join(temp, "bobbot-browser"));
 
       try {
         const result = spawnSync(
-          "./rakazo-browser",
+          "./bobbot-browser",
           [`--user-data-dir=${profile}`, "--remote-debugging-port=9222"],
           {
             cwd: temp,
@@ -520,14 +520,14 @@ describe("graphical computer spec", () => {
   );
 
   it.skipIf(process.platform !== "linux")(
-    "keeps a live browser when its profile directory is named rakazo-browser",
+    "keeps a live browser when its profile directory is named bobbot-browser",
     () => {
       const root = path.resolve(import.meta.dirname, "../../computer");
-      const temp = mkdtempSync(path.join(tmpdir(), "rakazo-browser-named-"));
+      const temp = mkdtempSync(path.join(tmpdir(), "bobbot-browser-named-"));
       const bin = path.join(temp, "bin");
       const capture = path.join(temp, "args");
       const home = path.join(temp, "home");
-      const profile = path.join(temp, "rakazo-browser");
+      const profile = path.join(temp, "bobbot-browser");
       const prefsPath = path.join(profile, "Default", "Preferences");
       const liveBin = path.join(temp, "live", "chromium");
       mkdirSync(bin);
@@ -561,7 +561,7 @@ describe("graphical computer spec", () => {
         const result = spawnSync(
           "sh",
           [
-            path.join(root, "rakazo-browser"),
+            path.join(root, "bobbot-browser"),
             `--user-data-dir=${profile}`,
             "--remote-debugging-port=9222",
           ],
@@ -594,14 +594,14 @@ describe("graphical computer spec", () => {
   );
 
   it.skipIf(process.platform !== "linux")(
-    "keeps a live shell browser when the profile flag ends in /rakazo-browser",
+    "keeps a live shell browser when the profile flag ends in /bobbot-browser",
     () => {
       const root = path.resolve(import.meta.dirname, "../../computer");
-      const temp = mkdtempSync(path.join(tmpdir(), "rakazo-browser-flag-"));
+      const temp = mkdtempSync(path.join(tmpdir(), "bobbot-browser-flag-"));
       const bin = path.join(temp, "bin");
       const capture = path.join(temp, "args");
       const home = path.join(temp, "home");
-      const profile = path.join(temp, "rakazo-browser");
+      const profile = path.join(temp, "bobbot-browser");
       const prefsPath = path.join(profile, "Default", "Preferences");
       mkdirSync(bin);
       mkdirSync(path.dirname(prefsPath), { recursive: true });
@@ -624,7 +624,7 @@ describe("graphical computer spec", () => {
         const result = spawnSync(
           "sh",
           [
-            path.join(root, "rakazo-browser"),
+            path.join(root, "bobbot-browser"),
             `--user-data-dir=${profile}`,
             "--remote-debugging-port=9222",
           ],
@@ -659,7 +659,7 @@ describe("graphical computer spec", () => {
     "clears crashed state from Chromium preferences and Local State",
     () => {
       const root = path.resolve(import.meta.dirname, "../../computer");
-      const temp = mkdtempSync(path.join(tmpdir(), "rakazo-browser-crash-"));
+      const temp = mkdtempSync(path.join(tmpdir(), "bobbot-browser-crash-"));
       const bin = path.join(temp, "bin");
       const home = path.join(temp, "home");
       const chromium = path.join(bin, "chromium");
@@ -680,7 +680,7 @@ describe("graphical computer spec", () => {
       writeFileSync(localStatePath, '{\n  "profile": {\n    "exited_cleanly": false\n  }\n}\n');
 
       try {
-        const result = spawnSync("bash", [path.join(root, "rakazo-browser")], {
+        const result = spawnSync("bash", [path.join(root, "bobbot-browser")], {
           env: {
             ...process.env,
             DISPLAY: ":1",
@@ -716,7 +716,7 @@ describe("graphical computer spec", () => {
         });
         const liveLock = path.join(profile, "SingletonLock");
         const launch = () =>
-          spawnSync("bash", [path.join(root, "rakazo-browser")], {
+          spawnSync("bash", [path.join(root, "bobbot-browser")], {
             env: {
               ...process.env,
               DISPLAY: ":1",
@@ -810,7 +810,7 @@ describe("graphical computer spec", () => {
                 }
                 const spacedLock = path.join(spacedProfile, "SingletonLock");
                 symlinkSync(`testhost-${joined.pid}`, spacedLock);
-                const kept = spawnSync("bash", [path.join(root, "rakazo-browser")], {
+                const kept = spawnSync("bash", [path.join(root, "bobbot-browser")], {
                   env: {
                     ...process.env,
                     DISPLAY: ":1",
@@ -871,7 +871,7 @@ describe("graphical computer spec", () => {
     "forwards a URL to the live browser when SingletonLock misses that process",
     () => {
       const root = path.resolve(import.meta.dirname, "../../computer");
-      const temp = mkdtempSync(path.join(tmpdir(), "rakazo-browser-live-"));
+      const temp = mkdtempSync(path.join(tmpdir(), "bobbot-browser-live-"));
       const bin = path.join(temp, "bin");
       const home = path.join(temp, "home");
       const capture = path.join(temp, "args");
@@ -884,7 +884,7 @@ describe("graphical computer spec", () => {
         '#!/bin/sh\nprintf "%s\\n" "$@" > "$BOBBOT_TEST_ARGS"\n',
       );
       chmodSync(path.join(bin, "chromium"), 0o755);
-      symlinkSync(path.join(root, "rakazo-browser"), path.join(bin, "rakazo-browser"));
+      symlinkSync(path.join(root, "bobbot-browser"), path.join(bin, "bobbot-browser"));
       const sleeper = path.join(bin, "sleeper");
       writeFileSync(sleeper, "#!/bin/sh\nsleep 120\n");
       chmodSync(sleeper, 0o755);
@@ -1039,7 +1039,7 @@ describe("graphical computer spec", () => {
         children.push(browser, renderer, wrapper);
         const liveLock = path.join(profile, "SingletonLock");
         const launch = (args: string[] = []) =>
-          spawnSync("bash", [path.join(root, "rakazo-browser"), ...args], {
+          spawnSync("bash", [path.join(root, "bobbot-browser"), ...args], {
             env: launchEnv,
             encoding: "utf8",
           });
@@ -1182,7 +1182,7 @@ describe("graphical computer spec", () => {
               "spec = importlib.util.spec_from_file_location('control', sys.argv[1])",
               "module = importlib.util.module_from_spec(spec)",
               "spec.loader.exec_module(module)",
-              "argv = ['env', 'DISPLAY=:1', 'rakazo-browser', sys.argv[2]]",
+              "argv = ['env', 'DISPLAY=:1', 'bobbot-browser', sys.argv[2]]",
               "try:",
               "    module.run_control_argv(argv, ':1')",
               "except RuntimeError as error:",
@@ -1466,11 +1466,11 @@ describe("graphical computer spec", () => {
           "assert allow(['env', 'DISPLAY=:1', 'xdotool', 'click', '--repeat', '3', '4'], ':1')",
           "assert allow(['env', 'DISPLAY=:1', 'xdotool', 'type', '--clearmodifiers', '--', 'hi'], ':1')",
           "assert allow(['env', 'DISPLAY=:2', 'xdg-open', 'https://example.com'], ':2')",
-          "assert allow(['env', 'DISPLAY=:1', 'rakazo-browser'], ':1')",
-          "assert allow(['env', 'DISPLAY=:2', 'rakazo-browser', 'https://example.com'], ':2')",
+          "assert allow(['env', 'DISPLAY=:1', 'bobbot-browser'], ':1')",
+          "assert allow(['env', 'DISPLAY=:2', 'bobbot-browser', 'https://example.com'], ':2')",
           "assert allow(['env', 'DISPLAY=:1', 'xterm'], ':1')",
-          "assert long_lived(['env', 'DISPLAY=:1', 'rakazo-browser'])",
-          "assert long_lived(['env', 'DISPLAY=:1', 'rakazo-browser', 'https://example.com'])",
+          "assert long_lived(['env', 'DISPLAY=:1', 'bobbot-browser'])",
+          "assert long_lived(['env', 'DISPLAY=:1', 'bobbot-browser', 'https://example.com'])",
           "assert long_lived(['env', 'DISPLAY=:1', 'xterm'])",
           "assert long_lived(['env', 'DISPLAY=:1', 'xdg-open', 'https://example.com'])",
           "assert not long_lived(['env', 'DISPLAY=:1', 'xdotool', 'key', '--clearmodifiers', 'a'])",
@@ -1517,12 +1517,12 @@ describe("graphical computer spec", () => {
           "finally:",
           "  module.CONTROL_TIMEOUT_SEC = timeout",
           "slow = tempfile.mkdtemp()",
-          "launcher = os.path.join(slow, 'rakazo-browser')",
+          "launcher = os.path.join(slow, 'bobbot-browser')",
           "open(launcher, 'w').write('#!/bin/sh\\nsleep 0.25\\nexit 1\\n')",
           "os.chmod(launcher, 0o755)",
           "os.environ['PATH'] = slow + os.pathsep + os.environ.get('PATH', '')",
           "try:",
-          "  module.run_control_argv(['env', 'DISPLAY=:1', 'rakazo-browser'], ':1')",
+          "  module.run_control_argv(['env', 'DISPLAY=:1', 'bobbot-browser'], ':1')",
           "  raise SystemExit('slow failure looked successful')",
           "except RuntimeError as error:",
           "  assert str(error) == 'computer action failed', str(error)",

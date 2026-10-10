@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 const computerRoot = fileURLToPath(new URL("../../computer/", import.meta.url));
-const localBinSnippet = path.join(computerRoot, "rakazo-local-bin.sh");
+const localBinSnippet = path.join(computerRoot, "bobbot-local-bin.sh");
 
 // Debian /etc/profile replaces PATH, then sources /etc/profile.d/*.sh. Bash login
 // shells (`bash -lc`) do that before any home profile. Reproduce that order in a
@@ -109,16 +109,16 @@ describe("agent shell PATH after Debian login startup", () => {
 
   it("installs the snippet where Debian login shells source it", () => {
     const dockerfile = readFileSync(path.join(computerRoot, "Dockerfile"), "utf8");
-    const copy = "COPY --chmod=644 rakazo-local-bin.sh /etc/profile.d/rakazo-local-bin.sh";
+    const copy = "COPY --chmod=644 bobbot-local-bin.sh /etc/profile.d/bobbot-local-bin.sh";
     const copyAt = dockerfile.indexOf(copy);
     const userAt = dockerfile.indexOf("USER 1000:1000");
     expect(copyAt).toBeGreaterThan(-1);
     expect(userAt).toBeGreaterThan(copyAt);
-    expect(dockerfile).toContain("/etc/profile.d/rakazo-local-bin.sh");
+    expect(dockerfile).toContain("/etc/profile.d/bobbot-local-bin.sh");
   });
 
   function createHome(): string {
-    const home = mkdtempSync(path.join(tmpdir(), "rakazo-local-bin-"));
+    const home = mkdtempSync(path.join(tmpdir(), "bobbot-local-bin-"));
     homes.push(home);
     return home;
   }

@@ -256,7 +256,7 @@ function isChromiumBrowser(application: string) {
   return BROWSER_APPLICATIONS.has(application.toLowerCase());
 }
 
-// Same 0.2s quick-failure window as rakazo-focus-or-launch. A GUI that stays
+// Same 0.2s quick-failure window as bobbot-focus-or-launch. A GUI that stays
 // up is success; an immediate non-zero exit fails the focus before the old
 // window is raised.
 const FOCUS_URI_PROBE = [
@@ -270,7 +270,7 @@ const FOCUS_URI_PROBE = [
 
 /**
  * Raise an app's existing window by WM_CLASS, else spawn it — the focus primitive
- * rakazo-focus-or-launch provides inside the computer image, inline for provider desktops.
+ * bobbot-focus-or-launch provides inside the computer image, inline for provider desktops.
  * A URI still starts the launcher (Chrome forwards URLs into its live window) without
  * waiting for that process to exit before the match is raised.
  */
