@@ -1,7 +1,7 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { CredentialGuard } from "./guard.js";
 
 describe("CredentialGuard", () => {
@@ -36,7 +36,7 @@ describe("CredentialGuard", () => {
 
   it("sanitizes transcript output", () => {
     const guard = new CredentialGuard();
-    const out = guard.sanitizeOutput('{"stdout": "DB connected with PASSWORD=hunter2"}');
+    const out = guard.sanitizeOutput('{"stdout": "DB connected with DB_PASSWORD=hunter2"}');
     expect(out).toContain("[REDACTED");
   });
 
@@ -62,9 +62,19 @@ describe("CredentialGuard", () => {
 
   it("finds multiple occurrences", () => {
     const guard = new CredentialGuard();
-    const { clean, findings } = guard.sanitizeInput("PASSWORD=secret1 TOKEN=secret2");
+    const { clean, findings } = guard.sanitizeInput("PASSWORD=hunter22abc TOKEN=abc123def456");
     expect(findings.length).toBeGreaterThanOrEqual(1);
     expect(clean).toContain("[REDACTED");
+  });
+
+  it("keeps ordinary code that names a KEY or a TOKEN", () => {
+    const guard = new CredentialGuard();
+    const source =
+      "const KEY = 1.609344;\nTOKEN = tokens.shift();\nconst keys = Object.keys(units);";
+    const { clean, blocked, findings } = guard.sanitizeInput(source);
+    expect(clean).toBe(source);
+    expect(findings).toHaveLength(0);
+    expect(blocked).toBe(false);
   });
 
   it("returns empty findings for clean input", () => {

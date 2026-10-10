@@ -1,4 +1,4 @@
-interface SecretPattern {
+export interface SecretPattern {
   name: string;
   regex: RegExp;
   replacement: string;
@@ -26,7 +26,11 @@ const DEFAULT_PATTERNS: SecretPattern[] = [
   },
   {
     name: "env-var-lower",
-    regex: /\b(PASSWORD|SECRET|TOKEN|KEY)\s*=\s*([^\s"'&]+)/gi,
+    // A tool call can carry ordinary code that names a variable KEY or TOKEN (a unit table, a
+    // lexer token). Treat the assignment as a secret only when the value itself looks like one:
+    // no punctuation that code uses, at least eight characters, and both letters and digits.
+    regex:
+      /\b(PASSWORD|SECRET|TOKEN|KEY)\s*[:=]\s*["']?(?=[A-Za-z0-9+/=_-]{8,}(?![A-Za-z0-9+/=_-]))(?=[A-Za-z0-9+/=_-]*\d)(?=[A-Za-z0-9+/=_-]*[A-Za-z])[A-Za-z0-9+/=_-]{8,}["']?/gi,
     replacement: "[REDACTED:$1]",
     severity: "block",
   },
