@@ -138,32 +138,50 @@ Docker computer topology:
 Set any of them to `0`, `none` or `unlimited` to remove that ceiling. A malformed value fails the
 supervisor at startup naming the variable, rather than surfacing later as a failed bot.
 
-### Restricted computer egress
+### Computer egress
 
 Docker computers have full outbound access by default — the public internet plus the Docker
 host's own addresses, the LAN, and link-local cloud metadata endpoints such as
 `169.254.169.254`. On a cloud VM that last path is instance-credential theft for anything a
-bot runs. Restricted mode keeps public internet egress (browsing, DNS, apt, git over SSH)
-while dropping computer traffic to every non-public destination and to the host itself.
+bot runs. `SANDBOX_COMPUTER_EGRESS` picks how much of that a computer keeps:
 
-It takes two parts, both opt-in:
+| Mode | A computer may reach |
+| --- | --- |
+| `open` (default) | Everything the host can, including the host itself and cloud metadata. |
+| `restricted` | The public internet only: browsing, DNS, apt, git over SSH. Everything non-public and the host are dropped. |
+| `allowlist` | Only the IP addresses and CIDR blocks in `SANDBOX_COMPUTER_EGRESS_ALLOW`, plus DNS. Everything else is dropped. |
+| `offline` | Nothing at all, name resolution included. |
 
-1. Set `SANDBOX_COMPUTER_EGRESS=restricted` in `.env` and recreate the supervisor. Each
-   computer network then gets a deterministic host bridge name (`rakazo-c…`) instead of a
-   generic `br-*`.
-2. Apply the host ruleset once per Docker host:
+`allowlist` takes addresses, not names: a domain list would need a filtering resolver, which
+this deployment does not ship. Resolve the endpoints you need yourself and keep the ranges
+updated, for example
+`SANDBOX_COMPUTER_EGRESS_ALLOW=203.0.113.7,198.51.100.0/24`. DNS stays reachable so names
+still resolve — if a computer must not reach anything, not even a resolver, use `offline`.
+
+Except for `open`, enforcement has two parts:
+
+1. Set the mode in `.env` and recreate the supervisor. Each computer network then gets a
+   deterministic host bridge name (`rakazo-c…`) instead of a generic `br-*`.
+2. Apply the host ruleset once per Docker host, passing the same mode and list:
 
    ```bash
-   sudo bash infra/compose/restrict-computer-egress.sh
+   sudo SANDBOX_COMPUTER_EGRESS=allowlist SANDBOX_COMPUTER_EGRESS_ALLOW=203.0.113.7 \
+     bash infra/compose/restrict-computer-egress.sh
    ```
 
    On a no-checkout install, download it first:
    `curl -fsSLO https://raw.githubusercontent.com/elie222/rakazo/main/infra/compose/restrict-computer-egress.sh`.
-   The script drops forwarded traffic from `rakazo-c*` bridges to all non-public IPv4/IPv6
-   destinations via the `DOCKER-USER` chain, adds an `INPUT` drop so computers cannot open
-   connections to the host (established replies to host-initiated control and screen
-   connections still flow), and installs a systemd oneshot so the rules return after a
-   reboot. `--print` shows the exact rules without changing anything; `--remove` uninstalls.
+   A shell does not read `.env` by itself, so pass the values here as well; the script records
+   them in its systemd unit so reboots reapply the same policy. It rewrites the chains to the
+   current mode, takes back the rules a previous mode installed, and leaves rules it never
+   wrote alone. `--print` shows the exact rules without changing anything; `--remove`
+   uninstalls.
+
+In `restricted` mode the script drops forwarded traffic from `rakazo-c*` bridges to all
+non-public IPv4/IPv6 destinations via the `DOCKER-USER` chain and adds an `INPUT` drop so
+computers cannot open connections to the host (established replies to host-initiated control
+and screen connections still flow). `allowlist` replaces the destination list with the
+allow-listed blocks and adds a catch-all drop; `offline` drops every destination and DNS.
 
 Screen streaming is unaffected: the supervisor and web proxy join each computer's bridge,
 and the ruleset exempts traffic whose in- and out-interface are both `rakazo-c*` before
@@ -174,16 +192,16 @@ traffic from the match and nothing else. A computer provisioned before the flag 
 is replaced on its next provision — resuming it on an unnamed bridge would bypass the
 restriction.
 
-To disable restricted egress, set `SANDBOX_COMPUTER_EGRESS=open`, recreate the
-supervisor, and run `sudo bash infra/compose/restrict-computer-egress.sh --remove`.
-The flag alone does not uninstall the host rules, which keep matching the still-named
-`rakazo-c*` bridges until removed.
+To disable enforcement, set `SANDBOX_COMPUTER_EGRESS=open`, recreate the supervisor, and run
+`sudo bash infra/compose/restrict-computer-egress.sh --remove`. The flag alone does not
+uninstall the host rules, which keep matching the still-named `rakazo-c*` bridges until
+removed.
 
-Do not enable restricted egress if computers must reach LAN services, an internal proxy,
-or endpoints bound to the host. Requires Linux Docker Engine with the iptables backend —
-Docker Desktop, rootless Docker, and `firewall-backend: nftables` are unsupported. The
-`SANDBOX_SCREEN_NETWORK=internal` topology shares one network instead of per-bot bridges,
-so the mode does not apply there.
+Do not use a restrictive mode if computers must reach LAN services, an internal proxy, or
+endpoints bound to the host; use `allowlist` with those addresses instead. Requires Linux
+Docker Engine with the iptables backend — Docker Desktop, rootless Docker, and
+`firewall-backend: nftables` are unsupported. The `SANDBOX_SCREEN_NETWORK=internal` topology
+shares one network instead of per-bot bridges, so no mode applies there.
 
 ## Docker Compose (single machine)
 

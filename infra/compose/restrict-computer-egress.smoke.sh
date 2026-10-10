@@ -55,6 +55,8 @@ done
 bin="$scratch/bin"
 mkdir -p "$bin"
 export STUB_DIR="$scratch/state"
+# Keep the record of installed rules inside the scratch dir, not /var/lib.
+export SANDBOX_COMPUTER_EGRESS_STATE="$scratch/egress-rules"
 mkdir -p "$STUB_DIR"
 for tool in iptables ip6tables; do
   cat >"$bin/$tool" <<'STUB'
@@ -298,6 +300,83 @@ BOBBOT_IF_INET6="$inet6_global" BOBBOT_IPTABLES="$bin/iptables" \
 # restricted egress while installing nothing.
 BOBBOT_IPTABLES="$bin/missing-iptables" BOBBOT_IP6TABLES="$bin/missing-ip6tables" \
   bash "$script" --apply && fail "--apply succeeded with no iptables binary" || true
+
+# --- allowlist mode -------------------------------------------------------
+# Only the listed destinations (plus DNS) stay reachable; everything else is
+# dropped, and an IPv6 entry never lands in the IPv4 rules.
+rm -f "$v4_state" "$v6_state" "$v4_calls" "$STUB_DIR/ip6tables.calls"
+BOBBOT_COMPUTER_EGRESS_MODE_UNUSED=""
+SANDBOX_COMPUTER_EGRESS=allowlist \
+  SANDBOX_COMPUTER_EGRESS_ALLOW="203.0.113.7 198.51.100.0/24,2001:db8::/32" \
+  BOBBOT_IPTABLES="$bin/iptables" BOBBOT_IP6TABLES="$bin/ip6tables" bash "$script" --apply
+grep -qxF 'DOCKER-USER -i rakazo-c+ -d 203.0.113.7 -j RETURN' "$v4_state" ||
+  fail "allowlist mode lacks the listed address"
+grep -qxF 'DOCKER-USER -i rakazo-c+ -d 198.51.100.0/24 -j RETURN' "$v4_state" ||
+  fail "allowlist mode lacks the listed block"
+grep -qxF 'DOCKER-USER -i rakazo-c+ -j DROP' "$v4_state" ||
+  fail "allowlist mode lacks the catch-all drop"
+grep -qxF 'DOCKER-USER -i rakazo-c+ -p udp --dport 53 -j RETURN' "$v4_state" ||
+  fail "allowlist mode must keep DNS working"
+grep -qxF 'DOCKER-USER -i rakazo-c+ -d 2001:db8::/32 -j RETURN' "$v6_state" ||
+  fail "allowlist mode lacks the listed IPv6 block"
+if grep -q '2001:db8' "$v4_state"; then fail "IPv6 allowlist entry installed in IPv4 rules"; fi
+if grep -q '203.0.113.7' "$v6_state"; then fail "IPv4 allowlist entry installed in IPv6 rules"; fi
+allow_at="$(grep -nxF 'DOCKER-USER -i rakazo-c+ -d 203.0.113.7 -j RETURN' "$v4_state" | head -1 | cut -d: -f1)"
+catch_all_at="$(grep -nxF 'DOCKER-USER -i rakazo-c+ -j DROP' "$v4_state" | head -1 | cut -d: -f1)"
+[[ -n "$allow_at" && -n "$catch_all_at" && "$allow_at" -lt "$catch_all_at" ]] ||
+  fail "allowlisted destination must sit above the catch-all drop"
+[[ "$(wc -l <"$v4_state")" -eq 8 ]] || fail "expected 8 IPv4 rules in allowlist mode, got $(wc -l <"$v4_state")"
+[[ "$(wc -l <"$v6_state")" -eq 7 ]] || fail "expected 7 IPv6 rules in allowlist mode, got $(wc -l <"$v6_state")"
+
+# Switching modes rewrites the chain instead of stacking both policies.
+SANDBOX_COMPUTER_EGRESS=offline BOBBOT_IPTABLES="$bin/iptables" \
+  BOBBOT_IP6TABLES="$bin/ip6tables" bash "$script" --apply
+grep -qxF 'DOCKER-USER -i rakazo-c+ -j DROP' "$v4_state" || fail "offline mode lacks the catch-all drop"
+grep -qxF 'DOCKER-USER -i rakazo-c+ -p udp --dport 53 -j DROP' "$v4_state" ||
+  fail "offline mode must drop DNS"
+if grep -q '203.0.113.7' "$v4_state"; then fail "allowlist survived the switch to offline"; fi
+offline_at="$(grep -nxF 'DOCKER-USER -i rakazo-c+ -j DROP' "$v4_state" | head -1 | cut -d: -f1)"
+[[ "$offline_at" -lt "$(wc -l <"$v4_state")" ]] || fail "catch-all drop must precede the INPUT rules"
+[[ "$(wc -l <"$v4_state")" -eq 6 ]] || fail "expected 6 IPv4 rules in offline mode, got $(wc -l <"$v4_state")"
+grep -q '^iptables DOCKER-USER -i rakazo-c+ -j DROP$' "$SANDBOX_COMPUTER_EGRESS_STATE" ||
+  fail "offline mode was not recorded, so a later switch could not undo it"
+if grep -q '203.0.113.7' "$SANDBOX_COMPUTER_EGRESS_STATE"; then
+  fail "the allowlist of the previous mode is still recorded"
+fi
+
+# A record from an earlier run is honoured even when the allowlist is gone: that
+# is what makes a mode switch or an edited list clean up after itself.
+printf '%s\n' 'iptables DOCKER-USER -d 192.0.2.9 -i rakazo-c+ -j RETURN' >"$scratch/stale-state"
+# The recorded rule sits below a prefix that already matches, next to a rule this
+# script never wrote for the same destination.
+printf '%s\n' 'DOCKER-USER -d 192.0.2.9 -i rakazo-c+ -j RETURN' >>"$v4_state"
+printf '%s\n' 'DOCKER-USER -d 192.0.2.9 -i rakazo-c+ -j ACCEPT' >>"$v4_state"
+SANDBOX_COMPUTER_EGRESS_STATE="$scratch/stale-state" SANDBOX_COMPUTER_EGRESS=offline \
+  BOBBOT_IPTABLES="$bin/iptables" BOBBOT_IP6TABLES="$bin/ip6tables" bash "$script" --apply
+if grep -qxF 'DOCKER-USER -d 192.0.2.9 -i rakazo-c+ -j RETURN' "$v4_state"; then
+  fail "a recorded rule from an earlier run survived"
+fi
+grep -qxF 'DOCKER-USER -d 192.0.2.9 -i rakazo-c+ -j ACCEPT' "$v4_state" ||
+  fail "a rule this script never installed was deleted"
+
+# --- configuration mistakes fail loudly -----------------------------------
+# Each of these would otherwise look enforced while computers keep more access
+# than the operator asked for.
+for bad in \
+  "SANDBOX_COMPUTER_EGRESS=allowlist" \
+  "SANDBOX_COMPUTER_EGRESS_ALLOW=203.0.113.7" \
+  "SANDBOX_COMPUTER_EGRESS=allowlist SANDBOX_COMPUTER_EGRESS_ALLOW=example.com" \
+  "SANDBOX_COMPUTER_EGRESS=allowlist SANDBOX_COMPUTER_EGRESS_ALLOW=10.0.0.0/99" \
+  "SANDBOX_COMPUTER_EGRESS=allowlist SANDBOX_COMPUTER_EGRESS_ALLOW=2001:db8::/129" \
+  "SANDBOX_COMPUTER_EGRESS=blocked" \
+  "SANDBOX_COMPUTER_EGRESS=open" \
+  "SANDBOX_COMPUTER_EGRESS=restricted SANDBOX_COMPUTER_EGRESS_ALLOW=203.0.113.7"; do
+  # shellcheck disable=SC2086
+  if env -u SANDBOX_COMPUTER_EGRESS -u SANDBOX_COMPUTER_EGRESS_ALLOW $bad \
+    BOBBOT_IPTABLES="$bin/iptables" BOBBOT_IP6TABLES="$bin/ip6tables" bash "$script" --apply; then
+    fail "--apply accepted: $bad"
+  fi
+done
 
 # Docs and Compose keep the flag and script wired together.
 docs="$root/../../docs/self-host.md"

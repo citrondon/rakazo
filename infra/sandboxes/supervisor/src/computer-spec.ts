@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { isIP } from "node:net";
 import path from "node:path";
 import { MAX_DESKTOP_DISPLAY, screenPorts } from "@bobbot/core/node/desktop-runtime";
 import type Docker from "dockerode";
@@ -150,23 +151,102 @@ export function resolveScreenNetworkMode(value: string | undefined): ScreenNetwo
 }
 
 /**
- * Egress policy for per-bot computer networks. `open` is today's behaviour: full
- * outbound access, including the host's bridge addresses, the LAN, and link-local
- * cloud metadata endpoints. `restricted` keeps public internet egress but lets the
- * operator drop everything else with one host-side iptables rule set — the
- * supervisor gives each computer network a deterministic bridge interface name so
- * the rules match by interface (`-i rakazo-c+`) instead of ephemeral subnets.
- * Enforcement lives on the Docker host (infra/compose/restrict-computer-egress.sh);
- * the flag only marks the networks. Supervisor capabilities stay unchanged.
+ * Egress policy for per-bot computer networks.
+ *
+ * - `open` is the default: full outbound access, including the host's bridge
+ *   addresses, the LAN, and link-local cloud metadata endpoints.
+ * - `restricted` keeps public internet egress but lets the operator drop
+ *   everything else with one host-side iptables rule set.
+ * - `allowlist` drops all egress except the destinations in
+ *   SANDBOX_COMPUTER_EGRESS_ALLOW (IPs and CIDR blocks; names would need a
+ *   filtering resolver, which this does not ship).
+ * - `offline` drops all egress, including name resolution.
+ *
+ * Every mode except `open` gives each computer network a deterministic bridge
+ * interface name so the host rules match by interface (`-i rakazo-c+`) instead of
+ * ephemeral subnets. Enforcement lives on the Docker host
+ * (infra/compose/restrict-computer-egress.sh); the flag only marks the networks.
+ * Supervisor capabilities stay unchanged.
  */
-export type ComputerEgressMode = "open" | "restricted";
+export type ComputerEgressMode = "open" | "restricted" | "allowlist" | "offline";
+
+export const COMPUTER_EGRESS_MODES: readonly ComputerEgressMode[] = [
+  "open",
+  "restricted",
+  "allowlist",
+  "offline",
+];
+
+/** True when the mode asks the host to enforce something on the computer bridges. */
+export function isRestrictiveComputerEgress(mode: ComputerEgressMode): boolean {
+  return mode !== "open";
+}
 
 export function resolveComputerEgressMode(
   value = process.env.SANDBOX_COMPUTER_EGRESS,
 ): ComputerEgressMode {
   if (value === undefined || value.trim() === "" || value === "open") return "open";
-  if (value === "restricted") return "restricted";
-  throw new Error(`Unsupported SANDBOX_COMPUTER_EGRESS value: ${value}`);
+  if ((COMPUTER_EGRESS_MODES as readonly string[]).includes(value)) {
+    return value as ComputerEgressMode;
+  }
+  throw new Error(
+    `Unsupported SANDBOX_COMPUTER_EGRESS value: ${value} (expected ${COMPUTER_EGRESS_MODES.join(", ")})`,
+  );
+}
+
+/**
+ * Destinations an `allowlist` deployment lets its computers reach. Accepts
+ * whitespace- or comma-separated IP addresses and CIDR blocks.
+ */
+export function parseComputerEgressAllowlist(
+  value = process.env.SANDBOX_COMPUTER_EGRESS_ALLOW,
+): string[] {
+  if (value === undefined) return [];
+  const entries = value.split(/[\s,]+/).filter(Boolean);
+  for (const entry of entries) {
+    if (!isIpOrCidr(entry)) {
+      throw new Error(
+        `Unsupported SANDBOX_COMPUTER_EGRESS_ALLOW entry: ${entry} (expected an IP address or CIDR block)`,
+      );
+    }
+  }
+  return [...new Set(entries)];
+}
+
+function isIpOrCidr(value: string): boolean {
+  const [address, prefix, ...rest] = value.split("/");
+  if (rest.length > 0 || !address) return false;
+  const family = isIP(address);
+  if (family === 0) return false;
+  if (prefix === undefined) return true;
+  if (!/^\d{1,3}$/.test(prefix)) return false;
+  const bits = Number(prefix);
+  return bits >= 0 && bits <= (family === 6 ? 128 : 32);
+}
+
+export type ComputerEgressPolicy = { mode: ComputerEgressMode; allowlist: string[] };
+
+/**
+ * The deployment's egress policy. An allowlist without the matching mode (or the
+ * matching mode without a list) is a configuration mistake worth failing on: it
+ * would otherwise look enforced while the computers keep their full access.
+ */
+export function resolveComputerEgressPolicy(
+  env: NodeJS.ProcessEnv = process.env,
+): ComputerEgressPolicy {
+  const mode = resolveComputerEgressMode(env.SANDBOX_COMPUTER_EGRESS);
+  const allowlist = parseComputerEgressAllowlist(env.SANDBOX_COMPUTER_EGRESS_ALLOW);
+  if (allowlist.length > 0 && mode !== "allowlist") {
+    throw new Error(
+      `SANDBOX_COMPUTER_EGRESS_ALLOW is set but SANDBOX_COMPUTER_EGRESS is ${mode}; set it to allowlist or drop the list`,
+    );
+  }
+  if (mode === "allowlist" && allowlist.length === 0) {
+    throw new Error(
+      "SANDBOX_COMPUTER_EGRESS=allowlist needs SANDBOX_COMPUTER_EGRESS_ALLOW with at least one IP address or CIDR block; use offline for no egress at all",
+    );
+  }
+  return { mode, allowlist };
 }
 
 /**
@@ -205,7 +285,7 @@ export function computerNetworkCreateOptions(
     Driver: "bridge",
     CheckDuplicate: true,
     Labels: { "rakazo.computerOwner": owner, "rakazo.botId": botId },
-    ...(egress === "restricted"
+    ...(isRestrictiveComputerEgress(egress)
       ? { Options: { "com.docker.network.bridge.name": computerBridgeNameFor(botId) } }
       : {}),
   };

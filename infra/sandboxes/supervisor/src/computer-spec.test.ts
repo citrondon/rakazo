@@ -33,11 +33,14 @@ import {
   controlPortPublicationMatches,
   homeVolumeMatches,
   hostComputerUser,
+  isRestrictiveComputerEgress,
   legacyNetworkOwnedSolelyBy,
+  parseComputerEgressAllowlist,
   parseMemoryBytes,
   publishedLoopbackControlHostPort,
   resolveComputerControlEndpoint,
   resolveComputerEgressMode,
+  resolveComputerEgressPolicy,
   resolveScreenNetworkMode,
   resolveScreenPublishTarget,
   resolveSpaceComputerLimit,
@@ -146,8 +149,67 @@ describe("graphical computer spec", () => {
     expect(resolveComputerEgressMode("")).toBe("open");
     expect(resolveComputerEgressMode("open")).toBe("open");
     expect(resolveComputerEgressMode("restricted")).toBe("restricted");
-    for (const value of ["blocked", "RESTRICTED", "0"])
+    expect(resolveComputerEgressMode("allowlist")).toBe("allowlist");
+    expect(resolveComputerEgressMode("offline")).toBe("offline");
+    for (const value of ["blocked", "RESTRICTED", "0", "deny_all"])
       expect(() => resolveComputerEgressMode(value)).toThrow(/SANDBOX_COMPUTER_EGRESS/);
+  });
+
+  it("reports which modes need host-side enforcement", () => {
+    expect(isRestrictiveComputerEgress("open")).toBe(false);
+    for (const mode of ["restricted", "allowlist", "offline"] as const) {
+      expect(isRestrictiveComputerEgress(mode)).toBe(true);
+    }
+  });
+
+  it("reads an allowlist of addresses and blocks", () => {
+    expect(parseComputerEgressAllowlist(undefined)).toEqual([]);
+    expect(parseComputerEgressAllowlist("")).toEqual([]);
+    expect(parseComputerEgressAllowlist("203.0.113.7")).toEqual(["203.0.113.7"]);
+    expect(parseComputerEgressAllowlist("203.0.113.7, 198.51.100.0/24")).toEqual([
+      "203.0.113.7",
+      "198.51.100.0/24",
+    ]);
+    expect(parseComputerEgressAllowlist("2001:db8::/32  ::1")).toEqual(["2001:db8::/32", "::1"]);
+    // Repeats collapse: the host script writes the same rule twice otherwise.
+    expect(parseComputerEgressAllowlist("10.0.0.1 10.0.0.1")).toEqual(["10.0.0.1"]);
+    for (const value of [
+      "example.com",
+      "10.0.0.0/33",
+      "2001:db8::/129",
+      "10.0.0.0/",
+      "10.0.0.999",
+    ]) {
+      expect(() => parseComputerEgressAllowlist(value)).toThrow(/SANDBOX_COMPUTER_EGRESS_ALLOW/);
+    }
+  });
+
+  it("refuses a policy whose list and mode disagree", () => {
+    expect(resolveComputerEgressPolicy({})).toEqual({ mode: "open", allowlist: [] });
+    expect(
+      resolveComputerEgressPolicy({
+        SANDBOX_COMPUTER_EGRESS: "allowlist",
+        SANDBOX_COMPUTER_EGRESS_ALLOW: "203.0.113.7",
+      }),
+    ).toEqual({ mode: "allowlist", allowlist: ["203.0.113.7"] });
+    // A list without the mode, or the mode without a list, would look enforced
+    // while the computers keep more access than the operator asked for.
+    expect(() =>
+      resolveComputerEgressPolicy({ SANDBOX_COMPUTER_EGRESS_ALLOW: "203.0.113.7" }),
+    ).toThrow(/set it to allowlist/);
+    expect(() =>
+      resolveComputerEgressPolicy({
+        SANDBOX_COMPUTER_EGRESS: "restricted",
+        SANDBOX_COMPUTER_EGRESS_ALLOW: "203.0.113.7",
+      }),
+    ).toThrow(/set it to allowlist/);
+    expect(() => resolveComputerEgressPolicy({ SANDBOX_COMPUTER_EGRESS: "allowlist" })).toThrow(
+      /at least one IP address or CIDR block/,
+    );
+    expect(resolveComputerEgressPolicy({ SANDBOX_COMPUTER_EGRESS: "offline" })).toEqual({
+      mode: "offline",
+      allowlist: [],
+    });
   });
 
   it("derives deterministic host bridge names within the 15-byte interface limit", () => {
@@ -160,7 +222,7 @@ describe("graphical computer spec", () => {
     expect(computerBridgeNameFor("a/b")).not.toBe(computerBridgeNameFor("ab"));
   });
 
-  it("names the bridge only when egress is restricted", () => {
+  it("names the bridge for every mode that needs host-side rules", () => {
     const open = computerNetworkCreateOptions("bot_1", "owner", "open");
     expect(open).toEqual({
       Name: computerNetworkNameFor("bot_1"),
@@ -175,6 +237,13 @@ describe("graphical computer spec", () => {
       "com.docker.network.bridge.name": computerBridgeNameFor("bot_1"),
     });
     expect(computerNetworkCreateOptions("bot_1", "owner")).toEqual(open);
+    // allowlist and offline are enforced per interface too, so they need the
+    // deterministic name just like restricted.
+    for (const mode of ["allowlist", "offline"] as const) {
+      expect(computerNetworkCreateOptions("bot_1", "owner", mode).Options).toEqual({
+        "com.docker.network.bridge.name": computerBridgeNameFor("bot_1"),
+      });
+    }
     // The bridge name differs from the network name so `docker network` output
     // still shows the readable rakazo-computer-* name while iptables matches the interface.
     expect(restricted.Options?.["com.docker.network.bridge.name"]).not.toBe(restricted.Name);

@@ -1,17 +1,29 @@
 #!/usr/bin/env bash
-# Restricted egress for BobBot bot computers (SANDBOX_COMPUTER_EGRESS=restricted).
+# Egress policy for BobBot bot computers.
 #
-# Computers keep full public-internet egress (browsing, DNS, apt, git over SSH)
-# but can no longer reach:
-#   - the Docker host itself (INPUT drop; replies to host-initiated connections
-#     stay open so supervisor control and published screen ports keep working),
-#   - RFC1918 / CGNAT / link-local destinations, including cloud metadata at
-#     169.254.169.254 (and AWS's IPv6 fd00:ec2::254),
-#   - multicast and reserved space.
+# The mode comes from SANDBOX_COMPUTER_EGRESS (the variable the supervisor reads) and
 #
-# Rules key on the deterministic bridge names the supervisor assigns in
-# restricted mode (rakazo-c<hash>), never on Docker's dynamic subnets — so
-# computer churn, network recreate, and subnet reuse need no firewall changes.
+#   restricted (default)
+#     Computers keep full public-internet egress (browsing, DNS, apt, git over SSH)
+#     but can no longer reach:
+#       - the Docker host itself (INPUT drop; replies to host-initiated connections
+#         stay open so supervisor control and published screen ports keep working),
+#       - RFC1918 / CGNAT / link-local destinations, including cloud metadata at
+#         169.254.169.254 (and AWS's IPv6 fd00:ec2::254),
+#       - multicast and reserved space.
+#
+#   allowlist
+#     Everything is dropped except the destinations in SANDBOX_COMPUTER_EGRESS_ALLOW
+#     (IPs and CIDR blocks, comma- or space-separated) and DNS on port 53, so names
+#     still resolve. An allowlist of names is not possible: that would need a
+#     filtering resolver, which this deployment does not ship.
+#
+#   offline
+#     No egress at all: every forwarded destination is dropped, including DNS.
+#
+# Rules key on the deterministic bridge names the supervisor assigns outside of
+# `open` mode (rakazo-c<hash>), never on Docker's dynamic subnets — so computer churn,
+# network recreate, and subnet reuse need no firewall changes.
 #
 # Same-bridge peers stay reachable: the supervisor and web screen proxy join the
 # computer's bridge. Docker loads br_netfilter with bridge-nf-call-iptables, so
@@ -35,8 +47,80 @@ IP6TABLES="${BOBBOT_IP6TABLES:-${RAKAZO_IP6TABLES:-ip6tables}}"
 SYSTEMCTL="${BOBBOT_SYSTEMCTL:-${RAKAZO_SYSTEMCTL:-systemctl}}"
 IF_INET6="${BOBBOT_IF_INET6:-${RAKAZO_IF_INET6:-/proc/net/if_inet6}}"
 BRIDGE_PREFIX="rakazo-c"
+# The supervisor reads SANDBOX_COMPUTER_EGRESS / _ALLOW from its environment; the host
+# script reads the same names so one setting describes the deployment. The BOBBOT_ and
+# RAKAZO_ spellings stay accepted for scripts that already export them.
+EGRESS_MODE="${SANDBOX_COMPUTER_EGRESS:-${BOBBOT_COMPUTER_EGRESS_MODE:-${RAKAZO_COMPUTER_EGRESS_MODE:-restricted}}}"
+EGRESS_ALLOW="${SANDBOX_COMPUTER_EGRESS_ALLOW:-${BOBBOT_COMPUTER_EGRESS_ALLOW:-${RAKAZO_COMPUTER_EGRESS_ALLOW:-}}}"
 INSTALLED_PATH=/usr/local/sbin/rakazo-computer-egress
 UNIT_PATH=/etc/systemd/system/rakazo-computer-egress.service
+# The rules this script installed, exactly as they were written. A mode switch or an
+# edited allowlist has to take its own previous rules back out, and the current
+# environment cannot describe them once the list changed.
+STATE_FILE="${SANDBOX_COMPUTER_EGRESS_STATE:-${BOBBOT_EGRESS_STATE:-/var/lib/rakazo-computer-egress/rules}}"
+IPTABLES_NAME="${IPTABLES##*/}"
+IP6TABLES_NAME="${IP6TABLES##*/}"
+
+# Every entry of BOBBOT_COMPUTER_EGRESS_ALLOW on its own line, for the rule builders.
+allowlist_entries() {
+  printf '%s' "$EGRESS_ALLOW" | tr ',' '\n' | tr -s '[:space:]' '\n' | grep -v '^$' || true
+}
+
+validate_allow_entry() {
+  local entry="$1" addr="${1%%/*}" prefix="" bits=0
+  if [[ "$entry" == */* ]]; then prefix="${entry#*/}"; fi
+  if [[ -n "$prefix" && ! "$prefix" =~ ^[0-9]{1,3}$ ]]; then
+    echo "Invalid prefix length in SANDBOX_COMPUTER_EGRESS_ALLOW: $entry" >&2
+    exit 2
+  fi
+  bits=${prefix:-0}
+  if [[ "$addr" == *:* ]]; then
+    if [[ ! "$addr" =~ ^[0-9A-Fa-f:]+$ ]]; then
+      echo "Invalid address in SANDBOX_COMPUTER_EGRESS_ALLOW: $entry" >&2
+      exit 2
+    fi
+    if ((bits > 128)); then
+      echo "Invalid prefix length in SANDBOX_COMPUTER_EGRESS_ALLOW: $entry" >&2
+      exit 2
+    fi
+    return 0
+  fi
+  if [[ ! "$addr" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]; then
+    echo "Invalid address in SANDBOX_COMPUTER_EGRESS_ALLOW: $entry" >&2
+    exit 2
+  fi
+  if ((bits > 32)); then
+    echo "Invalid prefix length in SANDBOX_COMPUTER_EGRESS_ALLOW: $entry" >&2
+    exit 2
+  fi
+}
+
+# The mode and the list have to agree with each other and with the supervisor.
+# A mismatch would look enforced while the computers keep more access than the
+# operator asked for, so every path except --remove refuses to guess.
+validate_config() {
+  case "$EGRESS_MODE" in
+    restricted | allowlist | offline) ;;
+    open)
+      echo "SANDBOX_COMPUTER_EGRESS=open leaves egress open; nothing to enforce. Run --remove to delete installed rules." >&2
+      exit 2
+      ;;
+    *)
+      echo "Unsupported SANDBOX_COMPUTER_EGRESS value: $EGRESS_MODE (expected restricted, allowlist, or offline)" >&2
+      exit 2
+      ;;
+  esac
+  if [[ "$EGRESS_MODE" == allowlist && -z "$(allowlist_entries)" ]]; then
+    echo "SANDBOX_COMPUTER_EGRESS=allowlist needs SANDBOX_COMPUTER_EGRESS_ALLOW with at least one IP address or CIDR block." >&2
+    exit 2
+  fi
+  if [[ "$EGRESS_MODE" != allowlist && -n "$(allowlist_entries)" ]]; then
+    echo "SANDBOX_COMPUTER_EGRESS_ALLOW is set but the mode is $EGRESS_MODE; switch to allowlist or drop the list." >&2
+    exit 2
+  fi
+  local entry
+  while IFS= read -r entry; do validate_allow_entry "$entry"; done < <(allowlist_entries)
+}
 
 usage() {
   cat <<'EOF'
@@ -45,6 +129,9 @@ Usage: restrict-computer-egress.sh [--install|--apply|--remove|--print]
   --apply     apply the rules now only (used by the systemd unit)
   --remove    delete the rules and the systemd unit
   --print     show the iptables commands without changing anything
+
+Mode comes from SANDBOX_COMPUTER_EGRESS: restricted (default), allowlist
+(with SANDBOX_COMPUTER_EGRESS_ALLOW), or offline.
 EOF
 }
 
@@ -80,24 +167,116 @@ EOF
 # catch-all drop so host- and supervisor-initiated connections to the computer
 # (control endpoint, published screen port) keep working while the computer can
 # no longer open connections to the host.
+#
+# allowlist returns the allowed destinations (and DNS) before its catch-all drop;
+# offline drops DNS explicitly (the catch-all would cover it, but the rule says
+# why name resolution stops) and then everything else.
 egress_rules_v4() {
-  local cidr
+  local cidr entry
   printf 'DOCKER-USER -i %s+ -o %s+ -j RETURN\n' "$BRIDGE_PREFIX" "$BRIDGE_PREFIX"
-  while IFS= read -r cidr; do
-    printf 'DOCKER-USER -i %s+ -d %s -j DROP\n' "$BRIDGE_PREFIX" "$cidr"
-  done < <(blocked_destinations_v4)
+  case "$EGRESS_MODE" in
+    restricted)
+      while IFS= read -r cidr; do
+        printf 'DOCKER-USER -i %s+ -d %s -j DROP\n' "$BRIDGE_PREFIX" "$cidr"
+      done < <(blocked_destinations_v4)
+      ;;
+    allowlist)
+      while IFS= read -r entry; do
+        [[ "$entry" == *:* ]] && continue
+        printf 'DOCKER-USER -i %s+ -d %s -j RETURN\n' "$BRIDGE_PREFIX" "$entry"
+      done < <(allowlist_entries)
+      printf 'DOCKER-USER -i %s+ -p udp --dport 53 -j RETURN\n' "$BRIDGE_PREFIX"
+      printf 'DOCKER-USER -i %s+ -p tcp --dport 53 -j RETURN\n' "$BRIDGE_PREFIX"
+      printf 'DOCKER-USER -i %s+ -j DROP\n' "$BRIDGE_PREFIX"
+      ;;
+    offline)
+      printf 'DOCKER-USER -i %s+ -p udp --dport 53 -j DROP\n' "$BRIDGE_PREFIX"
+      printf 'DOCKER-USER -i %s+ -p tcp --dport 53 -j DROP\n' "$BRIDGE_PREFIX"
+      printf 'DOCKER-USER -i %s+ -j DROP\n' "$BRIDGE_PREFIX"
+      ;;
+  esac
   printf 'INPUT -i %s+ -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT\n' "$BRIDGE_PREFIX"
   printf 'INPUT -i %s+ -j DROP\n' "$BRIDGE_PREFIX"
 }
 
 egress_rules_v6() {
-  local cidr
+  local cidr entry
   printf 'DOCKER-USER -i %s+ -o %s+ -j RETURN\n' "$BRIDGE_PREFIX" "$BRIDGE_PREFIX"
-  while IFS= read -r cidr; do
-    printf 'DOCKER-USER -i %s+ -d %s -j DROP\n' "$BRIDGE_PREFIX" "$cidr"
-  done < <(blocked_destinations_v6)
+  case "$EGRESS_MODE" in
+    restricted)
+      while IFS= read -r cidr; do
+        printf 'DOCKER-USER -i %s+ -d %s -j DROP\n' "$BRIDGE_PREFIX" "$cidr"
+      done < <(blocked_destinations_v6)
+      ;;
+    allowlist)
+      while IFS= read -r entry; do
+        [[ "$entry" == *:* ]] || continue
+        printf 'DOCKER-USER -i %s+ -d %s -j RETURN\n' "$BRIDGE_PREFIX" "$entry"
+      done < <(allowlist_entries)
+      printf 'DOCKER-USER -i %s+ -p udp --dport 53 -j RETURN\n' "$BRIDGE_PREFIX"
+      printf 'DOCKER-USER -i %s+ -p tcp --dport 53 -j RETURN\n' "$BRIDGE_PREFIX"
+      printf 'DOCKER-USER -i %s+ -j DROP\n' "$BRIDGE_PREFIX"
+      ;;
+    offline)
+      printf 'DOCKER-USER -i %s+ -p udp --dport 53 -j DROP\n' "$BRIDGE_PREFIX"
+      printf 'DOCKER-USER -i %s+ -p tcp --dport 53 -j DROP\n' "$BRIDGE_PREFIX"
+      printf 'DOCKER-USER -i %s+ -j DROP\n' "$BRIDGE_PREFIX"
+      ;;
+  esac
   printf 'INPUT -i %s+ -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT\n' "$BRIDGE_PREFIX"
   printf 'INPUT -i %s+ -j DROP\n' "$BRIDGE_PREFIX"
+}
+
+# Every rule this script can install, for any mode, deduplicated. Switching modes
+# or removing the rules has to clean up policies the operator no longer runs, while
+# leaving rules this script never wrote alone.
+# Recorded rules for one firewall command and chain, in spec form ("<chain> <args>").
+recorded_rules() {
+  local cmd_name="$1" chain="$2"
+  [[ -f "$STATE_FILE" ]] || return 0
+  awk -v cmd="$cmd_name" -v chain="$chain" '$1 == cmd && $2 == chain { $1 = ""; $2 = ""; sub(/^  /, ""); print }' \
+    "$STATE_FILE"
+}
+
+record_state() {
+  local dir file tmp
+  dir="$(dirname "$STATE_FILE")"
+  file="$STATE_FILE"
+  tmp="$file.tmp"
+  if [[ ! -d "$dir" ]] && ! mkdir -p "$dir" 2>/dev/null; then
+    echo "Note: cannot write $STATE_FILE, so a later mode change cannot take these rules back out." >&2
+    return 0
+  fi
+  : >"$tmp"
+  while IFS= read -r line; do printf '%s %s\n' "$IPTABLES_NAME" "$line" >>"$tmp"; done < <(egress_rules_v4)
+  while IFS= read -r line; do printf '%s %s\n' "$IP6TABLES_NAME" "$line" >>"$tmp"; done < <(egress_rules_v6)
+  mv "$tmp" "$file"
+}
+
+egress_rules_all_v4() {
+  local mode line saved="$EGRESS_MODE" seen=" "
+  for mode in restricted allowlist offline; do
+    EGRESS_MODE="$mode"
+    while IFS= read -r line; do
+      [[ "$seen" != *" $line "* ]] || continue
+      seen+="$line "
+      printf '%s\n' "$line"
+    done < <(egress_rules_v4)
+  done
+  EGRESS_MODE="$saved"
+}
+
+egress_rules_all_v6() {
+  local mode line saved="$EGRESS_MODE" seen=" "
+  for mode in restricted allowlist offline; do
+    EGRESS_MODE="$mode"
+    while IFS= read -r line; do
+      [[ "$seen" != *" $line "* ]] || continue
+      seen+="$line "
+      printf '%s\n' "$line"
+    done < <(egress_rules_v6)
+  done
+  EGRESS_MODE="$saved"
 }
 
 wait_for_docker_user() {
@@ -156,18 +335,22 @@ chain_has_prefix() {
 
 # Rules below a managed prefix that duplicate it. The prefix itself is kept:
 # replacements are inserted at the head first, and only later copies are removed.
+# Delete managed rules that sit BELOW the freshly installed prefix: the prefix is
+# the policy of the current mode, everything this script wrote for another mode is
+# stale. Rules that were never ours are left alone. prefix_len counts the rows the
+# new prefix occupies; the remaining arguments are every rule we manage.
 delete_stale_below_prefix() {
-  local cmd="$1" chain="$2"
-  shift 2
+  local cmd="$1" chain="$2" prefix_len="$3"
+  shift 3
   local -a wanted=("$@") lines=() stale=()
-  local line i j norm prefix_len=${#wanted[@]}
+  local line i j norm wanted_count=${#wanted[@]}
   while IFS= read -r line; do
     [[ "$line" == "-A $chain "* ]] || continue
     lines+=("${line#-A "$chain" }")
   done < <("$cmd" -S "$chain" 2>/dev/null || true)
   for ((i = prefix_len; i < ${#lines[@]}; i++)); do
     norm="$(normalize_rule "${lines[i]}")"
-    for ((j = 0; j < prefix_len; j++)); do
+    for ((j = 0; j < wanted_count; j++)); do
       if [[ "$norm" == "$(normalize_rule "${wanted[j]}")" ]]; then
         stale+=("$((i + 1))")
         break
@@ -185,10 +368,11 @@ delete_stale_below_prefix() {
 # accept stays above the catch-all drop. A chain that already has that prefix
 # is left alone.
 apply_family() {
-  local cmd="$1" rules=() line chain
+  local cmd="$1" rules=() all=() line chain
   command -v "$cmd" >/dev/null 2>&1 || return 0
   wait_for_docker_user "$cmd"
   while IFS= read -r line; do rules+=("$line"); done < <("$2")
+  while IFS= read -r line; do all+=("$line"); done < <("$3")
   local -a chain_names=()
   local seen=" "
   for line in "${rules[@]}"; do
@@ -212,9 +396,9 @@ apply_family() {
     rewrite+="$chain "
     chain_needs=1
   done
-  if ((chain_needs == 0)); then
-    return 0
-  fi
+  # Deletion still runs when the prefix already matches: a recorded rule from an
+  # earlier mode can sit below a correct prefix (a mode switch, or an allowlist
+  # that lost an entry, changes nothing above it).
   # Insert the new prefix before deleting the copies it replaces. Deleting
   # first would drop enforcement if a later iptables command failed or the
   # script were interrupted. Stale copies are removed only once the new rules
@@ -232,14 +416,45 @@ apply_family() {
     "$cmd" -I "$chain" 1 "${args[@]}"
   done
   for chain in "${chain_names[@]}"; do
-    [[ "$rewrite" == *" $chain "* ]] || continue
     wanted=()
     for line in "${rules[@]}"; do
       [[ "${line%% *}" == "$chain" ]] || continue
       wanted+=("${line#* }")
     done
-    delete_stale_below_prefix "$cmd" "$chain" "${wanted[@]}"
+    # Below the fresh prefix, delete every rule this script manages for ANY mode
+    # plus everything it recorded installing earlier: a mode switch or an edited
+    # allowlist must not leave the previous policy standing.
+    local -a managed=()
+    for line in "${all[@]}"; do
+      [[ "${line%% *}" == "$chain" ]] || continue
+      managed+=("${line#* }")
+    done
+    while IFS= read -r line; do managed+=("$line"); done < <(recorded_rules "${cmd##*/}" "$chain")
+    delete_stale_below_prefix "$cmd" "$chain" "${#wanted[@]}" "${managed[@]}"
   done
+}
+
+# Delete exactly the rules recorded from earlier runs, so --remove is complete
+# even when the mode or the allowlist changed since they were installed.
+remove_recorded_rules() {
+  [[ -f "$STATE_FILE" ]] || return 0
+  local cmd_name chain spec
+  local -a specs=()
+  while IFS= read -r line; do
+    cmd_name="${line%% *}"
+    spec="${line#* }"
+    [[ -n "$cmd_name" && -n "$spec" ]] || continue
+    specs=()
+    read -ra specs <<<"$spec"
+    chain="${specs[0]}"
+    local cmd="$IPTABLES"
+    [[ "$cmd_name" == "$IP6TABLES_NAME" ]] && cmd="$IP6TABLES"
+    command -v "$cmd" >/dev/null 2>&1 || continue
+    local -a args=("${specs[@]:1}")
+    while "$cmd" -C "$chain" "${args[@]}" 2>/dev/null; do
+      "$cmd" -D "$chain" "${args[@]}"
+    done
+  done <"$STATE_FILE"
 }
 
 remove_family() {
@@ -261,7 +476,7 @@ apply_rules() {
     echo "$IPTABLES not found — restricted egress needs the iptables firewall backend." >&2
     exit 1
   fi
-  apply_family "$IPTABLES" egress_rules_v4
+  apply_family "$IPTABLES" egress_rules_v4 egress_rules_all_v4
   if ! command -v "$IP6TABLES" >/dev/null 2>&1; then
     if host_has_ipv6; then
       echo "$IP6TABLES not found but the host has global IPv6 — computers would" >&2
@@ -272,13 +487,14 @@ apply_rules() {
     { host_has_ipv6 && wait_for_docker_user "$IP6TABLES"; }; then
     # The chain can lag dockerd startup; on dual-stack hosts it gets the same
     # grace window apply_family gives IPv4 before we reject the host.
-    apply_family "$IP6TABLES" egress_rules_v6
+    apply_family "$IP6TABLES" egress_rules_v6 egress_rules_all_v6
   elif host_has_ipv6; then
     echo "$IP6TABLES DOCKER-USER is unavailable but the host has global IPv6 —" >&2
     echo "computers would keep unrestricted IPv6 egress. Start Docker first (it" >&2
     echo "creates the chain) or disable IPv6, then re-run." >&2
     exit 1
   fi
+  record_state
 }
 
 # Scope-00 (global) entries in if_inet6 mean the host routes IPv6.
@@ -321,15 +537,21 @@ install_persistence() {
   if [[ "$(readlink -f "$0")" != "$INSTALLED_PATH" ]]; then
     install -m 0755 "$0" "$INSTALLED_PATH"
   fi
+  # The mode and its allowlist are part of the policy, so the unit repeats them:
+  # after a reboot, `--apply` would otherwise fall back to the default mode.
+  local allow_list
+  allow_list="$(allowlist_entries | paste -sd, -)"
   cat >"$UNIT_PATH" <<EOF
 [Unit]
-Description=Restrict BobBot bot-computer egress (rakazo-c* bridges)
+Description=Enforce BobBot bot-computer egress ($EGRESS_MODE) on rakazo-c* bridges
 After=docker.service
 Wants=docker.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+Environment=SANDBOX_COMPUTER_EGRESS=$EGRESS_MODE
+Environment=SANDBOX_COMPUTER_EGRESS_ALLOW=$allow_list
 ExecStart=$INSTALLED_PATH --apply
 
 [Install]
@@ -351,22 +573,39 @@ remove_persistence() {
 mode="${1:---install}"
 case "$mode" in
   --install)
+    validate_config
     require_root "$@"
     apply_rules
     install_persistence
-    echo "Computer egress restricted: rakazo-c* bridges drop non-public and host-bound traffic."
+    case "$EGRESS_MODE" in
+      restricted)
+        echo "Computer egress restricted: rakazo-c* bridges drop non-public and host-bound traffic."
+        ;;
+      allowlist)
+        echo "Computer egress allowlisted: rakazo-c* bridges reach only $(allowlist_entries | paste -sd, -) and DNS."
+        ;;
+      offline)
+        echo "Computer egress offline: rakazo-c* bridges reach nothing, including DNS."
+        ;;
+    esac
     ;;
   --apply)
+    validate_config
     apply_rules
     ;;
   --remove)
     require_root "$@"
-    remove_family "$IPTABLES" egress_rules_v4
-    remove_family "$IP6TABLES" egress_rules_v6
+    # Every mode the script can install is deleted, so removing works without
+    # remembering which mode was active when the rules went in.
+    remove_recorded_rules
+    remove_family "$IPTABLES" egress_rules_all_v4
+    remove_family "$IP6TABLES" egress_rules_all_v6
+    rm -f "$STATE_FILE"
     remove_persistence
     echo "Computer egress rules and persistence removed."
     ;;
   --print)
+    validate_config
     print_family "$IPTABLES" egress_rules_v4
     print_family "$IP6TABLES" egress_rules_v6
     ;;
