@@ -133,12 +133,13 @@ for index in "${!VOLUME_NAMES[@]}"; do
     docker volume create "${to}" >/dev/null
     continue
   fi
-  if [[ -n "$(docker ps -aq --filter "volume=${to}")" ]] || [[ -n "$(docker volume inspect "${to}" --format '{{.CreatedAt}}' 2>/dev/null)" ]]; then
-    echo "Volume ${to} already exists; keeping it (delete it first to re-copy)" >&2
+  if ! docker volume inspect "${to}" >/dev/null 2>&1; then
+    docker volume create "${to}" >/dev/null
+  elif [[ -n "$(docker run --rm -v "${to}:/to:ro" --entrypoint sh "${postgres_image}" -c 'ls -A /to' 2>/dev/null)" ]]; then
+    echo "Volume ${to} already holds data; keeping it (delete it first to re-copy)" >&2
     continue
   fi
   echo "Copying ${from} -> ${to}"
-  docker volume create "${to}" >/dev/null
   docker run --rm \
     -v "${from}:/from:ro" \
     -v "${to}:/to" \
