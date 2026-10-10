@@ -1,7 +1,9 @@
 # Erste Schritte mit BobBot
 
 Diese Anleitung ist für den Einstieg gedacht: du musst nichts programmieren und
-musst keine Datei anfassen. Alles passiert im Browser.
+musst keine Datei anfassen. Alles passiert im Browser — mit der App für Handy
+geht fast alles genauso, die Unterschiede stehen unter *Mit dem Handy
+arbeiten*.
 
 ## Was BobBot für dich tut
 
@@ -76,6 +78,32 @@ Fertige Dateien liegen als Artefakte im Thread und gesammelt unter
 Ergebnisse auch als Datei an eine Nachricht anhängen — das ist der Weg, auf dem
 Deliverables entstehen.
 
+## Mit dem Handy arbeiten
+
+Die App für Android und iOS verbindet sich mit demselben BobBot wie der
+Browser. Beim Anmelden tippst du unten auf **Use a custom server** und trägst
+die Adresse deines Servers ein; zuhause im selben Netz ist das
+`http://127.0.0.1:3100`.
+
+Was auf dem Handy (noch) anders ist:
+
+- Über das **+**-Symbol legst du einen Bot, eine Gruppe oder einen Space an.
+  Ein fertiges Team aus einer Vorlage gibt es dort nicht — Teams stellst du im
+  Browser mit **Team from template** auf, sie erscheinen danach auch im Handy.
+  Ein einzelner Bot funktioniert auch ohne Vorlage: lege ihn an und schreibe
+  ihm, was er werden soll; er fragt dann selbst nach Rolle, Auftrag und
+  Vorgaben.
+- Auf der Models-Seite steht oben **Active model** mit einem Beispielnamen, auch
+  wenn noch kein Modell verbunden ist. Trau dem nicht: erst Anbieter und
+  Schlüssel eintragen, verbinden, dann gilt das Modell.
+- In den Kontoeinstellungen stellst du ein, wofür das Handy klingelt: den
+  Live-Status während der Arbeit, Antworten der Bots, Alarme aus Routinen und
+  alles, was Aufmerksamkeit braucht (Fragen, Freigaben, Übernahme).
+- Während ein Bot arbeitet, siehst du seinen Zwischenstand im Chat und kannst
+  ihn über den Stopp-Knopf anhalten.
+- Artefakte schaust du unter **Artifacts** an; Computer-Dateien eines Bots
+  öffnest du im Chat über die Computer-Ansicht.
+
 ## Was von allein läuft
 
 - **Routinen** wecken einen Bot zu festen Zeiten in dem Chat, den du festlegst.
@@ -100,6 +128,9 @@ Deliverables entstehen.
 - **Erfundene Angaben.** Bots sollen nichts erfinden, sondern Belege aus dem
   Thread, aus Dateien oder aus dem Netz anführen. Prüfe trotzdem, was du
   weitergibst: ein falscher Schluss kommt selbstbewusst, nicht vorsichtig.
+- **Ein Schreibversuch wird abgelehnt.** Ein Sicherheitsfilter blockiert
+  Inhalte, die wie Zugangsdaten aussehen. Lass den Bot den Inhalt umformulieren
+  — er kann das selbst und meldet es dir.
 
 ## Deinen eigenen BobBot betreiben
 
